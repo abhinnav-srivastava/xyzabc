@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12">
+    <!-- Progress Card -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0 fw-semibold">Category Progress</h5>
+          <div class="d-flex align-items-center gap-3">
+            <div class="text-muted small">
+              <i class="bi bi-clock me-1"></i>
+              <span id="elapsed-time">00:00:00</span>
+            </div>
+            <span class="badge bg-primary fs-6">{{ progress.current }} of {{ progress.total }}</span>
+          </div>
+        </div>
+        <div class="progress" style="height: 8px;">
+          <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress.percent }}%"
+               aria-valuenow="{{ progress.percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <small class="text-muted mt-2 d-block">{{ progress.percent }}% Complete</small>
+      </div>
+    </div>
+
+    <!-- Category Header -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">
+          <i class="bi bi-folder-check me-2"></i>{{ category.role_name }} — {{ category.category_name }}
+        </h4>
+      </div>
+      <div class="card-body">
+        <p class="lead mb-0">Review all items in this category:</p>
+        <div class="alert alert-info border-0 mt-3">
+          <i class="bi bi-info-circle me-2"></i>
+          <strong>Note:</strong> You can proceed without answering all items. Unanswered items will be marked as "Unanswered" in the final report.
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <div class="d-flex align-items-center">
+              <span class="badge bg-danger me-2">MUST</span>
+              <small class="text-muted">Critical/Required items</small>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="d-flex align-items-center">
+              <span class="badge bg-success me-2">GOOD</span>
+              <small class="text-muted">Standard practice items</small>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="d-flex align-items-center">
+              <span class="badge bg-warning me-2">OPTIONAL</span>
+              <small class="text-muted">Recommended/Nice-to-have items</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Review Form -->
+    <form method="post" class="needs-validation" novalidate>
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th style="width: 5%;" class="text-center">#</th>
+                  <th style="width: 50%;">Review Item</th>
+                  <th style="width: 15%;" class="text-center">Type</th>
+                  <th style="width: 20%;" class="text-center">Status</th>
+                  <th style="width: 10%;" class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in category.item_list %}
+                  {% set item_key = item.role_id + '|' + item.category_id + '|' + item.item_id %}
+                  {% set saved = saved_responses.get(item_key, {}) %}
+                  {% set item_type_class = 'danger' if item.item_type == 'must' else 'success' if item.item_type == 'good' else 'warning' %}
+                  {% set item_type_text = item.item_type.upper() %}
+                  
+                  <tr class="review-item-row" data-item-key="{{ item_key }}">
+                    <td class="text-center fw-semibold">
+                      {{ loop.index }}
+                      {% if not saved or not saved.status %}
+                        <i class="bi bi-exclamation-triangle-fill text-warning ms-1" title="Unanswered"></i>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <div class="item-content">
+                        <h6 class="mb-2 fw-semibold">{{ item.item_text }}</h6>
+                        {% if item.item_description %}
+                          <p class="text-muted mb-2 small">{{ item.item_description }}</p>
+                        {% endif %}
+                        {% if item.item_details %}
+                          <div class="item-details-collapsed" id="details-{{ item_key }}">
+                            <button type="button" class="btn btn-sm btn-outline-info" 
+                                    onclick="toggleDetails('{{ item_key }}')">
+                              <i class="bi bi-info-circle me-1"></i>Show Details
+                            </button>
+                          </div>
+                          <div class="item-details-expanded d-none" id="details-expanded-{{ item_key }}">
+                            <div class="alert alert-info border-0 mb-2">
+                              <h6 class="alert-heading fw-semibold">
+                                <i class="bi bi-info-circle me-2"></i>Details & Guidelines
+                              </h6>
+                              <div class="item-details">
+                                {{ item.item_details|safe }}
+                              </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                    onclick="toggleDetails('{{ item_key }}')">
+                              <i class="bi bi-chevron-up me-1"></i>Hide Details
+                            </button>
+                          </div>
+                        {% endif %}
+                      </div>
+                    </td>
+                    <td class="text-center">
+                      <span class="badge bg-{{ item_type_class }}">{{ item_type_text }}</span>
+                    </td>
+                    <td class="text-center">
+                      <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="status_{{ item_key }}" value="OK" 
+                               id="status_ok_{{ item_key }}" {% if saved and saved.status == 'OK' %}checked{% endif %}>
+                        <label class="btn btn-outline-success btn-sm" for="status_ok_{{ item_key }}">
+                          <i class="bi bi-check-circle me-1"></i>OK
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="status_{{ item_key }}" value="NG" 
+                               id="status_ng_{{ item_key }}" {% if saved and saved.status == 'NG' %}checked{% endif %}>
+                        <label class="btn btn-outline-danger btn-sm" for="status_ng_{{ item_key }}">
+                          <i class="bi bi-x-circle me-1"></i>NG
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="status_{{ item_key }}" value="NA" 
+                               id="status_na_{{ item_key }}" {% if saved and saved.status == 'NA' %}checked{% endif %}>
+                        <label class="btn btn-outline-secondary btn-sm" for="status_na_{{ item_key }}">
+                          <i class="bi bi-dash-circle me-1"></i>N/A
+                        </label>
+                      </div>
+                    </td>
+                    <td class="text-center">
+                      <button type="button" class="btn btn-sm btn-outline-primary position-relative" 
+                              data-bs-toggle="modal" data-bs-target="#commentModal{{ loop.index }}">
+                        <i class="bi bi-chat-text"></i>
+                        {% if saved and saved.comment %}
+                          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success" style="font-size: 0.6rem;">
+                            <i class="bi bi-check"></i>
+                          </span>
+                        {% endif %}
+                      </button>
+                    </td>
+                  </tr>
+                  
+                  <!-- Comment Modal -->
+                  <div class="modal fade" id="commentModal{{ loop.index }}" tabindex="-1" aria-labelledby="commentModalLabel{{ loop.index }}" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="commentModalLabel{{ loop.index }}">
+                            <i class="bi bi-chat-text me-2"></i>Comments for Item {{ loop.index }}
+                          </h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                          <div class="mb-3">
+                            <h6 class="fw-semibold text-primary">Review Item:</h6>
+                            <p class="mb-3">{{ item.item_text }}</p>
+                          </div>
+                          <div class="mb-3">
+                            <label for="comment_{{ item_key }}" class="form-label fw-semibold">
+                              <i class="bi bi-chat-text me-1"></i>Your Comments
+                            </label>
+                            <textarea class="form-control" id="comment_{{ item_key }}" name="comment_{{ item_key }}" 
+                                      rows="4" placeholder="Add any additional notes or observations...">{{ saved.comment or '' }}</textarea>
+                            <div class="form-text">Comments are optional and will be included in the final report.</div>
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i>Close
+                          </button>
+                          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                            <i class="bi bi-check-circle me-1"></i>Save Comment
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between mt-4">
+        <button class="btn btn-outline-secondary btn-lg" name="action" value="prev" type="submit">
+          <i class="bi bi-arrow-left me-2"></i>Previous Category
+        </button>
+        {% if is_last %}
+          <button class="btn btn-success btn-lg px-4" name="action" value="finish" type="submit">
+            <i class="bi bi-check-circle me-2"></i>Finish Review
+          </button>
+        {% else %}
+          <button class="btn btn-primary btn-lg px-4" name="action" value="next" type="submit">
+            Next Category<i class="bi bi-arrow-right ms-2"></i>
+          </button>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Form submission handling (no validation required)
+(function() {
+  'use strict';
+  window.addEventListener('load', function() {
+    var forms = document.getElementsByClassName('needs-validation');
+    Array.prototype.filter.call(forms, function(form) {
+      form.addEventListener('submit', function(event) {
+        // Allow form submission without validation
+        // Unanswered items will be handled as "UNANSWERED" in the backend
+        form.classList.add('was-validated');
+      }, false);
+    });
+  }, false);
+})();
+
+// Toggle details visibility
+function toggleDetails(itemKey) {
+  const collapsed = document.getElementById('details-' + itemKey);
+  const expanded = document.getElementById('details-expanded-' + itemKey);
+  
+  if (collapsed.classList.contains('d-none')) {
+    collapsed.classList.remove('d-none');
+    expanded.classList.add('d-none');
+  } else {
+    collapsed.classList.add('d-none');
+    expanded.classList.remove('d-none');
+  }
+}
+
+// Highlight rows based on status and handle modals
+document.addEventListener('DOMContentLoaded', function() {
+  const rows = document.querySelectorAll('.review-item-row');
+  rows.forEach(row => {
+    const radioButtons = row.querySelectorAll('input[type="radio"]');
+    radioButtons.forEach(radio => {
+      radio.addEventListener('change', function() {
+        // Remove existing status classes
+        row.classList.remove('table-success', 'table-danger', 'table-secondary', 'table-warning');
+        
+        // Add appropriate class based on selection
+        if (this.value === 'OK') {
+          row.classList.add('table-success');
+        } else if (this.value === 'NG') {
+          row.classList.add('table-danger');
+        } else if (this.value === 'NA') {
+          row.classList.add('table-secondary');
+        }
+        // Note: Unanswered items will not have a specific row color
+      });
+      
+      // Apply initial state
+      if (radio.checked) {
+        radio.dispatchEvent(new Event('change'));
+      }
+    });
+  });
+
+  // Handle modal events to prevent flickering
+  const modals = document.querySelectorAll('.modal');
+  modals.forEach(modal => {
+    // Prevent modal from closing when clicking outside
+    modal.addEventListener('show.bs.modal', function (event) {
+      // Ensure modal is properly initialized
+      const modalElement = event.target;
+      modalElement.style.display = 'block';
+    });
+
+    modal.addEventListener('hide.bs.modal', function (event) {
+      // Clean up when modal is hidden
+      const modalElement = event.target;
+      modalElement.style.display = 'none';
+    });
+
+    // Handle modal backdrop clicks
+    modal.addEventListener('click', function (event) {
+      if (event.target === modal) {
+        // Only close if clicking on the backdrop, not the content
+        const modalInstance = bootstrap.Modal.getInstance(modal);
+        if (modalInstance) {
+          modalInstance.hide();
+        }
+      }
+    });
+  });
+
+  // Handle comment button clicks
+  const commentButtons = document.querySelectorAll('[data-bs-toggle="modal"]');
+  commentButtons.forEach(button => {
+    button.addEventListener('click', function(event) {
+      event.preventDefault();
+      const targetModal = this.getAttribute('data-bs-target');
+      const modalElement = document.querySelector(targetModal);
+      
+      if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement, {
+          backdrop: true,
+          keyboard: true,
+          focus: true
+        });
+        modal.show();
+      }
+    });
+  });
+
+  // Handle comment save functionality
+  const saveCommentButtons = document.querySelectorAll('.modal-footer .btn-primary');
+  saveCommentButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const modal = this.closest('.modal');
+      const textarea = modal.querySelector('textarea');
+      const commentButton = document.querySelector(`[data-bs-target="#${modal.id}"]`);
+      
+      if (textarea && textarea.value.trim()) {
+        // Add or update the comment indicator
+        let indicator = commentButton.querySelector('.badge');
+        if (!indicator) {
+          indicator = document.createElement('span');
+          indicator.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success';
+          indicator.style.fontSize = '0.6rem';
+          indicator.innerHTML = '<i class="bi bi-check"></i>';
+          commentButton.appendChild(indicator);
+        }
+      } else {
+        // Remove the comment indicator if no comment
+        const indicator = commentButton.querySelector('.badge');
+        if (indicator) {
+          indicator.remove();
+        }
+      }
+    });
+  });
+
+  // Elapsed time tracking
+  function updateElapsedTime() {
+    const startTime = new Date('{{ session.review_start_time or "" }}');
+    if (startTime && !isNaN(startTime.getTime())) {
+      const now = new Date();
+      const elapsed = now - startTime;
+      
+      const hours = Math.floor(elapsed / (1000 * 60 * 60));
+      const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((elapsed % (1000 * 60)) / 1000);
+      
+      const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      
+      const elapsedTimeElement = document.getElementById('elapsed-time');
+      if (elapsedTimeElement) {
+        elapsedTimeElement.textContent = timeString;
+      }
+    }
+  }
+
+  // Update elapsed time every second
+  updateElapsedTime();
+  setInterval(updateElapsedTime, 1000);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+{
+  "roles": [
+    {
+      "id": "self",
+      "name": "Self Review",
+      "categories": [
+        { "id": "correctness", "name": "Correctness", "type": "markdown", "path": "checklists/markdown/self/correctness.md" },
+        { "id": "readability", "name": "Readability", "type": "markdown", "path": "checklists/markdown/self/readability.md" },
+        { "id": "tests", "name": "Test Review", "type": "markdown", "path": "checklists/markdown/self/tests.md" }
+      ]
+    },
+    {
+      "id": "peer",
+      "name": "Peer Review",
+      "categories": [
+        { "id": "functionality", "name": "Functionality", "type": "markdown", "path": "checklists/markdown/peer/functionality.md" },
+        { "id": "style", "name": "Style & Naming", "type": "markdown", "path": "checklists/markdown/peer/style.md" }
+      ]
+    },
+    {
+      "id": "techlead",
+      "name": "Tech Lead Review",
+      "categories": [
+        { "id": "design", "name": "Design Review", "type": "markdown", "path": "checklists/markdown/techlead/design.md" },
+        { "id": "architecture", "name": "Architecture Review", "type": "markdown", "path": "checklists/markdown/techlead/architecture.md" }
+      ]
+    },
+    {
+      "id": "fo",
+      "name": "FO Review",
+      "categories": [
+        { "id": "ops", "name": "Operational Readiness", "type": "markdown", "path": "checklists/markdown/fo/ops.md" }
+      ]
+    },
+    {
+      "id": "architect",
+      "name": "Architect Review",
+      "categories": [
+        { "id": "architecture", "name": "Architecture Principles", "type": "markdown", "path": "checklists/markdown/architect/architecture.md" }
+      ]
+    }
+  ]
+}
