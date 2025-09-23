@@ -190,20 +190,32 @@ pyinstaller --onefile --add-data "config;config" --add-data "checklists;checklis
    set PORT=5001 && python app.py
    ```
 
-2. **Module not found errors**
+2. **Dependency installation fails**
+   - The setup script will ask if you want to continue without dependencies
+   - You can install dependencies later using:
+     - `install_deps.bat` (Windows batch)
+     - `install_deps.ps1` (PowerShell)
+     - Or manually: `.venv\Scripts\activate` then `pip install -r requirements.txt`
+
+3. **Module not found errors**
    ```bash
    # Make sure virtual environment is activated
    # Reinstall dependencies
    pip install -r requirements.txt
    ```
 
-3. **Permission errors on Windows**
+4. **Permission errors on Windows**
    - Run Command Prompt as Administrator
    - Or use PowerShell with appropriate permissions
 
-4. **Excel files not found**
+5. **Excel files not found**
    - Ensure checklists/excel/ folder exists
    - Run the conversion script to generate markdown files
+
+6. **Proxy/Network issues**
+   - The setup script includes advanced proxy detection
+   - You can manually enter proxy settings if automatic detection fails
+   - Try different proxy configurations or contact IT support
 
 ### Getting Help
 

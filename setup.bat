@@ -39,14 +39,28 @@ echo Virtual environment activated!
 echo.
 
 echo Installing dependencies...
-pip install -r requirements.txt
-if errorlevel 1 (
-    echo ERROR: Failed to install dependencies
-    pause
-    exit /b 1
-)
+echo Using advanced proxy detection...
 
-echo Dependencies installed successfully!
+python proxy_setup.py
+if errorlevel 1 (
+    echo.
+    echo WARNING: Failed to install dependencies automatically
+    echo You can continue with setup and install dependencies manually later
+    echo.
+    set /p continue="Continue with setup? (y/n): "
+    if /i "%continue%" neq "y" (
+        echo Setup cancelled by user
+        pause
+        exit /b 1
+    )
+    echo Skipping dependency installation...
+    echo You can install dependencies later by running:
+    echo   .venv\Scripts\activate
+    echo   pip install -r requirements.txt
+    echo.
+) else (
+    echo Dependencies installed successfully!
+)
 echo.
 
 echo Converting Excel files to Markdown...

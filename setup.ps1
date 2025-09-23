@@ -46,13 +46,45 @@ Write-Host ""
 
 # Install dependencies
 Write-Host "Installing dependencies..." -ForegroundColor Yellow
+Write-Host "Using advanced proxy detection..." -ForegroundColor Yellow
+
 try {
-    pip install -r requirements.txt
-    Write-Host "Dependencies installed successfully!" -ForegroundColor Green
+    python proxy_setup.py
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ""
+        Write-Host "WARNING: Failed to install dependencies automatically" -ForegroundColor Yellow
+        Write-Host "You can continue with setup and install dependencies manually later" -ForegroundColor Yellow
+        Write-Host ""
+        $continue = Read-Host "Continue with setup? (y/n)"
+        if ($continue -notmatch "^[yY]") {
+            Write-Host "Setup cancelled by user" -ForegroundColor Red
+            Read-Host "Press Enter to exit"
+            exit 1
+        }
+        Write-Host "Skipping dependency installation..." -ForegroundColor Yellow
+        Write-Host "You can install dependencies later by running:" -ForegroundColor White
+        Write-Host "  .\.venv\Scripts\Activate.ps1" -ForegroundColor White
+        Write-Host "  pip install -r requirements.txt" -ForegroundColor White
+        Write-Host ""
+    } else {
+        Write-Host "Dependencies installed successfully!" -ForegroundColor Green
+    }
 } catch {
-    Write-Host "ERROR: Failed to install dependencies" -ForegroundColor Red
-    Read-Host "Press Enter to exit"
-    exit 1
+    Write-Host ""
+    Write-Host "WARNING: Failed to run proxy setup script" -ForegroundColor Yellow
+    Write-Host "You can continue with setup and install dependencies manually later" -ForegroundColor Yellow
+    Write-Host ""
+    $continue = Read-Host "Continue with setup? (y/n)"
+    if ($continue -notmatch "^[yY]") {
+        Write-Host "Setup cancelled by user" -ForegroundColor Red
+        Read-Host "Press Enter to exit"
+        exit 1
+    }
+    Write-Host "Skipping dependency installation..." -ForegroundColor Yellow
+    Write-Host "You can install dependencies later by running:" -ForegroundColor White
+    Write-Host "  .\.venv\Scripts\Activate.ps1" -ForegroundColor White
+    Write-Host "  pip install -r requirements.txt" -ForegroundColor White
+    Write-Host ""
 }
 
 Write-Host ""

@@ -79,6 +79,10 @@ critique/
 - **Port 5000 in use**: The app will show an error, try closing other applications
 - **Permission errors**: Run Command Prompt as Administrator
 - **Setup fails**: Check that all files are present in the project folder
+- **Dependency installation fails**: 
+  - The setup will ask if you want to continue without dependencies
+  - You can install dependencies later using `install_deps.bat` or `install_deps.ps1`
+  - Or manually: `.venv\Scripts\activate` then `pip install -r requirements.txt`
 
 ## Support
 
