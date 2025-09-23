@@ -5,16 +5,8 @@
     <!-- Hero Section -->
     <div class="card shadow-sm border-0 mb-4">
       <div class="card-body text-center py-5">
-        <p class="lead text-muted mb-4">Professional code review tool with role-based, category-driven checklists for comprehensive quality assurance.</p>
-        <div class="alert alert-info border-0 mb-4">
-          <i class="bi bi-info-circle me-2"></i>
-          <strong>Quick Start:</strong> Your username has been pre-filled, but you can edit it if needed. Select your review role to begin.
-        </div>
+            <p class="lead text-muted mb-4 fw-bold">Professional code review tool with role-based, category-driven checklists for comprehensive quality assurance.</p>
         
-        <div class="alert alert-light border-0 mb-4">
-          <i class="bi bi-clock me-2"></i>
-          <strong>Current Time:</strong> <span id="current-timestamp"></span>
-        </div>
         
         <!-- Review Form -->
         <div class="row justify-content-center">
@@ -23,6 +15,12 @@
               <div class="mb-3">
                 <label for="reviewer_name" class="form-label fw-semibold">
                   <i class="bi bi-person me-1"></i>Reviewer Name
+                  <i class="bi bi-info-circle text-info ms-1" 
+                     data-bs-toggle="tooltip" 
+                     data-bs-placement="top" 
+                     data-bs-html="true"
+                     title="<strong>Quick Start:</strong> Your username has been pre-filled, but you can edit it if needed. Select your review role to begin.">
+                  </i>
                 </label>
                 <input type="text" class="form-control form-control-lg" id="reviewer_name" name="reviewer_name" 
                        required placeholder="Enter your full name" autocomplete="name" value="{{ default_username }}">
@@ -41,6 +39,34 @@
                 </select>
                 <div class="invalid-feedback">Please select a review role.</div>
               </div>
+
+                  <!-- Review Mode Selection -->
+                  <div class="mb-4">
+                    <div class="form-check form-switch d-flex align-items-center">
+                      <input class="form-check-input me-2" type="checkbox" id="single_page_mode" name="single_page_mode">
+                      <label class="form-check-label fw-semibold mb-0" for="single_page_mode">
+                        <i class="bi bi-layout-text-window me-1"></i>Single Page Mode
+                      </label>
+                    </div>
+                  </div>
+
+              <!-- MR/GitLab Details (Optional) -->
+              <div class="mb-4">
+                <div class="card border-0 bg-light">
+                  <div class="card-body">
+                    <h6 class="card-title fw-semibold">
+                      <i class="bi bi-git me-2"></i>MR/GitLab Details (Optional)
+                    </h6>
+                    <div class="row">
+                      <div class="col-md-12">
+                        <label for="mr_link" class="form-label">Merge Request Link</label>
+                        <input type="url" class="form-control" id="mr_link" name="mr_link" 
+                               placeholder="https://gitlab.com/.../merge_requests/123">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
               
               <button class="btn btn-lg px-5" type="submit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white;">
                 <i class="bi bi-play-circle me-2"></i>Start Review
@@ -55,44 +81,30 @@
 </div>
 
 <script>
-// Bootstrap form validation
-(function() {
-  'use strict';
-  window.addEventListener('load', function() {
-    var forms = document.getElementsByClassName('needs-validation');
-    var validation = Array.prototype.filter.call(forms, function(form) {
-      form.addEventListener('submit', function(event) {
-        if (form.checkValidity() === false) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
-        form.classList.add('was-validated');
+    // Bootstrap form validation
+    (function() {
+      'use strict';
+      window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+          form.addEventListener('submit', function(event) {
+            if (form.checkValidity() === false) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+          }, false);
+        });
       }, false);
+    })();
+
+    // Initialize Bootstrap tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+      var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+      });
     });
-  }, false);
-})();
 
-// Update timestamp every second
-function updateTimestamp() {
-  const now = new Date();
-  const timestamp = now.toLocaleString('en-US', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: true
-  });
-  
-  const timestampElement = document.getElementById('current-timestamp');
-  if (timestampElement) {
-    timestampElement.textContent = timestamp;
-  }
-}
-
-// Update timestamp immediately and then every second
-updateTimestamp();
-setInterval(updateTimestamp, 1000);
 </script>
 {% endblock %}

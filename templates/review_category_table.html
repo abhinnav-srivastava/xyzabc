@@ -244,6 +244,42 @@ document.addEventListener('DOMContentLoaded', function() {
           row.classList.add('table-danger');
         } else if (this.value === 'NA') {
           row.classList.add('table-secondary');
+          // For NA selection, show comment section and make it required
+          const itemKey = row.getAttribute('data-item-key');
+          const commentRow = document.getElementById(`comment-row-${itemKey}`);
+          const commentTextarea = document.getElementById(`comment_${itemKey}`);
+          if (commentRow && commentTextarea) {
+            commentRow.classList.remove('d-none');
+            commentTextarea.setAttribute('required', 'required');
+            commentTextarea.setAttribute('placeholder', 'Comment required for N/A selection - please explain why this item is not applicable...');
+            // Update comment button
+            const commentButton = document.querySelector(`[onclick="toggleComment('${itemKey}')"]`);
+            if (commentButton) {
+              commentButton.innerHTML = '<i class="bi bi-chat-text-fill"></i>';
+            }
+          }
+        } else {
+          // For OK/NG selection, remove required attribute from comment and close comment section
+          const itemKey = row.getAttribute('data-item-key');
+          const commentRow = document.getElementById(`comment-row-${itemKey}`);
+          const commentTextarea = document.getElementById(`comment_${itemKey}`);
+          const commentButton = document.querySelector(`[onclick="toggleComment('${itemKey}')"]`);
+          
+          if (commentTextarea) {
+            commentTextarea.removeAttribute('required');
+            commentTextarea.setAttribute('placeholder', 'Add any additional notes or observations...');
+          }
+          
+          // Close comment section if it was auto-opened for NA
+          if (commentRow && !commentRow.classList.contains('d-none')) {
+            commentRow.classList.add('d-none');
+            if (commentButton) {
+              commentButton.innerHTML = '<i class="bi bi-chat-text"></i>';
+              if (commentButton.querySelector('.badge')) {
+                commentButton.querySelector('.badge').classList.remove('ms-1');
+              }
+            }
+          }
         }
         
         // Remove warning icon when an answer is selected

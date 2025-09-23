@@ -1,0 +1,358 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <!-- Header Section -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <h4 class="mb-1 fw-bold">
+              <i class="bi bi-clipboard-check me-2"></i>Complete Review - All Categories
+            </h4>
+            <p class="text-muted mb-0">Review all categories in a single page</p>
+          </div>
+          <div class="col-md-4 text-end">
+            <div class="alert alert-light border-0 mb-0">
+              <h6 class="alert-heading fw-semibold mb-1">
+                <i class="bi bi-graph-up me-2"></i>Progress
+              </h6>
+              <div class="progress mb-2" style="height: 8px;">
+                <div class="progress-bar" role="progressbar" style="width: {{ progress.percent }}%" 
+                     aria-valuenow="{{ progress.percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+              <p class="mb-0 small" id="progress-text">{{ progress.answered_items }} of {{ progress.total_items }} items answered ({{ progress.percent }}% Complete)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Review Form -->
+    <form method="post" class="needs-validation" novalidate>
+      {% for category in categories %}
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-header bg-light">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <h5 class="mb-0 fw-bold">
+                  <i class="bi bi-folder me-2"></i>{{ category.category_name }}
+                </h5>
+                <small class="text-muted">{{ category.item_list|length }} items</small>
+              </div>
+              <div class="col-md-4 text-end">
+                <div class="form-check form-switch d-flex align-items-center justify-content-end">
+                  <input class="form-check-input me-2" type="checkbox" id="category_skip_{{ category.category_id }}" 
+                         name="category_skip_{{ category.category_id }}" 
+                         {% if saved_responses.get(category.category_id, {}).get('skipped') %}checked{% endif %}>
+                  <label class="form-check-label fw-semibold mb-0" for="category_skip_{{ category.category_id }}">
+                    <i class="bi bi-skip-forward me-1"></i>Skip Category
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Category Skip Comment -->
+          <div id="skip_comment_{{ category.category_id }}" class="card-body border-top" 
+               style="display: {% if saved_responses.get(category.category_id, {}).get('skipped') %}block{% else %}none{% endif %};">
+            <div class="alert alert-warning border-0">
+              <label for="category_skip_comment_{{ category.category_id }}" class="form-label fw-semibold">
+                <i class="bi bi-exclamation-triangle me-1"></i>Reason for skipping this category (Required)
+              </label>
+              <textarea class="form-control" id="category_skip_comment_{{ category.category_id }}" 
+                        name="category_skip_comment_{{ category.category_id }}" rows="2" required
+                        placeholder="Please explain why this category is not applicable...">{{ saved_responses.get(category.category_id, {}).get('skip_comment', '') }}</textarea>
+            </div>
+          </div>
+
+          <!-- Category Items -->
+          <div class="card-body" id="category_items_{{ category.category_id }}">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width: 5%;" class="text-center">#</th>
+                    <th style="width: 50%;">Review Item</th>
+                    <th style="width: 15%;" class="text-center">Type</th>
+                    <th style="width: 20%;" class="text-center">Status</th>
+                    <th style="width: 10%;" class="text-center">Comment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in category.item_list %}
+                    {% set item_key = item.role_id + '|' + item.category_id + '|' + item.item_id %}
+                    {% set saved = saved_responses.get(item_key, {}) %}
+                    {% set item_type_class = 'danger' if item.item_type == 'must' else 'success' if item.item_type == 'good' else 'warning' %}
+                    {% set item_type_text = item.item_type.upper() %}
+                    
+                    <tr class="review-item-row" data-item-key="{{ item_key }}">
+                      <td class="text-center fw-semibold">
+                        {{ loop.index }}
+                        {% if not saved or not saved.status %}
+                          <i class="bi bi-exclamation-triangle-fill text-warning ms-1" title="Unanswered"></i>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <div class="item-content">
+                          <h6 class="mb-2 fw-semibold">{{ item.item_text }}</h6>
+                          {% if item.item_description %}
+                            <p class="text-muted mb-2 small">{{ item.item_description }}</p>
+                          {% endif %}
+                          {% if item.item_details %}
+                            <div class="item-details-collapsed" id="details-{{ item_key }}">
+                              <button type="button" class="btn btn-sm btn-outline-info" 
+                                      onclick="toggleDetails('{{ item_key }}')">
+                                <i class="bi bi-info-circle me-1"></i>Show Details
+                              </button>
+                            </div>
+                            <div class="item-details-expanded d-none" id="details-expanded-{{ item_key }}">
+                              <div class="alert alert-info border-0 mb-2">
+                                <h6 class="alert-heading fw-semibold">
+                                  <i class="bi bi-info-circle me-2"></i>Details & Guidelines
+                                </h6>
+                                <div class="item-details">
+                                  {{ item.item_details|safe }}
+                                </div>
+                              </div>
+                              <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                      onclick="toggleDetails('{{ item_key }}')">
+                                <i class="bi bi-chevron-up me-1"></i>Hide Details
+                              </button>
+                            </div>
+                          {% endif %}
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <span class="badge bg-{{ item_type_class }}">{{ item_type_text }}</span>
+                      </td>
+                      <td class="text-center">
+                        <div class="btn-group" role="group">
+                          <input type="radio" class="btn-check" name="status_{{ item_key }}" value="OK" 
+                                 id="status_ok_{{ item_key }}" {% if saved and saved.status == 'OK' %}checked{% endif %}>
+                          <label class="btn btn-outline-success btn-sm" for="status_ok_{{ item_key }}">
+                            <i class="bi bi-check-circle me-1"></i>OK
+                          </label>
+
+                          <input type="radio" class="btn-check" name="status_{{ item_key }}" value="NG" 
+                                 id="status_ng_{{ item_key }}" {% if saved and saved.status == 'NG' %}checked{% endif %}>
+                          <label class="btn btn-outline-danger btn-sm" for="status_ng_{{ item_key }}">
+                            <i class="bi bi-x-circle me-1"></i>NG
+                          </label>
+
+                          <input type="radio" class="btn-check" name="status_{{ item_key }}" value="NA" 
+                                 id="status_na_{{ item_key }}" {% if saved and saved.status == 'NA' %}checked{% endif %}>
+                          <label class="btn btn-outline-secondary btn-sm" for="status_na_{{ item_key }}">
+                            <i class="bi bi-dash-circle me-1"></i>N/A
+                          </label>
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                onclick="toggleComment('{{ item_key }}')">
+                          <i class="bi bi-chat-text"></i>
+                          {% if saved and saved.comment %}
+                            <span class="badge bg-success ms-1" style="font-size: 0.6rem;">
+                              <i class="bi bi-check"></i>
+                            </span>
+                          {% endif %}
+                        </button>
+                      </td>
+                    </tr>
+                    
+                    <!-- Inline Comment Section -->
+                    <tr id="comment-row-{{ item_key }}" class="d-none">
+                      <td colspan="5">
+                        <div class="card border-0 bg-light">
+                          <div class="card-body">
+                            <div class="mb-3">
+                              <textarea class="form-control" id="comment_{{ item_key }}" name="comment_{{ item_key }}" 
+                                        rows="1" placeholder="Add any additional notes or observations...">{{ saved.comment or '' }}</textarea>
+                              <div class="form-text">Comments are optional and will be included in the final report.</div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+
+      <!-- Submit Button -->
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center">
+          <button type="submit" class="btn btn-lg px-5" 
+                  style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white;">
+            <i class="bi bi-check-circle me-2"></i>Complete Review
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Toggle details visibility
+function toggleDetails(itemKey) {
+  const collapsed = document.getElementById('details-' + itemKey);
+  const expanded = document.getElementById('details-expanded-' + itemKey);
+  
+  if (collapsed.classList.contains('d-none')) {
+    collapsed.classList.remove('d-none');
+    expanded.classList.add('d-none');
+  } else {
+    collapsed.classList.add('d-none');
+    expanded.classList.remove('d-none');
+  }
+}
+
+// Handle inline comment toggling
+window.toggleComment = function(itemKey) {
+  const commentRow = document.getElementById(`comment-row-${itemKey}`);
+  const commentButton = document.querySelector(`[onclick="toggleComment('${itemKey}')"]`);
+  
+  if (commentRow.classList.contains('d-none')) {
+    // Show comment section
+    commentRow.classList.remove('d-none');
+    commentButton.innerHTML = '<i class="bi bi-chat-text-fill"></i>';
+    if (commentButton.querySelector('.badge')) {
+      commentButton.querySelector('.badge').classList.add('ms-1');
+    }
+  } else {
+    // Hide comment section
+    commentRow.classList.add('d-none');
+    commentButton.innerHTML = '<i class="bi bi-chat-text"></i>';
+    if (commentButton.querySelector('.badge')) {
+      commentButton.querySelector('.badge').classList.remove('ms-1');
+    }
+  }
+};
+
+// Handle category skip toggle
+document.addEventListener('DOMContentLoaded', function() {
+  // Category skip functionality
+  document.querySelectorAll('input[id^="category_skip_"]').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const categoryId = this.id.replace('category_skip_', '');
+      const commentDiv = document.getElementById(`skip_comment_${categoryId}`);
+      const itemsDiv = document.getElementById(`category_items_${categoryId}`);
+      
+      if (this.checked) {
+        commentDiv.style.display = 'block';
+        itemsDiv.style.opacity = '0.5';
+        itemsDiv.style.pointerEvents = 'none';
+      } else {
+        commentDiv.style.display = 'none';
+        itemsDiv.style.opacity = '1';
+        itemsDiv.style.pointerEvents = 'auto';
+      }
+    });
+  });
+
+  // Handle radio button changes for progress tracking
+  const rows = document.querySelectorAll('.review-item-row');
+  rows.forEach(row => {
+    const radioButtons = row.querySelectorAll('input[type="radio"]');
+    radioButtons.forEach(radio => {
+      radio.addEventListener('change', function() {
+        // Remove existing status classes
+        row.classList.remove('table-success', 'table-danger', 'table-secondary', 'table-warning');
+        
+        // Add appropriate class based on selection
+        if (this.value === 'OK') {
+          row.classList.add('table-success');
+        } else if (this.value === 'NG') {
+          row.classList.add('table-danger');
+        } else if (this.value === 'NA') {
+          row.classList.add('table-secondary');
+          // For NA selection, show comment section and make it required
+          const itemKey = row.getAttribute('data-item-key');
+          const commentRow = document.getElementById(`comment-row-${itemKey}`);
+          const commentTextarea = document.getElementById(`comment_${itemKey}`);
+          if (commentRow && commentTextarea) {
+            commentRow.classList.remove('d-none');
+            commentTextarea.setAttribute('required', 'required');
+            commentTextarea.setAttribute('placeholder', 'Comment required for N/A selection - please explain why this item is not applicable...');
+            // Update comment button
+            const commentButton = document.querySelector(`[onclick="toggleComment('${itemKey}')"]`);
+            if (commentButton) {
+              commentButton.innerHTML = '<i class="bi bi-chat-text-fill"></i>';
+            }
+          }
+        } else {
+          // For OK/NG selection, remove required attribute from comment and close comment section
+          const itemKey = row.getAttribute('data-item-key');
+          const commentRow = document.getElementById(`comment-row-${itemKey}`);
+          const commentTextarea = document.getElementById(`comment_${itemKey}`);
+          const commentButton = document.querySelector(`[onclick="toggleComment('${itemKey}')"]`);
+          
+          if (commentTextarea) {
+            commentTextarea.removeAttribute('required');
+            commentTextarea.setAttribute('placeholder', 'Add any additional notes or observations...');
+          }
+          
+          // Close comment section if it was auto-opened for NA
+          if (commentRow && !commentRow.classList.contains('d-none')) {
+            commentRow.classList.add('d-none');
+            if (commentButton) {
+              commentButton.innerHTML = '<i class="bi bi-chat-text"></i>';
+              if (commentButton.querySelector('.badge')) {
+                commentButton.querySelector('.badge').classList.remove('ms-1');
+              }
+            }
+          }
+        }
+        
+        // Remove warning icon when an answer is selected
+        const warningIcon = row.querySelector('.bi-exclamation-triangle-fill');
+        if (warningIcon) {
+          warningIcon.remove();
+        }
+        
+        // Update progress in real-time
+        updateProgress();
+      });
+      
+      // Apply initial state
+      if (radio.checked) {
+        radio.dispatchEvent(new Event('change'));
+      }
+    });
+  });
+
+  // Update progress in real-time
+  function updateProgress() {
+    const totalItems = {{ progress.total_items }};
+    let answeredItems = 0;
+    
+    // Count answered items by checking all radio buttons
+    const allRadioButtons = document.querySelectorAll('input[type="radio"]:checked');
+    answeredItems = allRadioButtons.length;
+    
+    // Calculate percentage
+    const percentage = totalItems > 0 ? Math.round((answeredItems / totalItems) * 100) : 0;
+    
+    // Update progress bar
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+      progressBar.style.width = percentage + '%';
+      progressBar.setAttribute('aria-valuenow', percentage);
+    }
+    
+    // Update progress text
+    const progressText = document.getElementById('progress-text');
+    if (progressText) {
+      progressText.textContent = `${answeredItems} of ${totalItems} items answered (${percentage}% Complete)`;
+    }
+  }
+
+  // Initialize progress on page load
+  updateProgress();
+});
+</script>
+{% endblock %}

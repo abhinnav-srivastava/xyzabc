@@ -96,7 +96,7 @@ def create_app() -> Flask:
 
     def _compute_summary(steps: List[Dict[str, Any]], responses: Dict[str, Dict[str, Any]]):
         summary: Dict[str, Any] = {}
-        counts_overall = {"OK": 0, "NG": 0, "NA": 0, "UNANSWERED": 0}
+        counts_overall = {"OK": 0, "NG": 0, "NA": 0, "UNANSWERED": 0, "SKIPPED": 0}
         for step in steps:
             key = f"{step['role_id']}|{step['category_id']}|{step['item_id']}"
             role_id = step["role_id"]
@@ -109,7 +109,7 @@ def create_app() -> Flask:
             cat_bucket = role_bucket["categories"].setdefault(cat_id, {
                 "category_name": step["category_name"],
                 "item_list": [],
-                "counts": {"OK": 0, "NG": 0, "NA": 0, "UNANSWERED": 0},
+                "counts": {"OK": 0, "NG": 0, "NA": 0, "UNANSWERED": 0, "SKIPPED": 0},
             })
 
             record = {
@@ -118,11 +118,24 @@ def create_app() -> Flask:
                 "comment": "",
             }
 
-            if key in responses:
-                record["response"] = responses[key]["status"]
-                record["comment"] = responses[key].get("comment", "")
-                cat_bucket["counts"][record["response"]] += 1
-                counts_overall[record["response"]] += 1
+            # Check if the category is skipped first
+            if cat_id in responses and "skipped" in responses[cat_id]:
+                # Category is skipped, mark all items as SKIPPED
+                record["response"] = "SKIPPED"
+                record["comment"] = responses[cat_id].get("skip_comment", "")
+                cat_bucket["counts"]["SKIPPED"] += 1
+                counts_overall["SKIPPED"] += 1
+            elif key in responses:
+                # Check if this is an item response (has status)
+                if "status" in responses[key]:
+                    record["response"] = responses[key]["status"]
+                    record["comment"] = responses[key].get("comment", "")
+                    cat_bucket["counts"][record["response"]] += 1
+                    counts_overall[record["response"]] += 1
+                else:
+                    record["response"] = "UNANSWERED"
+                    cat_bucket["counts"]["UNANSWERED"] += 1
+                    counts_overall["UNANSWERED"] += 1
             else:
                 record["response"] = "UNANSWERED"
                 cat_bucket["counts"]["UNANSWERED"] += 1
@@ -143,6 +156,13 @@ def create_app() -> Flask:
     def start_review():
         reviewer_name = request.form.get("reviewer_name", "").strip()
         selected_role = request.form.get("selected_role", "").strip()
+        single_page_mode = request.form.get("single_page_mode") == "on"
+        
+        # MR/GitLab details (optional)
+        mr_link = request.form.get("mr_link", "").strip()
+        branch_name = request.form.get("branch_name", "").strip()
+        commit_hash = request.form.get("commit_hash", "").strip()
+        project_name = request.form.get("project_name", "").strip()
         
         if not reviewer_name or not selected_role:
             return redirect(url_for("index"))
@@ -156,7 +176,106 @@ def create_app() -> Flask:
         session["current_category"] = 0
         session["reviewer_name"] = reviewer_name
         session["selected_role"] = selected_role
-        return redirect(url_for("review_category", idx=0))
+        session["single_page_mode"] = single_page_mode
+        
+        # Store MR/GitLab details
+        session["mr_details"] = {
+            "mr_link": mr_link,
+            "branch_name": branch_name,
+            "commit_hash": commit_hash,
+            "project_name": project_name
+        }
+        
+        # Redirect based on mode
+        if single_page_mode:
+            return redirect(url_for("review_all_categories"))
+        else:
+            return redirect(url_for("review_category", idx=0))
+
+    @app.route("/review/all", methods=["GET", "POST"])
+    def review_all_categories():
+        if request.method == "POST":
+            # Handle form submission for all categories
+            responses = session.get("responses", {})
+            
+            # Process all form data
+            for key, value in request.form.items():
+                if key.startswith("status_"):
+                    item_key = key[7:]  # Remove "status_" prefix
+                    if item_key not in responses:
+                        responses[item_key] = {}
+                    responses[item_key]["status"] = value
+                elif key.startswith("comment_"):
+                    item_key = key[8:]  # Remove "comment_" prefix
+                    if item_key not in responses:
+                        responses[item_key] = {}
+                    responses[item_key]["comment"] = value
+                elif key.startswith("category_skip_"):
+                    category_id = key[14:]  # Remove "category_skip_" prefix
+                    skip_comment = request.form.get(f"category_skip_comment_{category_id}", "")
+                    if category_id not in responses:
+                        responses[category_id] = {}
+                    responses[category_id]["skipped"] = True
+                    responses[category_id]["skip_comment"] = skip_comment
+            
+            session["responses"] = responses
+            
+            # Check if all categories are completed or skipped
+            categories = _get_categories()
+            all_completed = True
+            for category in categories:
+                category_id = category["category_id"]
+                category_responses = [key for key in responses.keys() if key.startswith(f"{category['role_id']}|{category_id}|")]
+                
+                # Check if category is skipped
+                if category_id in responses and responses[category_id].get("skipped"):
+                    continue
+                
+                # Check if all items in category are answered
+                for item in category["item_list"]:
+                    item_key = f"{item['role_id']}|{item['category_id']}|{item['item_id']}"
+                    if item_key not in responses or not responses[item_key].get("status"):
+                        all_completed = False
+                        break
+                
+                if not all_completed:
+                    break
+            
+            if all_completed:
+                return redirect(url_for("summary"))
+        
+        # GET request - show all categories
+        categories = _get_categories()
+        if not categories:
+            return render_template("empty.html")
+        
+        # Get saved responses
+        saved_responses = session.get("responses", {})
+        
+        # Calculate progress
+        all_steps = _get_steps()
+        total_items = len(all_steps)
+        answered_items = 0
+        
+        for step in all_steps:
+            key = f"{step['role_id']}|{step['category_id']}|{step['item_id']}"
+            if key in saved_responses:
+                response = saved_responses[key].get("status", "")
+                if response and response != "UNANSWERED":
+                    answered_items += 1
+        
+        progress = {
+            "answered_items": answered_items,
+            "total_items": total_items,
+            "percent": int((answered_items / total_items) * 100) if total_items > 0 else 0,
+        }
+        
+        return render_template(
+            "review_all_categories.html",
+            categories=categories,
+            progress=progress,
+            saved_responses=saved_responses,
+        )
 
     @app.route("/review/category/<int:idx>", methods=["GET", "POST"]) 
     def review_category(idx: int):
@@ -250,6 +369,7 @@ def create_app() -> Flask:
         reviewer_name = session.get("reviewer_name", "Unknown")
         selected_role = session.get("selected_role", "All Roles")
         review_timing = _calculate_review_time()
+        mr_details = session.get("mr_details", {})
         
         return render_template(
             "summary.html",
@@ -258,6 +378,7 @@ def create_app() -> Flask:
             reviewer_name=reviewer_name,
             selected_role=selected_role,
             review_timing=review_timing,
+            mr_details=mr_details,
         )
 
     @app.route("/download/html")
