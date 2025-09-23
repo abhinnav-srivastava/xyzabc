@@ -212,10 +212,24 @@ def create_app() -> Flask:
             item_key = f"{item['role_id']}|{item['category_id']}|{item['item_id']}"
             saved_responses[item_key] = session.get("responses", {}).get(item_key, {})
 
+        # Calculate actual progress based on answered items
+        all_steps = _get_steps()
+        total_items = len(all_steps)
+        answered_items = 0
+        
+        for step in all_steps:
+            key = f"{step['role_id']}|{step['category_id']}|{step['item_id']}"
+            if key in session.get("responses", {}):
+                response = session["responses"][key].get("status", "")
+                if response and response != "UNANSWERED":
+                    answered_items += 1
+        
         progress = {
             "current": idx + 1,
             "total": total,
-            "percent": int(((idx + 1) / total) * 100),
+            "answered_items": answered_items,
+            "total_items": total_items,
+            "percent": int((answered_items / total_items) * 100) if total_items > 0 else 0,
         }
 
         return render_template(

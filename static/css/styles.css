@@ -239,7 +239,15 @@ footer {
   padding: 1rem 1.5rem;
 }
 
-/* Prevent modal flickering */
+/* Prevent modal flickering - simplified */
+.modal {
+  z-index: 1055 !important;
+}
+
+.modal-backdrop {
+  z-index: 1050 !important;
+}
+
 .modal.fade {
   transition: opacity 0.15s linear;
 }
@@ -253,11 +261,47 @@ footer {
   transform: none;
 }
 
-/* Modal content styling */
+/* Ensure modal stability */
+.modal-dialog {
+  margin: 1.75rem auto;
+}
+
 .modal-content {
-  border: none;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  pointer-events: auto;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid rgba(0, 0, 0, 0.2);
   border-radius: 0.5rem;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  outline: 0;
+}
+
+/* Modal content styling - override previous rule */
+.modal-content {
+  border: none !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Remove animations for comment sections */
+.comment-section {
+  transition: none !important;
+}
+
+.comment-section * {
+  transition: none !important;
+}
+
+/* Disable Bootstrap collapse animations for comment rows */
+.collapse {
+  transition: none !important;
+}
+
+.collapsing {
+  transition: none !important;
 }
 
 .modal-lg {

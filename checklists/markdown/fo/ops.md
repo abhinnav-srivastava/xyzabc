@@ -1,20 +1,11 @@
-# Code Review Checklist
+# Operational Readiness
 
-- Deployment and monitoring considerations addressed (MUST)
-  - Logging implemented
-  - Metrics exposed
-  - Health checks available
-  - Deployment process documented
-  <!-- Code should be production-ready with proper observability -->
+- Verify logging implementation (MUST)
+  - **Description:** Ensure proper logging is implemented for monitoring and debugging purposes.
+  - **Technical Details:** Uses structured logging with appropriate log levels
+  - **How to Measure:** Check log output and log aggregation setup
 
-- Configuration management is proper (GOOD)
-  - Environment-specific configs
-  - Secrets management
-  - Feature flags implemented
-  <!-- Configuration should be properly externalized and managed -->
-
-- Backup and recovery procedures considered (GOOD)
-  - Data backup strategy
-  - Recovery procedures
-  - Disaster recovery planning
-  <!-- Operational continuity should be planned for -->
+- Check monitoring setup (MUST)
+  - **Description:** Verify that monitoring and alerting are properly configured for the application.
+  - **Technical Details:** Metrics, health checks, and alerting configured
+  - **How to Measure:** Test monitoring endpoints and alerting rules

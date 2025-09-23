@@ -31,14 +31,18 @@ def _load_markdown_items(file_path: str) -> List[Dict[str, Any]]:
             if not stripped:
                 continue
                 
-            # Check for main item (starts with - or *)
-            if stripped.startswith("- ") or stripped.startswith("* "):
+            # Check for main item (starts with - or * and is not indented)
+            if (stripped.startswith("- ") or stripped.startswith("* ")) and not line.startswith("  "):
                 # Save previous item if exists
                 if current_item:
                     items.append(current_item)
                 
                 # Start new item
                 text = stripped[2:].strip()
+                
+                # Remove type indicators from text (MUST), (GOOD), (OPTIONAL)
+                import re
+                text = re.sub(r'\s*\([^)]+\)\s*$', '', text).strip()
                 
                 # Determine item type based on text patterns
                 item_type = "good"  # default
@@ -53,9 +57,9 @@ def _load_markdown_items(file_path: str) -> List[Dict[str, Any]]:
                     "type": item_type,
                 }
             # Check for details (starts with spaces or tabs, then - or *)
-            elif current_item and (stripped.startswith("  - ") or stripped.startswith("  * ") or 
-                                 stripped.startswith("\t- ") or stripped.startswith("\t* ")):
-                details_text = stripped.strip()
+            elif current_item and (line.startswith("  - ") or line.startswith("  * ") or 
+                                 line.startswith("\t- ") or line.startswith("\t* ")):
+                details_text = line.strip()
                 if details_text.startswith("  - "):
                     details_text = details_text[4:]
                 elif details_text.startswith("  * "):
@@ -95,7 +99,12 @@ def _load_markdown_items(file_path: str) -> List[Dict[str, Any]]:
         if "details" in item:
             details_html = "<ul class='mb-0'>"
             for detail in item["details"]:
-                details_html += f"<li>{detail}</li>"
+                # Convert Markdown formatting to HTML
+                detail_html = detail
+                # Convert **text** to <strong>text</strong>
+                import re
+                detail_html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', detail_html)
+                details_html += f"<li>{detail_html}</li>"
             details_html += "</ul>"
             item["item_details"] = details_html
             del item["details"]  # Remove the list version

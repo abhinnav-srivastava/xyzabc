@@ -26,43 +26,69 @@ def convert_excel_to_markdown(excel_path: str, markdown_path: str = None):
         print(f"Error reading Excel file {excel_path}: {e}")
         return False
     
-    # Validate required columns
-    required_columns = ['Item Text', 'Item Type']
+    # Validate required columns for new format
+    required_columns = ['Main Category', 'Sub Category', 'Description']
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
         print(f"Error: Missing required columns: {missing_columns}")
+        print(f"Available columns: {list(df.columns)}")
         return False
     
     # Generate markdown content
     markdown_lines = []
     
-    # Add header
-    markdown_lines.append("# Code Review Checklist")
+    # Get main category from first row for the header
+    main_category = ""
+    if len(df) > 0:
+        main_category = str(df.iloc[0].get('Main Category', '')).strip()
+    
+    # Add header with main category as title
+    if main_category and main_category.lower() not in ['nan', 'none', '']:
+        markdown_lines.append(f"# {main_category}")
+    else:
+        markdown_lines.append("# Code Review Checklist")
     markdown_lines.append("")
     
     # Process each row
     for index, row in df.iterrows():
-        item_text = str(row['Item Text']).strip()
-        item_type = str(row['Item Type']).strip().upper()
-        details = str(row.get('Details', '')).strip() if 'Details' in df.columns else ''
-        description = str(row.get('Description', '')).strip() if 'Description' in df.columns else ''
+        # Get values from new format columns
+        sub_category = str(row.get('Sub Category', '')).strip()
+        description = str(row.get('Description', '')).strip()
+        technical_desc = str(row.get('Technical Description', '')).strip()
+        how_to_measure = str(row.get('How to Measure', '')).strip()
         
-        if not item_text or item_text == 'nan':
+        # Skip empty rows
+        if not sub_category or sub_category.lower() in ['nan', 'none', '']:
             continue
-            
-        # Add main item
-        markdown_lines.append(f"- {item_text}")
         
-        # Add details if available
-        if details and details != 'nan':
-            # Split details by semicolon or newline
-            detail_items = [d.strip() for d in details.replace(';', '\n').split('\n') if d.strip()]
-            for detail in detail_items:
-                markdown_lines.append(f"  - {detail}")
+        # Determine item type based on content (default to MUST)
+        item_type = "MUST"
+        if any(keyword in sub_category.lower() for keyword in ['good', 'recommended', 'should', 'prefer']):
+            item_type = "GOOD"
+        elif any(keyword in sub_category.lower() for keyword in ['optional', 'nice to have', 'consider']):
+            item_type = "OPTIONAL"
         
-        # Add description as comment if available
-        if description and description != 'nan':
-            markdown_lines.append(f"  <!-- {description} -->")
+        # Add main checklist item (sub category is the main item text)
+        markdown_lines.append(f"- {sub_category} ({item_type})")
+        
+        # Add expandable details section
+        details_section = []
+        
+        # Add description if available
+        if description and description.lower() not in ['nan', 'none', '']:
+            details_section.append(f"  - **Description:** {description}")
+        
+        # Add technical description if available
+        if technical_desc and technical_desc.lower() not in ['nan', 'none', '']:
+            details_section.append(f"  - **Technical Details:** {technical_desc}")
+        
+        # Add how to measure if available
+        if how_to_measure and how_to_measure.lower() not in ['nan', 'none', '']:
+            details_section.append(f"  - **How to Measure:** {how_to_measure}")
+        
+        # Add details section if there are any details
+        if details_section:
+            markdown_lines.extend(details_section)
         
         markdown_lines.append("")
     

@@ -7,20 +7,22 @@
     <div class="card shadow-sm border-0 mb-4">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="mb-0 fw-semibold">Category Progress</h5>
+          <h5 class="mb-0 fw-semibold">Review Progress</h5>
           <div class="d-flex align-items-center gap-3">
             <div class="text-muted small">
               <i class="bi bi-clock me-1"></i>
               <span id="elapsed-time">00:00:00</span>
             </div>
-            <span class="badge bg-primary fs-6">{{ progress.current }} of {{ progress.total }}</span>
+            <span class="badge bg-primary fs-6">{{ progress.current }} of {{ progress.total }} categories</span>
           </div>
         </div>
         <div class="progress" style="height: 8px;">
           <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress.percent }}%"
                aria-valuenow="{{ progress.percent }}" aria-valuemin="0" aria-valuemax="100"></div>
         </div>
-        <small class="text-muted mt-2 d-block">{{ progress.percent }}% Complete</small>
+        <small class="text-muted mt-2 d-block" id="progress-text">
+          {{ progress.answered_items }} of {{ progress.total_items }} items answered ({{ progress.percent }}% Complete)
+        </small>
       </div>
     </div>
 
@@ -72,7 +74,7 @@
                   <th style="width: 50%;">Review Item</th>
                   <th style="width: 15%;" class="text-center">Type</th>
                   <th style="width: 20%;" class="text-center">Status</th>
-                  <th style="width: 10%;" class="text-center">Actions</th>
+                  <th style="width: 10%;" class="text-center">Comment</th>
                 </tr>
               </thead>
               <tbody>
@@ -144,11 +146,11 @@
                       </div>
                     </td>
                     <td class="text-center">
-                      <button type="button" class="btn btn-sm btn-outline-primary position-relative" 
-                              data-bs-toggle="modal" data-bs-target="#commentModal{{ loop.index }}">
+                      <button type="button" class="btn btn-sm btn-outline-primary" 
+                              onclick="toggleComment('{{ item_key }}')">
                         <i class="bi bi-chat-text"></i>
                         {% if saved and saved.comment %}
-                          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success" style="font-size: 0.6rem;">
+                          <span class="badge bg-success ms-1" style="font-size: 0.6rem;">
                             <i class="bi bi-check"></i>
                           </span>
                         {% endif %}
@@ -156,41 +158,20 @@
                     </td>
                   </tr>
                   
-                  <!-- Comment Modal -->
-                  <div class="modal fade" id="commentModal{{ loop.index }}" tabindex="-1" aria-labelledby="commentModalLabel{{ loop.index }}" aria-hidden="true">
-                    <div class="modal-dialog modal-lg">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <h5 class="modal-title" id="commentModalLabel{{ loop.index }}">
-                            <i class="bi bi-chat-text me-2"></i>Comments for Item {{ loop.index }}
-                          </h5>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
+                  <!-- Inline Comment Section -->
+                  <tr id="comment-row-{{ item_key }}" class="d-none">
+                    <td colspan="5">
+                      <div class="card border-0 bg-light">
+                        <div class="card-body">
                           <div class="mb-3">
-                            <h6 class="fw-semibold text-primary">Review Item:</h6>
-                            <p class="mb-3">{{ item.item_text }}</p>
-                          </div>
-                          <div class="mb-3">
-                            <label for="comment_{{ item_key }}" class="form-label fw-semibold">
-                              <i class="bi bi-chat-text me-1"></i>Your Comments
-                            </label>
                             <textarea class="form-control" id="comment_{{ item_key }}" name="comment_{{ item_key }}" 
-                                      rows="4" placeholder="Add any additional notes or observations...">{{ saved.comment or '' }}</textarea>
+                                      rows="1" placeholder="Add any additional notes or observations...">{{ saved.comment or '' }}</textarea>
                             <div class="form-text">Comments are optional and will be included in the final report.</div>
                           </div>
                         </div>
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="bi bi-x-circle me-1"></i>Close
-                          </button>
-                          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
-                            <i class="bi bi-check-circle me-1"></i>Save Comment
-                          </button>
-                        </div>
                       </div>
-                    </div>
-                  </div>
+                    </td>
+                  </tr>
                 {% endfor %}
               </tbody>
             </table>
@@ -264,7 +245,15 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (this.value === 'NA') {
           row.classList.add('table-secondary');
         }
-        // Note: Unanswered items will not have a specific row color
+        
+        // Remove warning icon when an answer is selected
+        const warningIcon = row.querySelector('.bi-exclamation-triangle-fill');
+        if (warningIcon) {
+          warningIcon.remove();
+        }
+        
+        // Update progress in real-time
+        updateProgress();
       });
       
       // Apply initial state
@@ -274,80 +263,53 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Handle modal events to prevent flickering
-  const modals = document.querySelectorAll('.modal');
-  modals.forEach(modal => {
-    // Prevent modal from closing when clicking outside
-    modal.addEventListener('show.bs.modal', function (event) {
-      // Ensure modal is properly initialized
-      const modalElement = event.target;
-      modalElement.style.display = 'block';
-    });
-
-    modal.addEventListener('hide.bs.modal', function (event) {
-      // Clean up when modal is hidden
-      const modalElement = event.target;
-      modalElement.style.display = 'none';
-    });
-
-    // Handle modal backdrop clicks
-    modal.addEventListener('click', function (event) {
-      if (event.target === modal) {
-        // Only close if clicking on the backdrop, not the content
-        const modalInstance = bootstrap.Modal.getInstance(modal);
-        if (modalInstance) {
-          modalInstance.hide();
-        }
+  // Handle inline comment toggling
+  window.toggleComment = function(itemKey) {
+    const commentRow = document.getElementById(`comment-row-${itemKey}`);
+    const commentButton = document.querySelector(`[onclick="toggleComment('${itemKey}')"]`);
+    
+    if (commentRow.classList.contains('d-none')) {
+      // Show comment section
+      commentRow.classList.remove('d-none');
+      commentButton.innerHTML = '<i class="bi bi-chat-text-fill"></i>';
+      if (commentButton.querySelector('.badge')) {
+        commentButton.querySelector('.badge').classList.add('ms-1');
       }
-    });
-  });
-
-  // Handle comment button clicks
-  const commentButtons = document.querySelectorAll('[data-bs-toggle="modal"]');
-  commentButtons.forEach(button => {
-    button.addEventListener('click', function(event) {
-      event.preventDefault();
-      const targetModal = this.getAttribute('data-bs-target');
-      const modalElement = document.querySelector(targetModal);
-      
-      if (modalElement) {
-        const modal = new bootstrap.Modal(modalElement, {
-          backdrop: true,
-          keyboard: true,
-          focus: true
-        });
-        modal.show();
+    } else {
+      // Hide comment section
+      commentRow.classList.add('d-none');
+      commentButton.innerHTML = '<i class="bi bi-chat-text"></i>';
+      if (commentButton.querySelector('.badge')) {
+        commentButton.querySelector('.badge').classList.remove('ms-1');
       }
-    });
-  });
+    }
+  };
 
-  // Handle comment save functionality
-  const saveCommentButtons = document.querySelectorAll('.modal-footer .btn-primary');
-  saveCommentButtons.forEach(button => {
-    button.addEventListener('click', function() {
-      const modal = this.closest('.modal');
-      const textarea = modal.querySelector('textarea');
-      const commentButton = document.querySelector(`[data-bs-target="#${modal.id}"]`);
-      
-      if (textarea && textarea.value.trim()) {
-        // Add or update the comment indicator
-        let indicator = commentButton.querySelector('.badge');
-        if (!indicator) {
-          indicator = document.createElement('span');
-          indicator.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success';
-          indicator.style.fontSize = '0.6rem';
-          indicator.innerHTML = '<i class="bi bi-check"></i>';
-          commentButton.appendChild(indicator);
-        }
-      } else {
-        // Remove the comment indicator if no comment
-        const indicator = commentButton.querySelector('.badge');
-        if (indicator) {
-          indicator.remove();
-        }
-      }
-    });
-  });
+  // Update progress in real-time
+  function updateProgress() {
+    const totalItems = {{ progress.total_items }};
+    let answeredItems = 0;
+    
+    // Count answered items by checking all radio buttons
+    const allRadioButtons = document.querySelectorAll('input[type="radio"]:checked');
+    answeredItems = allRadioButtons.length;
+    
+    // Calculate percentage
+    const percentage = totalItems > 0 ? Math.round((answeredItems / totalItems) * 100) : 0;
+    
+    // Update progress bar
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+      progressBar.style.width = percentage + '%';
+      progressBar.setAttribute('aria-valuenow', percentage);
+    }
+    
+    // Update progress text
+    const progressText = document.getElementById('progress-text');
+    if (progressText) {
+      progressText.textContent = `${answeredItems} of ${totalItems} items answered (${percentage}% Complete)`;
+    }
+  }
 
   // Elapsed time tracking
   function updateElapsedTime() {
@@ -372,6 +334,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Update elapsed time every second
   updateElapsedTime();
   setInterval(updateElapsedTime, 1000);
+  
+  // Initialize progress on page load
+  updateProgress();
 });
 </script>
 {% endblock %}

@@ -1,31 +1,16 @@
-# Code Review Checklist
+# Correctness Review
 
-- Code compiles without errors or warnings (MUST)
-  - All syntax errors resolved
-  - Compiler warnings addressed
-  - Dependencies properly configured
-  <!-- Ensure the code compiles cleanly without any errors or warnings -->
+- Verify code compiles without errors (MUST)
+  - **Description:** Ensure the code compiles cleanly without any compilation errors or warnings.
+  - **Technical Details:** All syntax errors resolved and dependencies properly configured
+  - **How to Measure:** Build the project and check for compilation errors
 
-- No obvious runtime exceptions in common paths (MUST)
-  - Test main user flows
-  - Verify error handling works correctly
-  - Check for null pointer exceptions
-  <!-- Verify that common user paths don't throw unexpected exceptions -->
+- Check for runtime exceptions (MUST)
+  - **Description:** Verify that common user paths don't throw unexpected runtime exceptions.
+  - **Technical Details:** Proper null checks and exception handling implemented
+  - **How to Measure:** Test main user flows and edge cases
 
-- Handles edge cases and invalid inputs (GOOD)
-  - Empty inputs handled gracefully
-  - Boundary conditions tested
-  - Invalid data types rejected appropriately
-  <!-- Code should handle edge cases and invalid inputs gracefully -->
-
-- Follows language and project standards for error handling (GOOD)
-  - Use appropriate exception types
-  - Provide meaningful error messages
-  - Log errors appropriately
-  <!-- Error handling should follow established patterns and standards -->
-
-- No hard-coded secrets or credentials (MUST)
-  - API keys in environment variables
-  - Database credentials in config files
-  - No passwords in source code
-  <!-- All sensitive information should be externalized and not hard-coded -->
+- Validate input handling (MUST)
+  - **Description:** Ensure the code properly handles edge cases and invalid inputs gracefully.
+  - **Technical Details:** Input validation and sanitization implemented
+  - **How to Measure:** Test with invalid inputs and boundary conditions

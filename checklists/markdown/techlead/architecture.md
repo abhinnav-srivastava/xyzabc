@@ -1,13 +1,16 @@
-# Code Review Checklist
+# Architecture Review
 
-- Follows microservices/component boundaries (MUST)
-  - Service boundaries respected
-  - Inter-service communication proper
-  - Data ownership clear
-  <!-- Code should respect established service and component boundaries -->
+- Verify scalability considerations (OPTIONAL)
+  - **Description:** Ensure the architecture can handle expected load and can be scaled horizontally or vertically as needed.
+  - **Technical Details:** Implements caching, connection pooling, and load balancing
+  - **How to Measure:** Performance testing and load testing
 
-- Database design is appropriate (GOOD)
-  - Normalization level appropriate
-  - Indexes optimized
-  - Migration strategy planned
-  <!-- Database design should support the application requirements efficiently -->
+- Check security implementation (MUST)
+  - **Description:** Verify that security measures are properly implemented including authentication, authorization, and data protection.
+  - **Technical Details:** Uses OAuth2, JWT, encryption, and secure communication
+  - **How to Measure:** Security audit and penetration testing
+
+- Validate database design (MUST)
+  - **Description:** Ensure database schema is properly normalized and optimized for the application requirements.
+  - **Technical Details:** Follows database normalization rules and uses appropriate indexes
+  - **How to Measure:** Database performance analysis and query optimization
