@@ -61,7 +61,6 @@ def test_proxy(proxy: str, url: str = "https://pypi.org", timeout: int = 10) -> 
 def get_common_proxies() -> List[str]:
     """Get list of common proxy configurations to try"""
     return [
-        None,  # No proxy
         "http://proxy:8080",
         "http://127.0.0.1:8080",
         "http://localhost:8080",
@@ -142,19 +141,7 @@ def main():
     print("🔍 CodeCritique Proxy Setup")
     print("=" * 50)
     
-    # Test direct connection first
-    print("Testing direct connection to PyPI...")
-    if test_connection():
-        print("✅ Direct connection works!")
-        if install_with_pip():
-            print("✅ Dependencies installed successfully!")
-            return True
-        else:
-            print("❌ Direct installation failed, trying proxy configurations...")
-    else:
-        print("❌ Direct connection failed, trying proxy configurations...")
-    
-    # Get system proxy
+    # Get system proxy first
     system_proxy = get_system_proxy()
     if system_proxy:
         print(f"🔍 Found system proxy: {system_proxy}")
@@ -171,18 +158,14 @@ def main():
     proxies = get_common_proxies()
     
     for i, proxy in enumerate(proxies, 1):
-        if proxy is None:
-            print(f"{i}. Trying without proxy...")
-        else:
-            print(f"{i}. Trying proxy: {proxy}")
-            if not test_proxy(proxy):
-                print(f"   ❌ Proxy test failed: {proxy}")
-                continue
+        print(f"{i}. Trying proxy: {proxy}")
+        if not test_proxy(proxy):
+            print(f"   ❌ Proxy test failed: {proxy}")
+            continue
         
         if install_with_pip(proxy):
             print(f"✅ Dependencies installed successfully!")
-            if proxy:
-                print(f"   Using proxy: {proxy}")
+            print(f"   Using proxy: {proxy}")
             return True
         else:
             print(f"   ❌ Installation failed")
