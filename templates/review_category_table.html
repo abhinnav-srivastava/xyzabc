@@ -34,10 +34,34 @@
         </h4>
       </div>
       <div class="card-body">
-        <p class="lead mb-0">Review all items in this category:</p>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <p class="lead mb-0">Review all items in this category:</p>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="category_skip_{{ category.category_id }}" 
+                   name="category_skip_{{ category.category_id }}" 
+                   {% if saved_responses.get(category.category_id, {}).get('skipped') %}checked{% endif %}>
+            <label class="form-check-label fw-semibold" for="category_skip_{{ category.category_id }}">
+              <i class="bi bi-skip-forward me-1"></i>Skip Category
+            </label>
+          </div>
+        </div>
+        
+        <!-- Category Skip Comment -->
+        <div id="skip_comment_{{ category.category_id }}" class="alert alert-warning border-0 mb-3" 
+             style="display: {% if saved_responses.get(category.category_id, {}).get('skipped') %}block{% else %}none{% endif %};">
+          <label for="category_skip_comment_{{ category.category_id }}" class="form-label fw-semibold">
+            <i class="bi bi-exclamation-triangle me-1"></i>Reason for skipping this category (Required)
+          </label>
+          <textarea class="form-control" id="category_skip_comment_{{ category.category_id }}" 
+                    name="category_skip_comment_{{ category.category_id }}" rows="2" required
+                    placeholder="Please explain why this category is not applicable...">{{ saved_responses.get(category.category_id, {}).get('skip_comment', '') }}</textarea>
+        </div>
+        
         <div class="alert alert-info border-0 mt-3">
           <i class="bi bi-info-circle me-2"></i>
           <strong>Note:</strong> You can proceed without answering all items. Unanswered items will be marked as "Unanswered" in the final report.
+          <br><i class="bi bi-book me-2"></i>
+          <strong>Tip:</strong> Click "View Guidelines" to see all guidelines for the category, or click specific rule IDs (e.g., AND-023) to see individual guidelines.
         </div>
         <div class="row mt-3">
           <div class="col-md-4">
@@ -77,7 +101,7 @@
                   <th style="width: 10%;" class="text-center">Comment</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="category_items_{{ category.category_id }}">
                 {% for item in category.item_list %}
                   {% set item_key = item.role_id + '|' + item.category_id + '|' + item.item_id %}
                   {% set saved = saved_responses.get(item_key, {}) %}
@@ -97,12 +121,28 @@
                         {% if item.item_description %}
                           <p class="text-muted mb-2 small">{{ item.item_description }}</p>
                         {% endif %}
-                        {% if item.item_details %}
-                          <div class="item-details-collapsed" id="details-{{ item_key }}">
+                        <div class="d-flex gap-2 mb-2 flex-wrap">
+                          {% if item.item_details %}
                             <button type="button" class="btn btn-sm btn-outline-info" 
                                     onclick="toggleDetails('{{ item_key }}')">
                               <i class="bi bi-info-circle me-1"></i>Show Details
                             </button>
+                          {% endif %}
+                          <a href="{{ url_for('guidelines', category=item.guideline_category) }}" 
+                             target="_blank" 
+                             class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-book me-1"></i>View Guidelines
+                          </a>
+                          {% if item.suggested_rule_id %}
+                            <a href="{{ url_for('individual_guideline', rule_id=item.suggested_rule_id) }}" 
+                               target="_blank" 
+                               class="btn btn-sm btn-outline-success">
+                              <i class="bi bi-target me-1"></i>{{ item.suggested_rule_id }}
+                            </a>
+                          {% endif %}
+                        </div>
+                        {% if item.item_details %}
+                          <div class="item-details-collapsed" id="details-{{ item_key }}">
                           </div>
                           <div class="item-details-expanded d-none" id="details-expanded-{{ item_key }}">
                             <div class="alert alert-info border-0 mb-2">
@@ -373,6 +413,45 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize progress on page load
   updateProgress();
+  
+  // Handle category skip toggle
+  const skipCheckbox = document.getElementById('category_skip_{{ category.category_id }}');
+  if (skipCheckbox) {
+    skipCheckbox.addEventListener('change', function() {
+      const commentDiv = document.getElementById('skip_comment_{{ category.category_id }}');
+      const itemsDiv = document.getElementById('category_items_{{ category.category_id }}');
+      
+      if (this.checked) {
+        commentDiv.style.display = 'block';
+        if (itemsDiv) {
+          itemsDiv.style.opacity = '0.5';
+          itemsDiv.style.pointerEvents = 'none';
+        }
+        
+        // Make comment required when skipping
+        const commentTextarea = document.getElementById('category_skip_comment_{{ category.category_id }}');
+        if (commentTextarea) {
+          commentTextarea.required = true;
+        }
+      } else {
+        commentDiv.style.display = 'none';
+        if (itemsDiv) {
+          itemsDiv.style.opacity = '1';
+          itemsDiv.style.pointerEvents = 'auto';
+        }
+        
+        // Remove required when not skipping
+        const commentTextarea = document.getElementById('category_skip_comment_{{ category.category_id }}');
+        if (commentTextarea) {
+          commentTextarea.required = false;
+          commentTextarea.value = '';
+        }
+      }
+      
+      // Update progress when skip status changes
+      updateProgress();
+    });
+  }
 });
 </script>
 {% endblock %}

@@ -29,6 +29,19 @@
       </div>
     </div>
 
+    <!-- Instructions -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body">
+        <div class="alert alert-info border-0">
+          <i class="bi bi-info-circle me-2"></i>
+          <strong>Note:</strong> You can skip entire categories or proceed without answering all items. 
+          Unanswered items will be marked as "Unanswered" in the final report.
+          <br><i class="bi bi-book me-2"></i>
+          <strong>Tip:</strong> Click "View Guidelines" to see all guidelines for the category, or click specific rule IDs (e.g., AND-023) to see individual guidelines.
+        </div>
+      </div>
+    </div>
+
     <!-- Review Form -->
     <form method="post" class="needs-validation" novalidate>
       {% for category in categories %}
@@ -100,12 +113,28 @@
                           {% if item.item_description %}
                             <p class="text-muted mb-2 small">{{ item.item_description }}</p>
                           {% endif %}
-                          {% if item.item_details %}
-                            <div class="item-details-collapsed" id="details-{{ item_key }}">
+                          <div class="d-flex gap-2 mb-2 flex-wrap">
+                            {% if item.item_details %}
                               <button type="button" class="btn btn-sm btn-outline-info" 
                                       onclick="toggleDetails('{{ item_key }}')">
                                 <i class="bi bi-info-circle me-1"></i>Show Details
                               </button>
+                            {% endif %}
+                            <a href="{{ url_for('guidelines', category=item.guideline_category) }}" 
+                               target="_blank" 
+                               class="btn btn-sm btn-outline-primary">
+                              <i class="bi bi-book me-1"></i>View Guidelines
+                            </a>
+                            {% if item.suggested_rule_id %}
+                              <a href="{{ url_for('individual_guideline', rule_id=item.suggested_rule_id) }}" 
+                                 target="_blank" 
+                                 class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-target me-1"></i>{{ item.suggested_rule_id }}
+                              </a>
+                            {% endif %}
+                          </div>
+                          {% if item.item_details %}
+                            <div class="item-details-collapsed" id="details-{{ item_key }}">
                             </div>
                             <div class="item-details-expanded d-none" id="details-expanded-{{ item_key }}">
                               <div class="alert alert-info border-0 mb-2">

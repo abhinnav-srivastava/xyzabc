@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Header Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <div>
+            <h2 class="card-title mb-1">
+              <i class="bi bi-book me-2"></i>Android Coding Guidelines
+            </h2>
+            <p class="text-muted mb-0">Comprehensive coding standards and best practices for Android development</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h5 class="card-title mb-3">
+            <i class="bi bi-funnel me-2"></i>Filter Guidelines
+          </h5>
+          <form method="GET" action="{{ url_for('guidelines') }}" class="row g-3">
+            <div class="col-md-4">
+              <label for="category" class="form-label">Category</label>
+              <select class="form-select" id="category" name="category">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                  <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>
+                    {{ category }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="subcategory" class="form-label">Sub Category</label>
+              <select class="form-select" id="subcategory" name="subcategory">
+                <option value="">All Sub Categories</option>
+                {% for subcategory in subcategories %}
+                  <option value="{{ subcategory }}" {% if selected_subcategory == subcategory %}selected{% endif %}>
+                    {{ subcategory }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <div class="btn-group w-100" role="group">
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-search me-1"></i>Filter
+                </button>
+                <a href="{{ url_for('guidelines') }}" class="btn btn-outline-secondary">
+                  <i class="bi bi-x-circle me-1"></i>Clear
+                </a>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-md-3">
+              <div class="border-end">
+                <h4 class="text-primary mb-1">{{ guidelines|length }}</h4>
+                <small class="text-muted">Filtered Guidelines</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="border-end">
+                <h4 class="text-success mb-1">{{ all_guidelines|length }}</h4>
+                <small class="text-muted">Total Guidelines</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="border-end">
+                <h4 class="text-info mb-1">{{ categories|length }}</h4>
+                <small class="text-muted">Categories</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <h4 class="text-warning mb-1">{{ subcategories|length }}</h4>
+              <small class="text-muted">Sub Categories</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guidelines List -->
+  <div class="row">
+    <div class="col-12">
+      {% if guidelines %}
+        {% if not selected_category and not selected_subcategory %}
+          <!-- Group by category when no filters applied -->
+          {% set grouped_guidelines = guidelines|groupby('category') %}
+          {% for category, category_guidelines in grouped_guidelines %}
+            <div class="mb-4">
+              <h4 class="text-primary mb-3">
+                <i class="bi bi-folder me-2"></i>{{ category }}
+                <span class="badge bg-primary ms-2">{{ category_guidelines|list|length }}</span>
+              </h4>
+              {% for guideline in category_guidelines %}
+                <div class="card shadow-sm border-0 mb-3">
+                  <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <div class="d-flex align-items-center mb-1">
+                          <a href="{{ url_for('individual_guideline', rule_id=guideline.rule_id) }}" 
+                             class="badge bg-secondary me-2 text-decoration-none">
+                            {{ guideline.rule_id }}
+                          </a>
+                        </div>
+                        <h5 class="card-title mb-0">{{ guideline.subcategory }}</h5>
+                      </div>
+                      <div>
+                        {% if guideline.severity == 'MUST' %}
+                          <span class="badge bg-danger">{{ guideline.severity }}</span>
+                        {% elif guideline.severity == 'GOOD' %}
+                          <span class="badge bg-success">{{ guideline.severity }}</span>
+                        {% elif guideline.severity == 'MAY' %}
+                          <span class="badge bg-info">{{ guideline.severity }}</span>
+                        {% else %}
+                          <span class="badge bg-secondary">{{ guideline.severity }}</span>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <!-- Description -->
+                    <div class="mb-3">
+                      <h6 class="fw-semibold text-primary">
+                        <i class="bi bi-info-circle me-1"></i>Description
+                      </h6>
+                      <p class="mb-0">{{ guideline.description }}</p>
+                    </div>
+
+                    <!-- Code Examples -->
+                    <div class="row">
+                      <div class="col-md-6">
+                        <h6 class="fw-semibold text-success">
+                          <i class="bi bi-check-circle me-1"></i>Good Example
+                        </h6>
+                        {% if guideline.good_example %}
+                          <pre class="bg-light p-3 rounded"><code class="language-kotlin">{{ guideline.good_example }}</code></pre>
+                        {% else %}
+                          <p class="text-muted">No example provided</p>
+                        {% endif %}
+                      </div>
+                      <div class="col-md-6">
+                        <h6 class="fw-semibold text-danger">
+                          <i class="bi bi-x-circle me-1"></i>Bad Example
+                        </h6>
+                        {% if guideline.bad_example %}
+                          <pre class="bg-light p-3 rounded"><code class="language-kotlin">{{ guideline.bad_example }}</code></pre>
+                        {% else %}
+                          <p class="text-muted">No example provided</p>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    <!-- Additional Information -->
+                    <div class="row mt-3">
+                      <div class="col-md-6">
+                        <h6 class="fw-semibold text-info">
+                          <i class="bi bi-clipboard-check me-1"></i>Measurement Reference
+                        </h6>
+                        <p class="mb-0">{{ guideline.measurement_reference }}</p>
+                      </div>
+                      <div class="col-md-6">
+                        <h6 class="fw-semibold text-warning">
+                          <i class="bi bi-link-45deg me-1"></i>External References
+                        </h6>
+                        {% if guideline.external_refs %}
+                          <a href="{{ guideline.external_refs }}" target="_blank" class="text-decoration-none">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>{{ guideline.external_refs }}
+                          </a>
+                        {% else %}
+                          <p class="text-muted mb-0">No external references</p>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <!-- Individual guidelines when filtered -->
+          {% for guideline in guidelines %}
+          <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-light">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="d-flex align-items-center mb-1">
+                    <span class="badge bg-primary me-2">{{ guideline.category }}</span>
+                    <a href="{{ url_for('individual_guideline', rule_id=guideline.rule_id) }}" 
+                       class="badge bg-secondary me-2 text-decoration-none">
+                      {{ guideline.rule_id }}
+                    </a>
+                  </div>
+                  <h5 class="card-title mb-0">{{ guideline.subcategory }}</h5>
+                </div>
+                <div>
+                  {% if guideline.severity == 'MUST' %}
+                    <span class="badge bg-danger">{{ guideline.severity }}</span>
+                  {% elif guideline.severity == 'GOOD' %}
+                    <span class="badge bg-success">{{ guideline.severity }}</span>
+                  {% elif guideline.severity == 'MAY' %}
+                    <span class="badge bg-info">{{ guideline.severity }}</span>
+                  {% else %}
+                    <span class="badge bg-secondary">{{ guideline.severity }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <!-- Description -->
+              <div class="mb-3">
+                <h6 class="fw-semibold text-primary">
+                  <i class="bi bi-info-circle me-1"></i>Description
+                </h6>
+                <p class="mb-0">{{ guideline.description }}</p>
+              </div>
+
+              <!-- Code Examples -->
+              <div class="row">
+                <div class="col-md-6">
+                  <h6 class="fw-semibold text-success">
+                    <i class="bi bi-check-circle me-1"></i>Good Example
+                  </h6>
+                  {% if guideline.good_example %}
+                    <pre class="bg-light p-3 rounded"><code class="language-kotlin">{{ guideline.good_example }}</code></pre>
+                  {% else %}
+                    <p class="text-muted">No example provided</p>
+                  {% endif %}
+                </div>
+                <div class="col-md-6">
+                  <h6 class="fw-semibold text-danger">
+                    <i class="bi bi-x-circle me-1"></i>Bad Example
+                  </h6>
+                  {% if guideline.bad_example %}
+                    <pre class="bg-light p-3 rounded"><code class="language-kotlin">{{ guideline.bad_example }}</code></pre>
+                  {% else %}
+                    <p class="text-muted">No example provided</p>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Additional Information -->
+              <div class="row mt-3">
+                <div class="col-md-6">
+                  <h6 class="fw-semibold text-info">
+                    <i class="bi bi-clipboard-check me-1"></i>Measurement Reference
+                  </h6>
+                  <p class="mb-0">{{ guideline.measurement_reference }}</p>
+                </div>
+                <div class="col-md-6">
+                  <h6 class="fw-semibold text-warning">
+                    <i class="bi bi-link-45deg me-1"></i>External References
+                  </h6>
+                  {% if guideline.external_refs %}
+                    <a href="{{ guideline.external_refs }}" target="_blank" class="text-decoration-none">
+                      <i class="bi bi-box-arrow-up-right me-1"></i>{{ guideline.external_refs }}
+                    </a>
+                  {% else %}
+                    <p class="text-muted mb-0">No external references</p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% endif %}
+      {% else %}
+        <div class="card shadow-sm border-0">
+          <div class="card-body text-center py-5">
+            <i class="bi bi-search display-1 text-muted mb-3"></i>
+            <h4 class="text-muted">No Guidelines Found</h4>
+            <p class="text-muted">Try adjusting your filter criteria or clear the filters to see all guidelines.</p>
+            <a href="{{ url_for('guidelines') }}" class="btn btn-primary">
+              <i class="bi bi-arrow-clockwise me-1"></i>Clear Filters
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+// Auto-submit form when filters change
+document.addEventListener('DOMContentLoaded', function() {
+  const categorySelect = document.getElementById('category');
+  const subcategorySelect = document.getElementById('subcategory');
+  
+  categorySelect.addEventListener('change', function() {
+    // Clear subcategory when category changes
+    subcategorySelect.value = '';
+    // Submit form
+    this.form.submit();
+  });
+  
+  subcategorySelect.addEventListener('change', function() {
+    // Submit form
+    this.form.submit();
+  });
+});
+</script>
+{% endblock %}

@@ -25,6 +25,27 @@ def create_app() -> Flask:
     app = Flask(__name__)
     app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
 
+    # Auto-update checklists on startup (optional - can be disabled for production)
+    try:
+        import subprocess
+        import sys
+        
+        # Check if we should auto-update (can be disabled with environment variable)
+        if os.environ.get('AUTO_UPDATE_CHECKLISTS', 'true').lower() == 'true':
+            script_path = os.path.join(os.path.dirname(__file__), "scripts", "auto_update_checklists.py")
+            if os.path.exists(script_path):
+                print("🔄 Auto-updating checklists on startup...")
+                result = subprocess.run([sys.executable, script_path], 
+                                      capture_output=True, text=True, cwd=os.path.dirname(__file__))
+                if result.returncode == 0:
+                    print("✅ Checklists auto-updated successfully")
+                else:
+                    print(f"⚠️ Auto-update failed: {result.stderr}")
+            else:
+                print("⚠️ Auto-update script not found, skipping...")
+    except Exception as e:
+        print(f"⚠️ Auto-update error: {str(e)}")
+
     def _get_steps() -> List[Dict[str, Any]]:
         config = load_roles_config()
         all_steps = build_all_steps(config)
@@ -53,6 +74,10 @@ def create_app() -> Flask:
                     "category_name": step["category_name"],
                     "item_list": []
                 }
+            # Add guideline category mapping to each step
+            guideline_info = _get_guideline_info_for_checklist_item(step)
+            step["guideline_category"] = guideline_info["category"]
+            step["suggested_rule_id"] = guideline_info["suggested_rule_id"]
             categories[cat_key]["item_list"].append(step)
         
         return list(categories.values())
@@ -147,10 +172,296 @@ def create_app() -> Flask:
     @app.route("/")
     def index():
         config = load_roles_config()
+        return render_template("index.html", config=config)
+
+    @app.route("/start-review")
+    def start_review_page():
+        """Display the start review page with form."""
+        config = load_roles_config()
         # Get Windows username
         import getpass
         windows_username = getpass.getuser()
-        return render_template("index.html", config=config, default_username=windows_username)
+        return render_template("start_review.html", config=config, default_username=windows_username)
+
+    @app.route("/guidelines")
+    def guidelines():
+        """Display Android coding guidelines with filtering capabilities"""
+        # Read the guidelines markdown file and parse it
+        guidelines_file = "checklists/markdown/guidelines/android_coding_guidelines.md"
+        
+        if not os.path.exists(guidelines_file):
+            return render_template("empty.html", message="Guidelines file not found")
+        
+        with open(guidelines_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Parse the markdown content to extract guidelines
+        guidelines_data = _parse_guidelines_markdown(content)
+        
+        # Get filter parameters
+        category_filter = request.args.get('category', '')
+        subcategory_filter = request.args.get('subcategory', '')
+        
+        # Apply filters
+        filtered_guidelines = guidelines_data
+        if category_filter:
+            filtered_guidelines = [g for g in filtered_guidelines if g['category'].lower() == category_filter.lower()]
+        if subcategory_filter:
+            filtered_guidelines = [g for g in filtered_guidelines if g['subcategory'].lower() == subcategory_filter.lower()]
+        
+        # Get unique categories and subcategories for filter dropdowns
+        categories = sorted(list(set([g['category'] for g in guidelines_data])))
+        subcategories = sorted(list(set([g['subcategory'] for g in guidelines_data])))
+        
+        return render_template("guidelines.html", 
+                             guidelines=filtered_guidelines,
+                             all_guidelines=guidelines_data,
+                             categories=categories,
+                             subcategories=subcategories,
+                             selected_category=category_filter,
+                             selected_subcategory=subcategory_filter)
+
+    @app.route("/guideline/<rule_id>")
+    def individual_guideline(rule_id: str):
+        """Display a specific guideline by Rule ID"""
+        # Read the guidelines markdown file and parse it
+        guidelines_file = "checklists/markdown/guidelines/android_coding_guidelines.md"
+        
+        if not os.path.exists(guidelines_file):
+            return render_template("empty.html", message="Guidelines file not found")
+        
+        with open(guidelines_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Parse the guidelines content to extract structured data
+        guidelines_data = _parse_guidelines_markdown(content)
+        
+        # Find the specific guideline by rule ID
+        target_guideline = None
+        for guideline in guidelines_data:
+            if guideline['rule_id'].upper() == rule_id.upper():
+                target_guideline = guideline
+                break
+        
+        if not target_guideline:
+            return render_template("empty.html", message=f"Guideline {rule_id} not found")
+        
+        # Get all categories for navigation
+        categories = sorted(list(set([g['category'] for g in guidelines_data])))
+        
+        return render_template("individual_guideline.html", 
+                             guideline=target_guideline,
+                             categories=categories)
+
+    @app.route("/refresh")
+    def refresh_checklists():
+        """Refresh checklists by running the auto-update script"""
+        try:
+            import subprocess
+            import sys
+            import os
+            
+            # Get the script path
+            script_path = os.path.join(os.path.dirname(__file__), "scripts", "auto_update_checklists.py")
+            
+            # Run the auto-update script
+            result = subprocess.run([sys.executable, script_path], 
+                                  capture_output=True, text=True, cwd=os.path.dirname(__file__))
+            
+            if result.returncode == 0:
+                # Clear any cached data
+                from services.checklist_loader import load_roles_config
+                
+                # Return success message
+                return {
+                    "status": "success",
+                    "message": "Checklists refreshed successfully",
+                    "output": result.stdout
+                }, 200
+            else:
+                return {
+                    "status": "error", 
+                    "message": "Failed to refresh checklists",
+                    "output": result.stdout,
+                    "error": result.stderr
+                }, 500
+                
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Error refreshing checklists: {str(e)}"
+            }, 500
+
+    def _get_category_mapping() -> Dict[str, str]:
+        """Map checklist categories to guideline categories"""
+        return {
+            "architecture": "Architecture",
+            "design": "Architecture", 
+            "correctness": "Error Handling",
+            "readability": "Style",
+            "tests": "Testing",
+            "functionality": "Logic",
+            "style": "CodeStyle",
+            "ops": "Performance"
+        }
+
+    def _get_guideline_info_for_checklist_item(item: Dict[str, Any]) -> Dict[str, str]:
+        """Get the appropriate guideline category and suggested rule ID for a checklist item"""
+        category_mapping = _get_category_mapping()
+        category_id = item.get("category_id", "").lower()
+        item_text = item.get("item_text", "").lower()
+        
+        # Direct mapping
+        if category_id in category_mapping:
+            category = category_mapping[category_id]
+        else:
+            # Fallback based on item text content
+            if any(keyword in item_text for keyword in ["error", "exception", "try", "catch", "fail"]):
+                category = "Error Handling"
+            elif any(keyword in item_text for keyword in ["test", "unit", "integration", "mock"]):
+                category = "Testing"
+            elif any(keyword in item_text for keyword in ["style", "format", "naming", "code"]):
+                category = "CodeStyle"
+            elif any(keyword in item_text for keyword in ["performance", "memory", "speed", "optimize"]):
+                category = "Performance"
+            elif any(keyword in item_text for keyword in ["security", "auth", "permission", "encrypt"]):
+                category = "Security"
+            elif any(keyword in item_text for keyword in ["ui", "ux", "interface", "user"]):
+                category = "UI/UX"
+            elif any(keyword in item_text for keyword in ["api", "network", "http", "retrofit"]):
+                category = "API Usage"
+            elif any(keyword in item_text for keyword in ["thread", "async", "coroutine", "background"]):
+                category = "Threading"
+            elif any(keyword in item_text for keyword in ["log", "debug", "trace"]):
+                category = "Logging"
+            elif any(keyword in item_text for keyword in ["mvvm", "repository", "pattern", "architecture"]):
+                category = "Architecture"
+            elif any(keyword in item_text for keyword in ["di", "inject", "dependency", "hilt"]):
+                category = "DI"
+            elif any(keyword in item_text for keyword in ["storage", "database", "room", "preference"]):
+                category = "Storage"
+            elif any(keyword in item_text for keyword in ["git", "commit", "branch", "merge"]):
+                category = "Git"
+            else:
+                category = "Style"  # Default fallback
+        
+        # Suggest specific rule IDs based on content
+        suggested_rule_id = None
+        if "retrofit" in item_text or "api" in item_text:
+            suggested_rule_id = "AND-023"
+        elif "error" in item_text and "handling" in item_text:
+            suggested_rule_id = "AND-024"
+        elif "memory" in item_text or "leak" in item_text:
+            suggested_rule_id = "AND-013"
+        elif "test" in item_text and "unit" in item_text:
+            suggested_rule_id = "AND-059"
+        elif "mvvm" in item_text or "viewmodel" in item_text:
+            suggested_rule_id = "AND-038"
+        elif "hilt" in item_text or "dependency" in item_text:
+            suggested_rule_id = "AND-009"
+        elif "log" in item_text:
+            suggested_rule_id = "AND-017"
+        elif "coroutine" in item_text or "thread" in item_text:
+            suggested_rule_id = "AND-020"
+        elif "security" in item_text or "keystore" in item_text:
+            suggested_rule_id = "AND-027"
+        
+        return {
+            "category": category,
+            "suggested_rule_id": suggested_rule_id
+        }
+
+    def _get_guideline_category_for_checklist_item(item: Dict[str, Any]) -> str:
+        """Get the appropriate guideline category for a checklist item (backward compatibility)"""
+        return _get_guideline_info_for_checklist_item(item)["category"]
+
+    def _parse_guidelines_markdown(content: str) -> List[Dict[str, Any]]:
+        """Parse the guidelines markdown file to extract structured data"""
+        guidelines = []
+        lines = content.split('\n')
+        
+        current_category = ""
+        current_subcategory = ""
+        current_guideline = {}
+        
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+            
+            # Parse category headers (## Category Name)
+            if line.startswith('## ') and not line.startswith('### '):
+                current_category = line[3:].strip()
+                current_subcategory = ""
+            
+            # Parse subcategory headers (### Sub Category)
+            elif line.startswith('### '):
+                current_subcategory = line[4:].strip()
+            
+            # Parse guideline headers (**AND-XXX** (SEVERITY): Description)
+            elif line.startswith('**AND-') and '**' in line:
+                # Save previous guideline if exists
+                if current_guideline:
+                    guidelines.append(current_guideline)
+                
+                # Parse new guideline
+                # Extract rule ID and severity
+                import re
+                match = re.match(r'\*\*(AND-\d+)\*\* \((MUST|GOOD|MAY)\): (.+)', line)
+                if match:
+                    rule_id = match.group(1)
+                    severity = match.group(2)
+                    description = match.group(3)
+                    
+                    current_guideline = {
+                        'rule_id': rule_id,
+                        'category': current_category,
+                        'subcategory': current_subcategory,
+                        'description': description,
+                        'severity': severity,
+                        'good_example': '',
+                        'bad_example': '',
+                        'measurement_reference': '',
+                        'external_refs': ''
+                    }
+            
+            # Parse guideline content
+            elif current_guideline:
+                if line.startswith('  - **Good Example:**'):
+                    # Skip the "Good Example:" line and get the next code block
+                    pass
+                elif line.startswith('  - **Bad Example:**'):
+                    # Skip the "Bad Example:" line and get the next code block
+                    pass
+                elif line.startswith('  - **Measurement:**'):
+                    current_guideline['measurement_reference'] = line[18:].strip()
+                elif line.startswith('  - **Reference:**'):
+                    current_guideline['external_refs'] = line[16:].strip()
+                elif line.startswith('```kotlin'):
+                    i += 1
+                    example_content = []
+                    while i < len(lines) and not lines[i].strip().startswith('```'):
+                        example_content.append(lines[i])
+                        i += 1
+                    
+                    # Determine if this is good or bad example based on context
+                    # Look back to find which type this is
+                    j = i - len(example_content) - 2
+                    while j >= 0 and j < len(lines):
+                        if '**Good Example:**' in lines[j]:
+                            current_guideline['good_example'] = '\n'.join(example_content).strip()
+                            break
+                        elif '**Bad Example:**' in lines[j]:
+                            current_guideline['bad_example'] = '\n'.join(example_content).strip()
+                            break
+                        j -= 1
+            
+            i += 1
+        
+        # Don't forget the last guideline
+        if current_guideline:
+            guidelines.append(current_guideline)
+        
+        return guidelines
 
     @app.route("/start", methods=["POST"])
     def start_review():
@@ -394,13 +705,15 @@ def create_app() -> Flask:
             reviewer_name = session.get("reviewer_name", "Unknown")
             selected_role = session.get("selected_role", "Unknown")
             review_timing = _calculate_review_time()
+            mr_details = session.get("mr_details", {})
             
             html = render_template("summary.html", 
                                  summary=summary_data, 
                                  counts_overall=counts_overall,
                                  reviewer_name=reviewer_name,
                                  selected_role=selected_role,
-                                 review_timing=review_timing)
+                                 review_timing=review_timing,
+                                 mr_details=mr_details)
             response = make_response(html)
             response.headers["Content-Type"] = "text/html; charset=utf-8"
             response.headers["Content-Disposition"] = "attachment; filename=code_review_report.html"
