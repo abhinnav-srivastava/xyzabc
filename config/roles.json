@@ -2,85 +2,61 @@
   "roles": [
     {
       "id": "architect",
-      "name": "Architect Review",
+      "name": "Architect",
       "categories": [
         {
-          "id": "architecture",
-          "name": "Architecture Review",
+          "id": "architect_consolidated",
+          "name": "Architect Review",
           "type": "markdown",
-          "path": "checklists/markdown/architect/architecture.md"
+          "path": "checklists\\markdown\\architect\\architect_consolidated.md"
         }
       ]
     },
     {
       "id": "fo",
-      "name": "FO Review",
+      "name": "Fo",
       "categories": [
         {
-          "id": "ops",
-          "name": "Operational Readiness",
+          "id": "fo_consolidated",
+          "name": "Fo Review",
           "type": "markdown",
-          "path": "checklists/markdown/fo/ops.md"
+          "path": "checklists\\markdown\\fo\\fo_consolidated.md"
         }
       ]
     },
     {
       "id": "peer",
-      "name": "Peer Review",
+      "name": "Peer",
       "categories": [
         {
-          "id": "functionality",
-          "name": "Functionality",
+          "id": "peer_consolidated",
+          "name": "Peer Review",
           "type": "markdown",
-          "path": "checklists/markdown/peer/functionality.md"
-        },
-        {
-          "id": "style",
-          "name": "Style & Naming",
-          "type": "markdown",
-          "path": "checklists/markdown/peer/style.md"
+          "path": "checklists\\markdown\\peer\\peer_consolidated.md"
         }
       ]
     },
     {
       "id": "self",
-      "name": "Self Review",
+      "name": "Self",
       "categories": [
         {
-          "id": "correctness",
-          "name": "Correctness",
+          "id": "self_consolidated",
+          "name": "Self Review",
           "type": "markdown",
-          "path": "checklists/markdown/self/correctness.md"
-        },
-        {
-          "id": "readability",
-          "name": "Readability",
-          "type": "markdown",
-          "path": "checklists/markdown/self/readability.md"
-        },
-        {
-          "id": "tests",
-          "name": "Test Review",
-          "type": "markdown",
-          "path": "checklists/markdown/self/tests.md"
+          "path": "checklists\\markdown\\self\\self_consolidated.md"
         }
       ]
     },
     {
       "id": "techlead",
-      "name": "Tech Lead Review",
+      "name": "Techlead",
       "categories": [
         {
-          "id": "architecture",
-          "name": "Architecture Review",
+          "id": "techlead_consolidated",
+          "name": "Techlead Review",
           "type": "markdown",
-          "path": "checklists/markdown/techlead/architecture.md"
-        },
-        {
-          "id": "design",
-          "name": "Design Review",
-          "type": "markdown",
-          "path": "checklists/markdown/techlead/design.md"
+          "path": "checklists\\markdown\\techlead\\techlead_consolidated.md"
         }
       ]
     }

@@ -9,6 +9,63 @@
   --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
+/* PWA Install Popup Styles */
+#pwa-install-popup {
+  animation: slideInUp 0.3s ease-out;
+}
+
+#pwa-install-popup .card {
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#pwa-install-popup .card-body {
+  padding: 1.25rem;
+}
+
+#pwa-install-popup .btn-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 1;
+}
+
+#pwa-install-popup .btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+#pwa-install-popup .btn:hover {
+  transform: translateY(-1px);
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* PWA Install Popup Responsive */
+@media (max-width: 576px) {
+  #pwa-install-popup {
+    left: 1rem !important;
+    right: 1rem !important;
+    max-width: none !important;
+  }
+  
+  #pwa-install-popup .card {
+    max-width: none !important;
+  }
+}
+
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;

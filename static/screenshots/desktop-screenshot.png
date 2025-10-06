@@ -1,0 +1,33 @@
+<!-- Placeholder desktop screenshot -->
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8f9fa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e9ecef;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="1280" height="80" fill="#0d6efd"/>
+  <text x="640" y="45" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="white">CodeCritique - Desktop Interface</text>
+  
+  <!-- Content area -->
+  <rect x="40" y="120" width="1200" height="500" fill="white" stroke="#dee2e6" stroke-width="2" rx="8"/>
+  
+  <!-- Mock content -->
+  <text x="640" y="200" font-family="Arial, sans-serif" font-size="32" font-weight="bold" text-anchor="middle" fill="#212529">Code Review Dashboard</text>
+  <text x="640" y="250" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="#6c757d">Professional code review tool with role-based checklists</text>
+  
+  <!-- Mock buttons -->
+  <rect x="500" y="300" width="120" height="40" fill="#0d6efd" rx="4"/>
+  <text x="560" y="325" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="white">Start Review</text>
+  
+  <rect x="660" y="300" width="120" height="40" fill="#6c757d" rx="4"/>
+  <text x="720" y="325" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="white">View Summary</text>
+  
+  <!-- Footer -->
+  <text x="640" y="680" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#6c757d">CodeCritique - Code Review Tool</text>
+</svg>

@@ -1,0 +1,198 @@
+{
+  "application": {
+    "name": "CodeCritique",
+    "version": "1.0.0",
+    "description": "Professional code review tool with role-based, category-driven checklists",
+    "license": "Apache-2.0",
+    "homepage": "https://github.com/codecritique/codecritique",
+    "repository": "https://github.com/codecritique/codecritique.git"
+  },
+  "roles": {
+    "self": {
+      "id": "self",
+      "name": "Self Review",
+      "description": "Self-review checklist for developers",
+      "icon": "bi-person-check",
+      "color": "#28a745",
+      "categories": [
+        "code_correctness"
+      ],
+      "enabled": true,
+      "order": 1
+    },
+    "peer": {
+      "id": "peer",
+      "name": "Peer Review",
+      "description": "Peer review checklist for code reviewers",
+      "icon": "bi-people",
+      "color": "#007bff",
+      "categories": [
+        "code_review"
+      ],
+      "enabled": true,
+      "order": 2
+    },
+    "techlead": {
+      "id": "techlead",
+      "name": "Tech Lead Review",
+      "description": "Technical lead review checklist",
+      "icon": "bi-gear",
+      "color": "#6f42c1",
+      "categories": [],
+      "enabled": true,
+      "order": 3
+    },
+    "fo": {
+      "id": "fo",
+      "name": "FO Review",
+      "description": "First Officer review checklist",
+      "icon": "bi-shield-check",
+      "color": "#fd7e14",
+      "categories": [],
+      "enabled": true,
+      "order": 4
+    },
+    "architect": {
+      "id": "architect",
+      "name": "Architect Review",
+      "description": "Architecture review checklist",
+      "icon": "bi-building",
+      "color": "#dc3545",
+      "categories": [],
+      "enabled": true,
+      "order": 5
+    }
+  },
+  "categories": {
+    "code_correctness": {
+      "id": "code_correctness",
+      "name": "Code Correctness",
+      "description": "Code Correctness review checklist",
+      "icon": "bi-check-circle",
+      "color": "#28a745",
+      "enabled": true,
+      "order": 1,
+      "file_count": 1,
+      "files": [
+        "code_correctness.xlsx"
+      ]
+    },
+    "code_review": {
+      "id": "code_review",
+      "name": "Code Review",
+      "description": "Code Review review checklist",
+      "icon": "bi-eye",
+      "color": "#007bff",
+      "enabled": true,
+      "order": 2,
+      "file_count": 1,
+      "files": [
+        "code_review.xlsx"
+      ]
+    }
+  },
+  "review_settings": {
+    "default_mode": "category",
+    "single_page_mode": true,
+    "auto_save": true,
+    "auto_save_interval": 30,
+    "session_timeout": 3600,
+    "max_review_duration": 14400,
+    "progress_tracking": true,
+    "offline_support": true
+  },
+  "ui_settings": {
+    "theme": "light",
+    "language": "en",
+    "date_format": "YYYY-MM-DD",
+    "time_format": "24h",
+    "timezone": "UTC",
+    "items_per_page": 20,
+    "show_progress": true,
+    "show_timestamps": true,
+    "show_comments": true
+  },
+  "export_settings": {
+    "formats": [
+      "html",
+      "pdf",
+      "json",
+      "csv"
+    ],
+    "default_format": "html",
+    "include_metadata": true,
+    "include_timestamps": true,
+    "include_comments": true,
+    "include_progress": true,
+    "compression": false
+  },
+  "security": {
+    "session_secret_key": "dev-secret-key-change-in-production",
+    "csrf_protection": true,
+    "rate_limiting": true,
+    "max_requests_per_minute": 60,
+    "allowed_origins": [
+      "*"
+    ],
+    "secure_cookies": false,
+    "http_only_cookies": true
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "file": "logs/app.log",
+    "max_size": "10MB",
+    "backup_count": 5,
+    "console_output": true
+  },
+  "database": {
+    "type": "sqlite",
+    "path": "data/app.db",
+    "backup_enabled": true,
+    "backup_interval": 3600,
+    "max_backups": 10
+  },
+  "cache": {
+    "enabled": true,
+    "type": "memory",
+    "ttl": 3600,
+    "max_size": "100MB"
+  },
+  "notifications": {
+    "enabled": true,
+    "types": [
+      "success",
+      "warning",
+      "error",
+      "info"
+    ],
+    "auto_dismiss": true,
+    "dismiss_timeout": 5000,
+    "position": "top-right"
+  },
+  "features": {
+    "pwa": true,
+    "offline_mode": true,
+    "auto_update": true,
+    "gitlab_integration": false,
+    "github_integration": false,
+    "jira_integration": false,
+    "slack_integration": false
+  },
+  "limits": {
+    "max_file_size": 52428800,
+    "max_files_per_upload": 10,
+    "max_review_items": 1000,
+    "max_comments_length": 1000,
+    "max_reviewers": 10
+  },
+  "paths": {
+    "checklists_excel": "checklists/excel",
+    "checklists_markdown": "checklists/markdown",
+    "templates": "templates",
+    "static": "static",
+    "logs": "logs",
+    "data": "data",
+    "backups": "backups"
+  }
+}

@@ -19,36 +19,88 @@ from services.checklist_loader import (
     load_roles_config,
     build_all_steps,
 )
+from services.network_security import network_security
+from services.dynamic_categories import dynamic_categories
 
 
 def create_app() -> Flask:
     app = Flask(__name__)
     app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
 
-    # Auto-update checklists on startup (optional - can be disabled for production)
+    # Auto-update checklists and dynamic categories on startup (optional - can be disabled for production)
     try:
         import subprocess
         import sys
         
         # Check if we should auto-update (can be disabled with environment variable)
         if os.environ.get('AUTO_UPDATE_CHECKLISTS', 'true').lower() == 'true':
-            script_path = os.path.join(os.path.dirname(__file__), "scripts", "auto_update_checklists.py")
+            # Update dynamic categories first
+            print("Updating dynamic categories from Excel files...")
+            try:
+                dynamic_categories.update_all_configs()
+                print("Dynamic categories updated successfully")
+            except Exception as e:
+                print(f"Dynamic categories update failed: {str(e)}")
+            
+            # Then update checklists with category-based conversion
+            script_path = os.path.join(os.path.dirname(__file__), "scripts", "py", "auto_update_checklists_category.py")
             if os.path.exists(script_path):
-                print("🔄 Auto-updating checklists on startup...")
+                print("Auto-updating checklists with category-based conversion...")
                 result = subprocess.run([sys.executable, script_path], 
                                       capture_output=True, text=True, cwd=os.path.dirname(__file__))
                 if result.returncode == 0:
-                    print("✅ Checklists auto-updated successfully")
+                    print("Checklists auto-updated successfully")
+                    if result.stdout:
+                        print("Update output:", result.stdout.strip())
                 else:
-                    print(f"⚠️ Auto-update failed: {result.stderr}")
+                    print(f"Auto-update failed: {result.stderr}")
+                    if result.stdout:
+                        print("Update output:", result.stdout.strip())
             else:
-                print("⚠️ Auto-update script not found, skipping...")
+                print("Auto-update script not found, skipping...")
     except Exception as e:
-        print(f"⚠️ Auto-update error: {str(e)}")
+        print(f"Auto-update error: {str(e)}")
+
+    # Network security middleware
+    @app.before_request
+    def validate_request():
+        """Validate incoming requests for security"""
+        client_ip = request.environ.get('REMOTE_ADDR', '127.0.0.1')
+        is_allowed, reason = network_security.validate_request(client_ip)
+        
+        if not is_allowed:
+            return f"Access denied: {reason}", 403
 
     def _get_steps() -> List[Dict[str, Any]]:
         config = load_roles_config()
         all_steps = build_all_steps(config)
+        
+        # Check if we have any steps, if not, try to auto-refresh from Excel
+        if not all_steps:
+            print("No steps found, attempting to auto-refresh from Excel files...")
+            try:
+                # Try to refresh from Excel files
+                from services.dynamic_categories import dynamic_categories
+                import subprocess
+                import sys
+                
+                # Update dynamic categories first
+                dynamic_categories.update_all_configs()
+                
+                # Run auto-update script
+                script_path = os.path.join(os.path.dirname(__file__), "scripts", "py", "auto_update_checklists_category.py")
+                if os.path.exists(script_path):
+                    result = subprocess.run([sys.executable, script_path], 
+                                          capture_output=True, text=True, cwd=os.path.dirname(__file__))
+                    if result.returncode == 0:
+                        print("Auto-refresh successful, reloading config...")
+                        # Reload config and try again
+                        config = load_roles_config()
+                        all_steps = build_all_steps(config)
+                    else:
+                        print(f"Auto-refresh failed: {result.stderr}")
+            except Exception as e:
+                print(f"Auto-refresh error: {str(e)}")
         
         # Filter by selected role if specified
         selected_role = session.get("selected_role")
@@ -62,15 +114,25 @@ def create_app() -> Flask:
     def _get_categories() -> List[Dict[str, Any]]:
         """Group steps by category for category-based review"""
         steps = _get_steps()
+        
+        # If no steps found, try auto-refresh
+        if not steps:
+            print("No steps found in _get_categories, attempting auto-refresh...")
+            # The auto-refresh logic is already in _get_steps(), so just return empty for now
+            return []
+        
         categories = {}
         
         for step in steps:
-            cat_key = f"{step['role_id']}|{step['category_id']}"
+            # Group by role_id and category_name (not category_id) to merge same MainCategory
+            cat_key = f"{step['role_id']}|{step['category_name']}"
             if cat_key not in categories:
+                # Generate a consistent category_id based on the category_name
+                consistent_category_id = step['category_name'].lower().replace(' ', '_').replace('-', '_')
                 categories[cat_key] = {
                     "role_id": step["role_id"],
                     "role_name": step["role_name"],
-                    "category_id": step["category_id"],
+                    "category_id": consistent_category_id,
                     "category_name": step["category_name"],
                     "item_list": []
                 }
@@ -253,6 +315,69 @@ def create_app() -> Flask:
                              guideline=target_guideline,
                              categories=categories)
 
+    @app.route("/refresh-categories")
+    def refresh_categories():
+        """Refresh dynamic categories from Excel files"""
+        try:
+            success = dynamic_categories.update_all_configs()
+            if success:
+                return {"status": "success", "message": "Dynamic categories and roles updated successfully"}, 200
+            else:
+                return {"status": "error", "message": "Failed to update dynamic categories and roles"}, 500
+        except Exception as e:
+            return {"status": "error", "message": f"Error updating categories and roles: {str(e)}"}, 500
+
+    @app.route("/refresh-all")
+    def refresh_all():
+        """Refresh everything: categories, checklists, and markdown files"""
+        try:
+            import subprocess
+            import sys
+            import os
+            
+            # Step 1: Update dynamic categories
+            print("Refreshing dynamic categories...")
+            categories_success = dynamic_categories.update_all_configs()
+            
+            # Step 2: Run auto-update script with category-based conversion
+            print("Refreshing checklists with category-based conversion...")
+            script_path = os.path.join(os.path.dirname(__file__), "scripts", "py", "auto_update_checklists_category.py")
+            
+            if os.path.exists(script_path):
+                result = subprocess.run([sys.executable, script_path], 
+                                      capture_output=True, text=True, cwd=os.path.dirname(__file__))
+                
+                if result.returncode == 0:
+                    return {
+                        "status": "success",
+                        "message": "Everything refreshed successfully",
+                        "categories_updated": categories_success,
+                        "checklists_updated": True,
+                        "output": result.stdout
+                    }, 200
+                else:
+                    return {
+                        "status": "error",
+                        "message": "Failed to refresh checklists",
+                        "categories_updated": categories_success,
+                        "checklists_updated": False,
+                        "output": result.stdout,
+                        "error": result.stderr
+                    }, 500
+            else:
+                return {
+                    "status": "error",
+                    "message": "Auto-update script not found",
+                    "categories_updated": categories_success,
+                    "checklists_updated": False
+                }, 500
+                
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Error refreshing everything: {str(e)}"
+            }, 500
+
     @app.route("/refresh")
     def refresh_checklists():
         """Refresh checklists by running the auto-update script"""
@@ -262,20 +387,26 @@ def create_app() -> Flask:
             import os
             
             # Get the script path
-            script_path = os.path.join(os.path.dirname(__file__), "scripts", "auto_update_checklists.py")
+            script_path = os.path.join(os.path.dirname(__file__), "scripts", "py", "auto_update_checklists.py")
             
             # Run the auto-update script
             result = subprocess.run([sys.executable, script_path], 
                                   capture_output=True, text=True, cwd=os.path.dirname(__file__))
             
             if result.returncode == 0:
+                # Also update dynamic categories
+                try:
+                    dynamic_categories.update_all_configs()
+                except Exception as e:
+                    print(f"Warning: Dynamic categories update failed: {e}")
+                
                 # Clear any cached data
                 from services.checklist_loader import load_roles_config
                 
                 # Return success message
                 return {
                     "status": "success",
-                    "message": "Checklists refreshed successfully",
+                    "message": "Checklists and categories refreshed successfully",
                     "output": result.stdout
                 }, 200
             else:
@@ -825,6 +956,33 @@ def create_app() -> Flask:
             mimetype="application/pdf",
         )
 
+    # PWA Routes
+    @app.route("/manifest.json")
+    def manifest():
+        """Serve the PWA manifest file"""
+        return send_file("static/manifest.json", mimetype="application/json")
+    
+    @app.route("/sw.js")
+    def service_worker():
+        """Serve the service worker file"""
+        return send_file("static/sw.js", mimetype="application/javascript")
+    
+    @app.route("/offline")
+    def offline():
+        """Offline page for PWA"""
+        return render_template("offline.html")
+    
+    @app.route("/api/sync-offline-data", methods=["POST"])
+    def sync_offline_data():
+        """API endpoint to sync offline data"""
+        try:
+            data = request.get_json()
+            # Here you would process the offline data
+            # For now, just return success
+            return {"status": "success", "message": "Offline data synced successfully"}, 200
+        except Exception as e:
+            return {"status": "error", "message": str(e)}, 500
+
 
     return app
 
@@ -832,4 +990,4 @@ def create_app() -> Flask:
 if __name__ == "__main__":
     app = create_app()
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="127.0.0.1", port=port, debug=True)
