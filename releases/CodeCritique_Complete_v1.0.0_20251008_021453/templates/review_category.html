@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <!-- Progress Card -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0 fw-semibold">Review Progress</h5>
+          <span class="badge bg-primary fs-6">Category {{ progress.current }} of {{ progress.total }}</span>
+        </div>
+        <div class="progress" style="height: 8px;">
+          <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress.percent }}%" 
+               aria-valuenow="{{ progress.percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <small class="text-muted mt-2 d-block">{{ progress.percent }}% Complete</small>
+      </div>
+    </div>
+
+    <!-- Category Header -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">
+          <i class="bi bi-clipboard-check me-2"></i>{{ category.role_name }} — {{ category.category_name }}
+        </h3>
+        <p class="mb-0 mt-2 opacity-75">Review all items in this category below</p>
+      </div>
+    </div>
+
+    <!-- Review Form -->
+    <form method="post" class="needs-validation" novalidate>
+      {% for item in category.item_list %}
+        {% set item_key = item.role_id + '|' + item.category_id + '|' + item.item_id %}
+        {% set saved = saved_responses.get(item_key, {}) %}
+        
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-8">
+                <h5 class="fw-semibold mb-3">{{ item.item_text }}</h5>
+                {% if item.item_description %}
+                  <p class="text-muted mb-3">{{ item.item_description }}</p>
+                {% endif %}
+                {% if item.item_details %}
+                  <div class="alert alert-info border-0 mb-3">
+                    <h6 class="alert-heading fw-semibold">
+                      <i class="bi bi-info-circle me-2"></i>Details & Guidelines
+                    </h6>
+                    <div class="item-details">
+                      {{ item.item_details|safe }}
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">
+                    <i class="bi bi-check-circle me-1"></i>Review Status
+                  </label>
+                  <div class="d-grid gap-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="status_{{ item_key }}" value="OK" id="status_ok_{{ loop.index }}" 
+                             {% if saved.status == 'OK' %}checked{% endif %} required>
+                      <label class="form-check-label" for="status_ok_{{ loop.index }}">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>Reviewed OK
+                      </label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="status_{{ item_key }}" value="NG" id="status_ng_{{ loop.index }}" 
+                             {% if saved.status == 'NG' %}checked{% endif %} required>
+                      <label class="form-check-label" for="status_ng_{{ loop.index }}">
+                        <i class="bi bi-x-circle-fill text-danger me-2"></i>Reviewed NG
+                      </label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="status_{{ item_key }}" value="NA" id="status_na_{{ loop.index }}" 
+                             {% if saved.status == 'NA' %}checked{% endif %} required>
+                      <label class="form-check-label" for="status_na_{{ loop.index }}">
+                        <i class="bi bi-dash-circle-fill text-secondary me-2"></i>Not Applicable
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-12">
+                <div class="mb-3">
+                  <label for="comment_{{ item_key }}" class="form-label fw-semibold">
+                    <i class="bi bi-chat-text me-1"></i>Comments (Optional)
+                  </label>
+                  <textarea class="form-control" id="comment_{{ item_key }}" name="comment_{{ item_key }}" rows="2" 
+                            placeholder="Add any additional notes or observations...">{{ saved.comment or '' }}</textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+
+      <!-- Navigation -->
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <button class="btn btn-outline-secondary btn-lg" name="action" value="prev" type="submit">
+              <i class="bi bi-arrow-left me-2"></i>Previous Category
+            </button>
+            {% if is_last %}
+              <button class="btn btn-success btn-lg px-4" name="action" value="finish" type="submit">
+                <i class="bi bi-check-circle me-2"></i>Finish Review
+              </button>
+            {% else %}
+              <button class="btn btn-primary btn-lg px-4" name="action" value="next" type="submit">
+                Next Category<i class="bi bi-arrow-right ms-2"></i>
+              </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Bootstrap form validation
+(function() {
+  'use strict';
+  window.addEventListener('load', function() {
+    var forms = document.getElementsByClassName('needs-validation');
+    var validation = Array.prototype.filter.call(forms, function(form) {
+      form.addEventListener('submit', function(event) {
+        if (form.checkValidity() === false) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+      }, false);
+    });
+  }, false);
+})();
+
+// Auto-save functionality (optional enhancement)
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form');
+  const inputs = form.querySelectorAll('input, textarea');
+  
+  inputs.forEach(function(input) {
+    input.addEventListener('change', function() {
+      // Could add auto-save functionality here if needed
+      console.log('Form data changed');
+    });
+  });
+});
+</script>
+{% endblock %}

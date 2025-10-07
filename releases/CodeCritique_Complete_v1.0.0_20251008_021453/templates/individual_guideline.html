@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Header Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h2 class="card-title mb-1">
+                <span class="badge bg-primary me-2">{{ guideline.rule_id }}</span>
+                {{ guideline.subcategory }}
+              </h2>
+              <p class="text-muted mb-0">{{ guideline.category }} • Android Coding Guideline</p>
+            </div>
+            <div>
+              <a href="{{ url_for('guidelines', category=guideline.category) }}" class="btn btn-outline-primary me-2">
+                <i class="bi bi-folder me-1"></i>View Category
+              </a>
+              <a href="{{ url_for('guidelines') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-list me-1"></i>All Guidelines
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guideline Details -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-light">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="card-title mb-0">
+                <span class="badge bg-primary me-2">{{ guideline.category }}</span>
+                {{ guideline.subcategory }}
+              </h5>
+            </div>
+            <div>
+              {% if guideline.severity == 'MUST' %}
+                <span class="badge bg-danger fs-6">{{ guideline.severity }}</span>
+              {% elif guideline.severity == 'GOOD' %}
+                <span class="badge bg-success fs-6">{{ guideline.severity }}</span>
+              {% elif guideline.severity == 'MAY' %}
+                <span class="badge bg-info fs-6">{{ guideline.severity }}</span>
+              {% else %}
+                <span class="badge bg-secondary fs-6">{{ guideline.severity }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Description -->
+          <div class="mb-4">
+            <h6 class="fw-semibold text-primary mb-3">
+              <i class="bi bi-info-circle me-2"></i>Description
+            </h6>
+            <div class="alert alert-light border-0">
+              <p class="mb-0 fs-5">{{ guideline.description }}</p>
+            </div>
+          </div>
+
+          <!-- Code Examples -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h6 class="fw-semibold text-success mb-3">
+                <i class="bi bi-check-circle me-2"></i>Good Example
+              </h6>
+              {% if guideline.good_example %}
+                <div class="bg-success bg-opacity-10 p-3 rounded border border-success">
+                  <pre class="mb-0"><code class="language-kotlin">{{ guideline.good_example }}</code></pre>
+                </div>
+              {% else %}
+                <div class="bg-light p-3 rounded text-muted">
+                  <i class="bi bi-info-circle me-2"></i>No example provided
+                </div>
+              {% endif %}
+            </div>
+            <div class="col-md-6">
+              <h6 class="fw-semibold text-danger mb-3">
+                <i class="bi bi-x-circle me-2"></i>Bad Example
+              </h6>
+              {% if guideline.bad_example %}
+                <div class="bg-danger bg-opacity-10 p-3 rounded border border-danger">
+                  <pre class="mb-0"><code class="language-kotlin">{{ guideline.bad_example }}</code></pre>
+                </div>
+              {% else %}
+                <div class="bg-light p-3 rounded text-muted">
+                  <i class="bi bi-info-circle me-2"></i>No example provided
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Additional Information -->
+          <div class="row">
+            <div class="col-md-6">
+              <h6 class="fw-semibold text-info mb-3">
+                <i class="bi bi-clipboard-check me-2"></i>Measurement Reference
+              </h6>
+              <div class="bg-info bg-opacity-10 p-3 rounded border border-info">
+                <p class="mb-0">{{ guideline.measurement_reference }}</p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <h6 class="fw-semibold text-warning mb-3">
+                <i class="bi bi-link-45deg me-2"></i>External References
+              </h6>
+              <div class="bg-warning bg-opacity-10 p-3 rounded border border-warning">
+                {% if guideline.external_refs %}
+                  <a href="{{ guideline.external_refs }}" target="_blank" class="text-decoration-none">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>{{ guideline.external_refs }}
+                  </a>
+                {% else %}
+                  <p class="mb-0 text-muted">No external references</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h6 class="fw-semibold mb-3">
+            <i class="bi bi-compass me-2"></i>Related Guidelines
+          </h6>
+          <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('guidelines', category=guideline.category) }}" class="btn btn-outline-primary">
+              <i class="bi bi-folder me-1"></i>{{ guideline.category }} Guidelines
+            </a>
+            <a href="{{ url_for('guidelines') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-list me-1"></i>All Guidelines
+            </a>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-info">
+              <i class="bi bi-house me-1"></i>Back to Home
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

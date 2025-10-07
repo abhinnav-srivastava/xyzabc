@@ -3,6 +3,7 @@ import io
 import time
 from datetime import datetime
 from typing import Dict, List, Any, Tuple
+from pathlib import Path
 
 from flask import (
     Flask,
@@ -14,6 +15,38 @@ from flask import (
     send_file,
     make_response,
 )
+
+# Import path utilities
+try:
+    from utils.path_utils import get_scripts_path, get_checklists_path, get_templates_path, get_project_root
+except ImportError:
+    # Fallback for when utils module is not available
+    import sys
+    def get_base_dir() -> str:
+        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+            return sys._MEIPASS  # type: ignore[attr-defined]
+        return os.path.dirname(__file__)
+    
+    def get_scripts_path(script_file: str = "") -> Path:
+        base_path = Path(get_base_dir()) / "scripts"
+        if script_file:
+            return base_path / script_file
+        return base_path
+    
+    def get_checklists_path(subpath: str = "") -> Path:
+        base_path = Path(get_base_dir()) / "checklists"
+        if subpath:
+            return base_path / subpath
+        return base_path
+    
+    def get_templates_path(template_file: str = "") -> Path:
+        base_path = Path(get_base_dir()) / "templates"
+        if template_file:
+            return base_path / template_file
+        return base_path
+    
+    def get_project_root() -> Path:
+        return Path(get_base_dir())
 
 from services.checklist_loader import (
     load_roles_config,
@@ -33,7 +66,11 @@ def create_app() -> Flask:
         import sys
         
         # Check if we should auto-update (can be disabled with environment variable)
-        if os.environ.get('AUTO_UPDATE_CHECKLISTS', 'true').lower() == 'true':
+        # Skip auto-update in portable mode to avoid subprocess issues
+        is_portable = getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+        if is_portable:
+            print("Running in portable mode - skipping auto-update process")
+        elif os.environ.get('AUTO_UPDATE_CHECKLISTS', 'true').lower() == 'true':
             # Update dynamic categories first
             print("Updating dynamic categories from Excel files...")
             try:
@@ -43,11 +80,11 @@ def create_app() -> Flask:
                 print(f"Dynamic categories update failed: {str(e)}")
             
             # Then update checklists with category-based conversion
-            script_path = os.path.join(os.path.dirname(__file__), "scripts", "py", "auto_update_checklists_category.py")
-            if os.path.exists(script_path):
+            script_path = get_scripts_path("py/auto_update_checklists_category.py")
+            if script_path.exists():
                 print("Auto-updating checklists with category-based conversion...")
-                result = subprocess.run([sys.executable, script_path], 
-                                      capture_output=True, text=True, cwd=os.path.dirname(__file__))
+                result = subprocess.run([sys.executable, str(script_path)], 
+                                      capture_output=True, text=True, cwd=get_project_root())
                 if result.returncode == 0:
                     print("Checklists auto-updated successfully")
                     if result.stdout:
@@ -77,30 +114,35 @@ def create_app() -> Flask:
         
         # Check if we have any steps, if not, try to auto-refresh from Excel
         if not all_steps:
-            print("No steps found, attempting to auto-refresh from Excel files...")
-            try:
-                # Try to refresh from Excel files
-                from services.dynamic_categories import dynamic_categories
-                import subprocess
-                import sys
-                
-                # Update dynamic categories first
-                dynamic_categories.update_all_configs()
-                
-                # Run auto-update script
-                script_path = os.path.join(os.path.dirname(__file__), "scripts", "py", "auto_update_checklists_category.py")
-                if os.path.exists(script_path):
-                    result = subprocess.run([sys.executable, script_path], 
-                                          capture_output=True, text=True, cwd=os.path.dirname(__file__))
-                    if result.returncode == 0:
-                        print("Auto-refresh successful, reloading config...")
-                        # Reload config and try again
-                        config = load_roles_config()
-                        all_steps = build_all_steps(config)
-                    else:
-                        print(f"Auto-refresh failed: {result.stderr}")
-            except Exception as e:
-                print(f"Auto-refresh error: {str(e)}")
+            # Skip auto-refresh in portable mode
+            is_portable = getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+            if is_portable:
+                print("Portable mode: No steps found, but skipping auto-refresh")
+            else:
+                print("No steps found, attempting to auto-refresh from Excel files...")
+                try:
+                    # Try to refresh from Excel files
+                    from services.dynamic_categories import dynamic_categories
+                    import subprocess
+                    import sys
+                    
+                    # Update dynamic categories first
+                    dynamic_categories.update_all_configs()
+                    
+                    # Run auto-update script
+                    script_path = get_scripts_path("py/auto_update_checklists_category.py")
+                    if script_path.exists():
+                        result = subprocess.run([sys.executable, str(script_path)], 
+                                              capture_output=True, text=True, cwd=get_project_root())
+                        if result.returncode == 0:
+                            print("Auto-refresh successful, reloading config...")
+                            # Reload config and try again
+                            config = load_roles_config()
+                            all_steps = build_all_steps(config)
+                        else:
+                            print(f"Auto-refresh failed: {result.stderr}")
+                except Exception as e:
+                    print(f"Auto-refresh error: {str(e)}")
         
         # Filter by selected role if specified
         selected_role = session.get("selected_role")
@@ -341,11 +383,11 @@ def create_app() -> Flask:
             
             # Step 2: Run auto-update script with category-based conversion
             print("Refreshing checklists with category-based conversion...")
-            script_path = os.path.join(os.path.dirname(__file__), "scripts", "py", "auto_update_checklists_category.py")
+            script_path = get_scripts_path("py/auto_update_checklists_category.py")
             
-            if os.path.exists(script_path):
-                result = subprocess.run([sys.executable, script_path], 
-                                      capture_output=True, text=True, cwd=os.path.dirname(__file__))
+            if script_path.exists():
+                result = subprocess.run([sys.executable, str(script_path)], 
+                                      capture_output=True, text=True, cwd=get_project_root())
                 
                 if result.returncode == 0:
                     return {
@@ -387,11 +429,11 @@ def create_app() -> Flask:
             import os
             
             # Get the script path
-            script_path = os.path.join(os.path.dirname(__file__), "scripts", "py", "auto_update_checklists.py")
+            script_path = get_scripts_path("py/auto_update_checklists.py")
             
             # Run the auto-update script
-            result = subprocess.run([sys.executable, script_path], 
-                                  capture_output=True, text=True, cwd=os.path.dirname(__file__))
+            result = subprocess.run([sys.executable, str(script_path)], 
+                                  capture_output=True, text=True, cwd=get_project_root())
             
             if result.returncode == 0:
                 # Also update dynamic categories

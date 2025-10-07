@@ -1,0 +1,29 @@
+<!-- Placeholder icon 96x96 -->
+<svg width="96" height="96" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d6efd;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6f42c1;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="96" height="96" fill="url(#bg)" rx="12"/>
+  
+  <!-- Code brackets -->
+  <g fill="white" stroke="white" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Left bracket -->
+    <path d="M 24 32 L 24 48 L 32 48 L 32 64 L 24 64 L 24 72 L 48 72 L 48 32 Z"/>
+    
+    <!-- Right bracket -->
+    <path d="M 72 32 L 72 48 L 64 48 L 64 64 L 72 64 L 72 72 L 48 72 L 48 32 Z"/>
+  </g>
+  
+  <!-- Checkmark in center -->
+  <g fill="white" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 38.0 43.0 L 45.0 50.0 L 57 38.0"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="48" y="72" font-family="Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="middle" fill="white">CC</text>
+</svg>

@@ -1,0 +1,64 @@
+{
+  "roles": [
+    {
+      "id": "architect",
+      "name": "Architect",
+      "categories": [
+        {
+          "id": "architect_consolidated",
+          "name": "Architect Review",
+          "type": "markdown",
+          "path": "checklists\\markdown\\architect\\architect_consolidated.md"
+        }
+      ]
+    },
+    {
+      "id": "fo",
+      "name": "Fo",
+      "categories": [
+        {
+          "id": "fo_consolidated",
+          "name": "Fo Review",
+          "type": "markdown",
+          "path": "checklists\\markdown\\fo\\fo_consolidated.md"
+        }
+      ]
+    },
+    {
+      "id": "peer",
+      "name": "Peer",
+      "categories": [
+        {
+          "id": "peer_consolidated",
+          "name": "Peer Review",
+          "type": "markdown",
+          "path": "checklists\\markdown\\peer\\peer_consolidated.md"
+        }
+      ]
+    },
+    {
+      "id": "self",
+      "name": "Self",
+      "categories": [
+        {
+          "id": "self_consolidated",
+          "name": "Self Review",
+          "type": "markdown",
+          "path": "checklists\\markdown\\self\\self_consolidated.md"
+        }
+      ]
+    },
+    {
+      "id": "techlead",
+      "name": "Techlead",
+      "categories": [
+        {
+          "id": "techlead_consolidated",
+          "name": "Techlead Review",
+          "type": "markdown",
+          "path": "checklists\\markdown\\techlead\\techlead_consolidated.md"
+        }
+      ]
+    }
+  ]
+}
