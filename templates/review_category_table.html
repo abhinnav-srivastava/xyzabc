@@ -36,26 +36,33 @@
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <p class="lead mb-0">Review all items in this category:</p>
+          {% if app_config.get('features', {}).get('skip_categories', False) %}
           <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" id="category_skip_{{ category.category_id }}" 
-                   name="category_skip_{{ category.category_id }}" 
+                   name="category_skip_{{ category.category_id }}" value="on"
                    {% if saved_responses.get(category.category_id, {}).get('skipped') %}checked{% endif %}>
             <label class="form-check-label fw-semibold" for="category_skip_{{ category.category_id }}">
               <i class="bi bi-skip-forward me-1"></i>Skip Category
             </label>
+            <!-- Hidden input to ensure we always know the skip status -->
+            <input type="hidden" name="category_skip_{{ category.category_id }}_status" value="off">
           </div>
+          {% endif %}
         </div>
         
         <!-- Category Skip Comment -->
+        {% if app_config.get('features', {}).get('skip_categories', True) %}
         <div id="skip_comment_{{ category.category_id }}" class="alert alert-warning border-0 mb-3" 
              style="display: {% if saved_responses.get(category.category_id, {}).get('skipped') %}block{% else %}none{% endif %};">
           <label for="category_skip_comment_{{ category.category_id }}" class="form-label fw-semibold">
             <i class="bi bi-exclamation-triangle me-1"></i>Reason for skipping this category (Required)
           </label>
           <textarea class="form-control" id="category_skip_comment_{{ category.category_id }}" 
-                    name="category_skip_comment_{{ category.category_id }}" rows="2" required
+                    name="category_skip_comment_{{ category.category_id }}" rows="2"
+                    {% if saved_responses.get(category.category_id, {}).get('skipped') %}required{% endif %}
                     placeholder="Please explain why this category is not applicable...">{{ saved_responses.get(category.category_id, {}).get('skip_comment', '') }}</textarea>
         </div>
+        {% endif %}
         
         <div class="alert alert-info border-0 mt-3">
           <i class="bi bi-info-circle me-2"></i>
@@ -72,7 +79,7 @@
           </div>
           <div class="col-md-4">
             <div class="d-flex align-items-center">
-              <span class="badge bg-success me-2">GOOD</span>
+              <span class="badge bg-success me-2">RECOMMENDED</span>
               <small class="text-muted">Standard practice items</small>
             </div>
           </div>
@@ -106,7 +113,7 @@
                   {% set item_key = item.role_id + '|' + item.category_id + '|' + item.item_id %}
                   {% set saved = saved_responses.get(item_key, {}) %}
                   {% set item_type_class = 'danger' if item.item_type == 'must' else 'success' if item.item_type == 'good' else 'warning' %}
-                  {% set item_type_text = item.item_type.upper() %}
+                  {% set item_type_text = 'MUST' if item.item_type == 'must' else 'RECOMMENDED' if item.item_type == 'good' else 'OPTIONAL' if item.item_type == 'optional' else item.item_type.upper() %}
                   
                   <tr class="review-item-row" data-item-key="{{ item_key }}">
                     <td class="text-center fw-semibold">
@@ -114,9 +121,10 @@
                     </td>
                     <td>
                       <div class="item-content">
-                        <h6 class="mb-2 fw-semibold">{{ item.item_text or 'No title available' }}</h6>
-                        {% if item.item_description and item.item_description.strip() %}
-                          <p class="text-muted mb-2 small">{{ item.item_description }}</p>
+                        {% if item.subcategory and item.description %}
+                          <h6 class="mb-2"><strong>{{ item.subcategory }}</strong> - <em>{{ item.description }}</em></h6>
+                        {% else %}
+                          <h6 class="mb-2 fw-semibold">{{ item.item_text or 'No title available' }}</h6>
                         {% endif %}
                         <div class="d-flex gap-2 mb-2 flex-wrap">
                           {% if item.item_details %}
@@ -125,19 +133,15 @@
                               <i class="bi bi-info-circle me-1"></i>Show Details
                             </button>
                           {% endif %}
-                          {% if item.suggested_rule_id or (item.item_details and ('Rule Reference' in item.item_details or 'AND-' in item.item_details)) %}
+                          {% if item.rule_reference or (item.item_details and ('Rule Reference' in item.item_details or 'AND-' in item.item_details)) %}
                           <a href="{{ url_for('guidelines', category=item.guideline_category) }}" 
                              target="_blank" 
                              class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-book me-1"></i>View Guidelines
+                            {% if item.rule_reference %}
+                              <span class="ms-1 badge bg-success">{{ item.rule_reference }}</span>
+                            {% endif %}
                           </a>
-                          {% endif %}
-                          {% if item.suggested_rule_id %}
-                            <a href="{{ url_for('individual_guideline', rule_id=item.suggested_rule_id) }}" 
-                               target="_blank" 
-                               class="btn btn-sm btn-outline-success">
-                              <i class="bi bi-target me-1"></i>{{ item.suggested_rule_id }}
-                            </a>
                           {% endif %}
                         </div>
                         {% if item.item_details %}
@@ -266,8 +270,26 @@ function toggleDetails(itemKey) {
   }
 }
 
+// Initialize progress from server-side data
+function initializeProgress() {
+  const serverAnsweredItems = {{ progress.answered_items }};
+  const totalItems = {{ progress.total_items }};
+  
+  // Save server progress to session storage
+  const progressData = {
+    previousAnswered: serverAnsweredItems,
+    lastUpdated: new Date().toISOString()
+  };
+  sessionStorage.setItem('reviewProgress', JSON.stringify(progressData));
+  
+  console.log(`Initialized progress: ${serverAnsweredItems}/${totalItems} items answered`);
+}
+
 // Highlight rows based on status and handle modals
 document.addEventListener('DOMContentLoaded', function() {
+  // Initialize progress from server-side data
+  initializeProgress();
+  
   const rows = document.querySelectorAll('.review-item-row');
   rows.forEach(row => {
     const radioButtons = row.querySelectorAll('input[type="radio"]');
@@ -416,9 +438,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalItems = {{ progress.total_items }};
     let answeredItems = 0;
     
-    // Count answered items by checking all radio buttons
-    const allRadioButtons = document.querySelectorAll('input[type="radio"]:checked');
-    answeredItems = allRadioButtons.length;
+    // Count answered items from current page
+    const currentPageRadioButtons = document.querySelectorAll('input[type="radio"]:checked');
+    const currentPageAnswered = currentPageRadioButtons.length;
+    
+    // Get previously answered items from session storage
+    const savedProgress = sessionStorage.getItem('reviewProgress');
+    let previousAnswered = 0;
+    
+    if (savedProgress) {
+      try {
+        const progressData = JSON.parse(savedProgress);
+        previousAnswered = progressData.previousAnswered || 0;
+      } catch (e) {
+        console.warn('Failed to parse saved progress:', e);
+      }
+    }
+    
+    // Calculate total answered items
+    answeredItems = previousAnswered + currentPageAnswered;
+    
+    // Save current progress to session storage
+    const progressData = {
+      previousAnswered: answeredItems,
+      lastUpdated: new Date().toISOString()
+    };
+    sessionStorage.setItem('reviewProgress', JSON.stringify(progressData));
     
     // Calculate percentage
     const percentage = totalItems > 0 ? Math.round((answeredItems / totalItems) * 100) : 0;

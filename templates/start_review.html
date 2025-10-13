@@ -45,7 +45,7 @@
                   <select class="form-select" id="selected_role" name="selected_role" required>
                     <option value="">Choose a role to review...</option>
                     {% for role in config.roles %}
-                      <option value="{{ role.id }}">{{ role.name }}</option>
+                      <option value="{{ role.id }}" {% if role.id == 'self' %}selected{% endif %}>{{ role.name }}</option>
                     {% endfor %}
                   </select>
                   <div class="invalid-feedback">Please select a review role.</div>

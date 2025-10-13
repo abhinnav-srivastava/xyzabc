@@ -14,10 +14,10 @@ def get_base_dir() -> str:
     Works correctly in both development and PyInstaller bundled environments.
     """
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        # Running in PyInstaller bundle
-        return sys._MEIPASS  # type: ignore[attr-defined]
+        \
+        return sys._MEIPASS
     else:
-        # Running in development
+        \
         return os.path.dirname(os.path.dirname(__file__))
 
 def get_project_root() -> Path:
@@ -29,10 +29,10 @@ def get_project_root() -> Path:
 def get_config_path(config_file: str) -> Path:
     """
     Get the full path to a config file.
-    
+
     Args:
         config_file: The config file name (e.g., 'roles.json', 'app_config.json')
-    
+
     Returns:
         Path to the config file
     """
@@ -41,10 +41,10 @@ def get_config_path(config_file: str) -> Path:
 def get_checklists_path(subpath: str = "") -> Path:
     """
     Get the path to the checklists directory.
-    
+
     Args:
         subpath: Optional subpath within checklists directory
-    
+
     Returns:
         Path to checklists directory or subpath
     """
@@ -56,10 +56,10 @@ def get_checklists_path(subpath: str = "") -> Path:
 def get_scripts_path(script_file: str = "") -> Path:
     """
     Get the path to the scripts directory.
-    
+
     Args:
         script_file: Optional script file name
-    
+
     Returns:
         Path to scripts directory or specific script
     """
@@ -71,10 +71,10 @@ def get_scripts_path(script_file: str = "") -> Path:
 def get_static_path(subpath: str = "") -> Path:
     """
     Get the path to the static directory.
-    
+
     Args:
         subpath: Optional subpath within static directory
-    
+
     Returns:
         Path to static directory or subpath
     """
@@ -86,10 +86,10 @@ def get_static_path(subpath: str = "") -> Path:
 def get_templates_path(template_file: str = "") -> Path:
     """
     Get the path to the templates directory.
-    
+
     Args:
         template_file: Optional template file name
-    
+
     Returns:
         Path to templates directory or specific template
     """
@@ -101,10 +101,10 @@ def get_templates_path(template_file: str = "") -> Path:
 def ensure_dir_exists(path: Union[str, Path]) -> Path:
     """
     Ensure a directory exists, creating it if necessary.
-    
+
     Args:
         path: Directory path
-    
+
     Returns:
         Path object to the directory
     """
@@ -115,23 +115,23 @@ def ensure_dir_exists(path: Union[str, Path]) -> Path:
 def get_relative_path(target_path: Union[str, Path], from_path: Optional[Union[str, Path]] = None) -> Path:
     """
     Get a relative path from one location to another.
-    
+
     Args:
         target_path: The target path
         from_path: The starting path (defaults to project root)
-    
+
     Returns:
         Relative path
     """
     if from_path is None:
         from_path = get_project_root()
-    
+
     return Path(target_path).relative_to(Path(from_path))
 
 def is_portable_mode() -> bool:
     """
     Check if the application is running in portable mode (PyInstaller bundle).
-    
+
     Returns:
         True if running in portable mode, False otherwise
     """
@@ -142,7 +142,7 @@ def get_data_dir() -> Path:
     Get the data directory for the application.
     In portable mode, this is the same as the base directory.
     In development mode, this is the project root.
-    
+
     Returns:
         Path to the data directory
     """
@@ -151,7 +151,7 @@ def get_data_dir() -> Path:
 def get_logs_dir() -> Path:
     """
     Get the logs directory for the application.
-    
+
     Returns:
         Path to the logs directory
     """
@@ -162,7 +162,7 @@ def get_logs_dir() -> Path:
 def get_temp_dir() -> Path:
     """
     Get the temporary directory for the application.
-    
+
     Returns:
         Path to the temporary directory
     """
@@ -170,7 +170,6 @@ def get_temp_dir() -> Path:
     ensure_dir_exists(temp_dir)
     return temp_dir
 
-# Convenience functions for common paths
 def get_roles_config_path() -> Path:
     """Get the path to roles.json config file."""
     return get_config_path("roles.json")
@@ -194,4 +193,3 @@ def get_checklist_columns_config_path() -> Path:
 def get_conversion_config_path() -> Path:
     """Get the path to conversion_config.json config file."""
     return get_config_path("conversion_config.json")
-

@@ -43,7 +43,7 @@
     </div>
 
     <!-- Review Form -->
-    <form method="post" class="needs-validation" novalidate>
+    <form method="post" id="reviewForm">
       {% for category in categories %}
         <div class="card shadow-sm border-0 mb-4">
           <div class="card-header bg-light">
@@ -55,19 +55,24 @@
                 <small class="text-muted">{{ category.item_list|length }} items</small>
               </div>
               <div class="col-md-4 text-end">
+                {% if app_config.get('features', {}).get('skip_categories', False) %}
                 <div class="form-check form-switch d-flex align-items-center justify-content-end">
                   <input class="form-check-input me-2" type="checkbox" id="category_skip_{{ category.category_id }}" 
-                         name="category_skip_{{ category.category_id }}" 
+                         name="category_skip_{{ category.category_id }}" value="on"
                          {% if saved_responses.get(category.category_id, {}).get('skipped') %}checked{% endif %}>
                   <label class="form-check-label fw-semibold mb-0" for="category_skip_{{ category.category_id }}">
                     <i class="bi bi-skip-forward me-1"></i>Skip Category
                   </label>
+                  <!-- Hidden input to ensure we always know the skip status -->
+                  <input type="hidden" name="category_skip_{{ category.category_id }}_status" value="off" id="hidden_skip_{{ category.category_id }}">
                 </div>
+                {% endif %}
               </div>
             </div>
           </div>
           
           <!-- Category Skip Comment -->
+          {% if app_config.get('features', {}).get('skip_categories', True) %}
           <div id="skip_comment_{{ category.category_id }}" class="card-body border-top" 
                style="display: {% if saved_responses.get(category.category_id, {}).get('skipped') %}block{% else %}none{% endif %};">
             <div class="alert alert-warning border-0">
@@ -75,10 +80,12 @@
                 <i class="bi bi-exclamation-triangle me-1"></i>Reason for skipping this category (Required)
               </label>
               <textarea class="form-control" id="category_skip_comment_{{ category.category_id }}" 
-                        name="category_skip_comment_{{ category.category_id }}" rows="2" required
+                        name="category_skip_comment_{{ category.category_id }}" rows="2"
+                        {% if saved_responses.get(category.category_id, {}).get('skipped') %}required{% endif %}
                         placeholder="Please explain why this category is not applicable...">{{ saved_responses.get(category.category_id, {}).get('skip_comment', '') }}</textarea>
             </div>
           </div>
+          {% endif %}
 
           <!-- Category Items -->
           <div class="card-body" id="category_items_{{ category.category_id }}">
@@ -98,7 +105,7 @@
                     {% set item_key = item.role_id + '|' + item.category_id + '|' + item.item_id %}
                     {% set saved = saved_responses.get(item_key, {}) %}
                     {% set item_type_class = 'danger' if item.item_type == 'must' else 'success' if item.item_type == 'good' else 'warning' %}
-                    {% set item_type_text = item.item_type.upper() %}
+                    {% set item_type_text = 'MUST' if item.item_type == 'must' else 'RECOMMENDED' if item.item_type == 'good' else 'OPTIONAL' if item.item_type == 'optional' else item.item_type.upper() %}
                     
                     <tr class="review-item-row" data-item-key="{{ item_key }}">
                       <td class="text-center fw-semibold">
@@ -106,9 +113,10 @@
                       </td>
                       <td>
                         <div class="item-content">
-                          <h6 class="mb-2 fw-semibold">{{ item.item_text or 'No title available' }}</h6>
-                          {% if item.item_description and item.item_description.strip() %}
-                            <p class="text-muted mb-2 small">{{ item.item_description }}</p>
+                          {% if item.subcategory and item.description %}
+                            <h6 class="mb-2"><strong>{{ item.subcategory }}</strong> - <em>{{ item.description }}</em></h6>
+                          {% else %}
+                            <h6 class="mb-2 fw-semibold">{{ item.item_text or 'No title available' }}</h6>
                           {% endif %}
                           <div class="d-flex gap-2 mb-2 flex-wrap">
                             {% if item.item_details %}
@@ -117,19 +125,15 @@
                                 <i class="bi bi-info-circle me-1"></i>Show Details
                               </button>
                             {% endif %}
-                            {% if item.suggested_rule_id or (item.item_details and ('Rule Reference' in item.item_details or 'AND-' in item.item_details)) %}
+                            {% if item.rule_reference or (item.item_details and ('Rule Reference' in item.item_details or 'AND-' in item.item_details)) %}
                             <a href="{{ url_for('guidelines', category=item.guideline_category) }}" 
                                target="_blank" 
                                class="btn btn-sm btn-outline-primary">
                               <i class="bi bi-book me-1"></i>View Guidelines
+                              {% if item.rule_reference %}
+                                <span class="ms-1 badge bg-success">{{ item.rule_reference }}</span>
+                              {% endif %}
                             </a>
-                            {% endif %}
-                            {% if item.suggested_rule_id %}
-                              <a href="{{ url_for('individual_guideline', rule_id=item.suggested_rule_id) }}" 
-                                 target="_blank" 
-                                 class="btn btn-sm btn-outline-success">
-                                <i class="bi bi-target me-1"></i>{{ item.suggested_rule_id }}
-                              </a>
                             {% endif %}
                           </div>
                           {% if item.item_details %}
@@ -261,23 +265,125 @@ window.toggleComment = function(itemKey) {
   }
 };
 
-// Handle category skip toggle
+// Handle form submission
 document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('reviewForm');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      console.log('Form submission triggered');
+      console.log('Form element:', form);
+      console.log('Form method:', form.method);
+      console.log('Form action:', form.action);
+      
+      // Validate that at least some categories are either answered or skipped
+      const allCategories = document.querySelectorAll('[id^="category_skip_"]');
+      console.log('All skip checkboxes found:', allCategories.length);
+      
+      let hasAnyResponse = false;
+      let skippedCategories = 0;
+      let categoriesWithoutSkipComments = [];
+      
+      {% if app_config.get('features', {}).get('skip_categories', True) %}
+      allCategories.forEach(skipCheckbox => {
+        const categoryId = skipCheckbox.id.replace('category_skip_', '');
+        const isSkipped = skipCheckbox.checked;
+        console.log(`Category ${categoryId}: skipped=${isSkipped}`);
+        
+        if (isSkipped) {
+          skippedCategories++;
+          const skipCommentField = document.getElementById(`category_skip_comment_${categoryId}`);
+          if (skipCommentField && !skipCommentField.value.trim()) {
+            console.log(`Category ${categoryId} missing skip comment`);
+            categoriesWithoutSkipComments.push(categoryId);
+          }
+          hasAnyResponse = true;
+        } else {
+          // Check if this category has any answered items
+          const categoryItems = document.querySelectorAll(`input[name^="status_"][name*="${categoryId}"]`);
+          console.log(`Category ${categoryId} has ${categoryItems.length} items`);
+          categoryItems.forEach(item => {
+            if (item.checked) {
+              console.log(`Category ${categoryId} has answered item: ${item.name}`);
+              hasAnyResponse = true;
+            }
+          });
+        }
+      });
+      {% else %}
+      // Skip feature disabled - only check for answered items
+      const allCategoryItems = document.querySelectorAll('input[name^="status_"]');
+      allCategoryItems.forEach(item => {
+        if (item.checked) {
+          hasAnyResponse = true;
+        }
+      });
+      {% endif %}
+      
+      console.log('Validation results:', {
+        hasAnyResponse,
+        skippedCategories,
+        categoriesWithoutSkipComments: categoriesWithoutSkipComments.length
+      });
+      
+      // Check if any skipped categories are missing comments
+      if (categoriesWithoutSkipComments.length > 0) {
+        console.log('Preventing submit: missing skip comments');
+        e.preventDefault();
+        alert('⚠️ Please provide skip comments for all skipped categories.\n\nCategories missing comments: ' + categoriesWithoutSkipComments.length);
+        return false;
+      }
+      
+      // Show confirmation if submitting with no responses
+      if (!hasAnyResponse) {
+        console.log('No responses detected, asking for confirmation');
+        if (!confirm('⚠️ You haven\'t answered or skipped any items.\n\nDo you want to submit the review anyway?')) {
+          console.log('User cancelled submission');
+          e.preventDefault();
+          return false;
+        }
+        console.log('User confirmed submission with no responses');
+      }
+      
+      // Show loading indicator
+      const submitButton = form.querySelector('button[type="submit"]');
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Processing Review...';
+      }
+      
+      console.log('Form submitting with responses');
+      console.log('About to submit form...');
+      // Let the form submit
+      return true;
+    });
+  } else {
+    console.error('Form with id="reviewForm" not found!');
+  }
   // Category skip functionality
   document.querySelectorAll('input[id^="category_skip_"]').forEach(checkbox => {
     checkbox.addEventListener('change', function() {
       const categoryId = this.id.replace('category_skip_', '');
       const commentDiv = document.getElementById(`skip_comment_${categoryId}`);
       const itemsDiv = document.getElementById(`category_items_${categoryId}`);
+      const hiddenInput = document.getElementById(`hidden_skip_${categoryId}`);
+      const commentTextarea = document.getElementById(`category_skip_comment_${categoryId}`);
       
       if (this.checked) {
         commentDiv.style.display = 'block';
         itemsDiv.style.opacity = '0.5';
         itemsDiv.style.pointerEvents = 'none';
+        // Update hidden input to indicate skip is on
+        if (hiddenInput) hiddenInput.value = 'on';
+        // Make comment field required
+        if (commentTextarea) commentTextarea.setAttribute('required', 'required');
       } else {
         commentDiv.style.display = 'none';
         itemsDiv.style.opacity = '1';
         itemsDiv.style.pointerEvents = 'auto';
+        // Update hidden input to indicate skip is off
+        if (hiddenInput) hiddenInput.value = 'off';
+        // Remove required attribute from comment field
+        if (commentTextarea) commentTextarea.removeAttribute('required');
       }
     });
   });

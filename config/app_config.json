@@ -2,10 +2,7 @@
   "application": {
     "name": "CodeCritique",
     "version": "1.0.0",
-    "description": "Professional code review tool with role-based, category-driven checklists",
-    "license": "Apache-2.0",
-    "homepage": "https://github.com/codecritique/codecritique",
-    "repository": "https://github.com/codecritique/codecritique.git"
+    "description": "Professional code review tool with role-based, category-driven checklists"
   },
   "roles": {
     "self": {
@@ -171,9 +168,12 @@
     "position": "top-right"
   },
   "features": {
+    "skip_categories": false,
+    "auto_launch_browser": true,
     "pwa": true,
     "offline_mode": true,
     "auto_update": true,
+    "debug_logging": false,
     "gitlab_integration": false,
     "github_integration": false,
     "jira_integration": false,

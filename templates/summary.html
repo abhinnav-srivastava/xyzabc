@@ -107,6 +107,7 @@
               </div>
             </div>
           </div>
+          {% if app_config.get('features', {}).get('skip_categories', False) %}
           <div class="col-md-2">
             <div class="card border-info h-100">
               <div class="card-body text-center">
@@ -116,6 +117,7 @@
               </div>
             </div>
           </div>
+          {% endif %}
           <div class="col-md-2">
             <div class="card border-warning h-100">
               <div class="card-body text-center">
@@ -161,7 +163,9 @@
                       <span class="badge bg-success">{{ cat.counts.OK }}</span>
                       <span class="badge bg-danger">{{ cat.counts.NG }}</span>
                       <span class="badge bg-secondary">{{ cat.counts.NA }}</span>
+                      {% if app_config.get('features', {}).get('skip_categories', False) %}
                       <span class="badge bg-info">{{ cat.counts.SKIPPED }}</span>
+                      {% endif %}
                       <span class="badge bg-warning">{{ cat.counts.UNANSWERED }}</span>
                     </div>
                   </div>
@@ -181,15 +185,19 @@
                                     <i class="bi bi-x-circle-fill text-danger me-3"></i>
                                   {% elif item.response == 'NA' %}
                                     <i class="bi bi-dash-circle-fill text-secondary me-3"></i>
-                                  {% elif item.response == 'SKIPPED' %}
+                                  {% elif app_config.get('features', {}).get('skip_categories', False) and item.response == 'SKIPPED' %}
                                     <i class="bi bi-skip-forward-fill text-info me-3"></i>
                                   {% elif item.response == 'UNANSWERED' %}
                                     <i class="bi bi-question-circle-fill text-warning me-3"></i>
                                   {% else %}
                                     <i class="bi bi-question-circle-fill text-warning me-3"></i>
                                   {% endif %}
-                              <span class="fw-semibold">{{ item.item_text }}</span>
-                              <span class="badge bg-{{ 'success' if item.response == 'OK' else 'danger' if item.response == 'NG' else 'secondary' if item.response == 'NA' else 'info' if item.response == 'SKIPPED' else 'warning' }} ms-auto me-3">
+                              {% if item.subcategory and item.description %}
+                                <span class="fw-semibold"><strong>{{ item.subcategory }}</strong> - <em>{{ item.description }}</em></span>
+                              {% else %}
+                                <span class="fw-semibold">{{ item.item_text }}</span>
+                              {% endif %}
+                              <span class="badge bg-{{ 'success' if item.response == 'OK' else 'danger' if item.response == 'NG' else 'secondary' if item.response == 'NA' else 'info' if app_config.get('features', {}).get('skip_categories', False) and item.response == 'SKIPPED' else 'warning' }} ms-auto me-3">
                                 {{ item.response if item.response not in ['UNANSWERED'] else 'Unanswered' }}
                               </span>
                             </div>

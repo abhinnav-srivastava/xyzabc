@@ -14,7 +14,7 @@
     },
     {
       "id": "fo",
-      "name": "Fo",
+      "name": "FeatureOwner",
       "categories": [
         {
           "id": "fo_consolidated",
@@ -38,7 +38,7 @@
     },
     {
       "id": "self",
-      "name": "Self",
+      "name": "Developer Review",
       "categories": [
         {
           "id": "self_consolidated",
