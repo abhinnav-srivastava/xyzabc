@@ -1214,6 +1214,12 @@ if __name__ == "__main__":
                        help='Port to run the server on (default: 5000)')
     parser.add_argument('--host', default='127.0.0.1',
                        help='Host to run the server on (default: 127.0.0.1)')
+    parser.add_argument('--bind-all', action='store_true',
+                       help='Bind to all addresses (0.0.0.0) instead of localhost only')
+    parser.add_argument('--production', action='store_true',
+                       help='Run in production mode (disable debug mode)')
+    parser.add_argument('--dev-server', action='store_true',
+                       help='Use Flask development server (not recommended for production)')
 
     args = parser.parse_args()
 
@@ -1221,7 +1227,7 @@ if __name__ == "__main__":
 
     \
     if args.no_browser:
-        print("🚫 Auto-launch browser disabled by command line")
+        print("Auto-launch browser disabled by command line")
         \
         if 'app_config' in app.config and 'features' in app.config['app_config']:
             app.config['app_config']['features']['auto_launch_browser'] = False
@@ -1237,13 +1243,40 @@ if __name__ == "__main__":
                 def launch_browser():
                     time.sleep(1.5)
                     webbrowser.open(f'http://{args.host}:{args.port}')
-                    print("🌐 Browser launched automatically")
+                    print("Browser launched automatically")
                 threading.Thread(target=launch_browser, daemon=True).start()
             except Exception as e:
                 print(f"Failed to auto-launch browser: {e}")
 
     port = args.port
-    host = args.host
+    host = '0.0.0.0' if args.bind_all else args.host
 
-    print(f"🚀 Starting CodeCritique on http://{host}:{port}")
-    app.run(host=host, port=port, debug=True)
+    print(f"Starting CodeCritique on http://{host}:{port}")
+    
+    # Default to production WSGI server unless dev-server is explicitly requested
+    if args.dev_server:
+        print("Using Flask development server (not recommended for production)")
+        debug_mode = not args.production
+        if args.production:
+            print("Running in production mode (debug disabled)")
+            import warnings
+            warnings.filterwarnings("ignore", message=".*development server.*")
+        else:
+            print("Running in development mode (debug enabled)")
+        app.run(host=host, port=port, debug=debug_mode)
+    else:
+        # Use production WSGI server by default
+        try:
+            import waitress
+            print("Using Waitress production WSGI server")
+            print("Running in production mode (debug disabled)")
+            waitress.serve(app, host=host, port=port, threads=4)
+        except ImportError:
+            print("Waitress not available, falling back to Flask development server")
+            print("WARNING: This is a development server. Install waitress for production.")
+            app.run(host=host, port=port, debug=False)
+        except Exception as e:
+            print(f"Error starting Waitress: {e}")
+            print("Falling back to Flask development server")
+            print("WARNING: This is a development server.")
+            app.run(host=host, port=port, debug=False)

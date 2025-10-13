@@ -257,6 +257,102 @@ def convert_role_excel_files(excel_files: List[Path], role_name: str, markdown_d
         print(f"Error processing role {role_name}: {e}")
         return False
 
+def convert_guidelines_excel(excel_dir: str = "checklists/excel", markdown_dir: str = "checklists/markdown") -> bool:
+    """
+    Convert guidelines Excel file to markdown format.
+    """
+    try:
+        guidelines_excel = Path(excel_dir) / "guidelines" / "android_coding_guidelines.xlsx"
+        if not guidelines_excel.exists():
+            print(f"Guidelines Excel file not found: {guidelines_excel}")
+            return False
+        
+        # Read the guidelines Excel file
+        df = pd.read_excel(guidelines_excel)
+        
+        # Create the guidelines markdown directory
+        guidelines_md_dir = Path(markdown_dir) / "guidelines"
+        guidelines_md_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate markdown content
+        markdown_lines = []
+        markdown_lines.append('# Android Coding Guidelines')
+        markdown_lines.append('')
+        
+        current_category = ''
+        current_subcategory = ''
+        
+        for _, row in df.iterrows():
+            rule_id = str(row.get('Rule ID', '')).strip()
+            main_category = str(row.get('Main Category', '')).strip()
+            sub_category = str(row.get('Sub Category', '')).strip()
+            description = str(row.get('Guidelines Description', '')).strip()
+            good_example = str(row.get('Good Example', '')).strip()
+            bad_example = str(row.get('Bad Example', '')).strip()
+            measurement = str(row.get('Measurement Reference', '')).strip()
+            severity = str(row.get('Severity (MUST/GOOD/MAY)', '')).strip()
+            external_refs = str(row.get('External Refs', '')).strip()
+            
+            # Skip empty rows
+            if not rule_id or rule_id.lower() in ['nan', 'none', '']:
+                continue
+            
+            # Add category header
+            if main_category and main_category != current_category:
+                current_category = main_category
+                markdown_lines.append(f'## {main_category}')
+                markdown_lines.append('')
+                current_subcategory = ''
+            
+            # Add subcategory header
+            if sub_category and sub_category != current_subcategory:
+                current_subcategory = sub_category
+                markdown_lines.append(f'### {sub_category}')
+                markdown_lines.append('')
+            
+            # Add guideline
+            severity_text = f'({severity})' if severity and severity.lower() not in ['nan', 'none', ''] else ''
+            markdown_lines.append(f'**{rule_id}** {severity_text}: {description}')
+            
+            # Add details
+            details = []
+            
+            if good_example and good_example.lower() not in ['nan', 'none', '']:
+                details.append(f'  - **Good Example:**')
+                details.append(f'```kotlin')
+                details.append(good_example)
+                details.append(f'```')
+            
+            if bad_example and bad_example.lower() not in ['nan', 'none', '']:
+                details.append(f'  - **Bad Example:**')
+                details.append(f'```kotlin')
+                details.append(bad_example)
+                details.append(f'```')
+            
+            if measurement and measurement.lower() not in ['nan', 'none', '']:
+                details.append(f'  - **Measurement:** {measurement}')
+            
+            if external_refs and external_refs.lower() not in ['nan', 'none', '']:
+                details.append(f'  - **Reference:** {external_refs}')
+            
+            if details:
+                markdown_lines.extend(details)
+            
+            markdown_lines.append('')
+        
+        # Write the markdown file
+        markdown_file = guidelines_md_dir / 'android_coding_guidelines.md'
+        with open(markdown_file, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(markdown_lines))
+        
+        print(f"Successfully created guidelines: {markdown_file}")
+        print(f"Generated {len(df)} guidelines")
+        return True
+        
+    except Exception as e:
+        print(f"Error processing guidelines: {e}")
+        return False
+
 def convert_all_excel_files_by_category(excel_dir: str = "checklists/excel", markdown_dir: str = "checklists/markdown") -> bool:
     """
     Convert all Excel files, grouping by role and MainCategory column.
@@ -386,6 +482,10 @@ def main():
     if not convert_all_excel_files_by_category():
         print("Error: Failed to convert Excel files")
         return False
+
+    print("\n1.5. Converting guidelines Excel file to markdown...")
+    if not convert_guidelines_excel():
+        print("Warning: Failed to convert guidelines Excel file")
 
     print("\n2. Updating roles.json with dynamic categories...")
     if not update_roles_json():

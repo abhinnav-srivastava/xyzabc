@@ -1,649 +1,918 @@
+# Android Coding Guidelines
 
+## Style
 
-**AND-001** (MUST): Use MVVM architecture pattern for UI components
+### Naming
+
+**AND-001** (MUST): Use PascalCase for class names
   - **Good Example:**
 ```kotlin
-class UserViewModel : ViewModel() {
-    private val _user = MutableLiveData<User>()
-    val user: LiveData<User> = _user
-    
-    fun loadUser(userId: String) {
-        // Load user logic
-    }
+public class UserProfileActivity
+```
+  - **Bad Example:**
+```kotlin
+public class userProfileActivity
+```
+  - **Measurement:** Android Code Style Guide
+  - **Reference:** https://developer.android.com/kotlin/style-guide
+
+### Formatting
+
+**AND-002** (MUST): Use 4 spaces for indentation
+  - **Good Example:**
+```kotlin
+if (condition) {
+    doSomething();
 }
 ```
   - **Bad Example:**
 ```kotlin
-class MainActivity : AppCompatActivity() {
-    fun loadUser() {
-        // Direct database access in Activity
-        val user = database.getUser()
-        textView.text = user.name
-    }
+if (condition) {
+  doSomething();
 }
 ```
-  - **Measurement:** Code review checklist
-  - **Reference:** Android Architecture Guide
+  - **Measurement:** IDE formatting rules
+  - **Reference:** https://developer.android.com/kotlin/style-guide
 
-**AND-002** (MUST): Implement Repository pattern for data access
+### Documentation
+
+**AND-003** (GOOD): Add KDoc for public APIs
   - **Good Example:**
 ```kotlin
-class UserRepository @Inject constructor(
-    private val localDataSource: UserLocalDataSource,
-    private val remoteDataSource: UserRemoteDataSource
-) {
-    suspend fun getUser(id: String): Result<User> {
-        return try {
-            val user = remoteDataSource.getUser(id)
-            localDataSource.saveUser(user)
-            Result.success(user)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-}
+/**
+ * Retrieves user profile
+ */
 ```
   - **Bad Example:**
 ```kotlin
-class UserViewModel : ViewModel() {
-    fun loadUser() {
-        // Direct API calls in ViewModel
-        apiService.getUser().enqueue(object : Callback<User> {
-            // Handle response
-        })
-    }
-}
+// Gets user data
 ```
-  - **Measurement:** Architecture review
-  - **Reference:** Android Architecture Components
+  - **Measurement:** KDoc coverage reports
+  - **Reference:** https://kotlinlang.org/docs/kotlin-doc.html
 
+### Variables
 
-**AND-003** (MUST): Implement proper exception handling
+**AND-004** (GOOD): Use val for immutable variables
   - **Good Example:**
 ```kotlin
-suspend fun fetchData(): Result<Data> {
-    return try {
-        val data = apiService.getData()
-        Result.success(data)
-    } catch (e: IOException) {
-        Result.failure(NetworkException("Network error", e))
-    } catch (e: Exception) {
-        Result.failure(UnknownException("Unknown error", e))
-    }
-}
+val userName = "John"
 ```
   - **Bad Example:**
 ```kotlin
-fun fetchData() {
-    try {
-        val data = apiService.getData()
-        // Handle success
-    } catch (e: Exception) {
-        // Generic exception handling
-        Log.e("Error", e.message)
-    }
-}
+var userName = "John"
 ```
-  - **Measurement:** Code review
-  - **Reference:** Android Error Handling Best Practices
+  - **Measurement:** IDE variable warnings
+  - **Reference:** https://kotlinlang.org/docs/basic-syntax.html
 
-**AND-004** (MUST): Use null safety features properly
+## Error Handling
+
+### Exceptions
+
+**AND-005** (MUST): Use specific exception types
   - **Good Example:**
 ```kotlin
-fun processUser(user: User?) {
-    user?.let {
-        // Safe processing
-        displayUser(it)
-    } ?: run {
-        // Handle null case
-        showError("User not found")
-    }
-}
+throw IllegalArgumentException("Invalid ID")
 ```
   - **Bad Example:**
 ```kotlin
-fun processUser(user: User?) {
-    if (user != null) {
-        displayUser(user)
-    }
-    // Missing null handling
-}
+throw Exception("Error occurred")
 ```
-  - **Measurement:** Static analysis
-  - **Reference:** Kotlin Null Safety Guide
+  - **Measurement:** Exception handling audit
+  - **Reference:** https://kotlinlang.org/docs/exceptions.html
 
+### Try-Catch
 
-**AND-005** (MUST): Write unit tests for business logic
+**AND-006** (MUST): Handle exceptions at appropriate levels
   - **Good Example:**
 ```kotlin
-@Test
-fun `when user is valid, should return success`() {
-    // Given
-    val user = User("John", "john@example.com")
-    
-    // When
-    val result = userValidator.validate(user)
-    
-    // Then
-    assertTrue(result.isSuccess)
-}
+try { riskyOperation() } catch (e: IOException) { handleError(e) }
 ```
   - **Bad Example:**
 ```kotlin
-// No unit tests written
-class UserValidator {
-    fun validate(user: User): Result<User> {
-        // Validation logic without tests
-    }
-}
+val result = riskyOperation() // No error handling
 ```
-  - **Measurement:** Test coverage > 80%
-  - **Reference:** Android Testing Guide
+  - **Measurement:** Code coverage analysis
+  - **Reference:** https://kotlinlang.org/docs/exceptions.html
 
-**AND-006** (GOOD): Write integration tests for critical flows
+### User Feedback
+
+**AND-007** (MUST): Show user-friendly error messages
   - **Good Example:**
 ```kotlin
-@RunWith(AndroidJUnit4::class)
-class UserRepositoryIntegrationTest {
-    @Test
-    fun `should save and retrieve user from database`() {
-        // Integration test implementation
-    }
-}
+showError("Unable to connect to server")
 ```
   - **Bad Example:**
 ```kotlin
-// Only unit tests, no integration tests
+showError("IOException: Connection refused")
 ```
-  - **Measurement:** Critical path coverage
-  - **Reference:** Android Testing Guide
+  - **Measurement:** User feedback analysis
+  - **Reference:** https://material.io/design/communication/errors.html
 
+### Monitoring
 
-**AND-007** (MUST): Avoid memory leaks in Activities and Fragments
+**AND-008** (MUST): Report errors to crash reporting service
   - **Good Example:**
 ```kotlin
-class MainActivity : AppCompatActivity() {
-    private val viewModel: MainViewModel by viewModels()
-    
-    override fun onDestroy() {
-        super.onDestroy()
-        // ViewModel automatically cleared
-    }
-}
+FirebaseCrashlytics.getInstance().recordException(exception)
 ```
   - **Bad Example:**
 ```kotlin
-class MainActivity : AppCompatActivity() {
-    private var listener: OnClickListener? = null
-    
-    override fun onDestroy() {
-        super.onDestroy()
-        // Memory leak - listener not cleared
-    }
-}
+Log.e(TAG, "Error occurred", exception)
 ```
-  - **Measurement:** Memory profiling
-  - **Reference:** Android Memory Management
+  - **Measurement:** Crash reporting dashboard
+  - **Reference:** https://firebase.google.com/docs/crashlytics
 
-**AND-008** (MUST): Use appropriate threading mechanisms
+## DI
+
+### Hilt Setup
+
+**AND-009** (GOOD): Use Hilt for dependency injection
   - **Good Example:**
 ```kotlin
-class DataRepository {
-    suspend fun fetchData(): Data = withContext(Dispatchers.IO) {
-        // Background work
-        apiService.getData()
-    }
-}
+@HiltAndroidApp
+class MyApplication : Application()
 ```
   - **Bad Example:**
 ```kotlin
-class DataRepository {
-    fun fetchData() {
-        Thread {
-            // Blocking main thread
-            val data = apiService.getData()
-            // Update UI on background thread
-        }.start()
-    }
-}
+Manual dependency creation in activities
 ```
-  - **Measurement:** ANR detection
-  - **Reference:** Android Threading Guide
+  - **Measurement:** DI framework adoption
+  - **Reference:** https://developer.android.com/training/dependency-injection/hilt-android
 
+### Modules
 
-**AND-009** (MUST): Encrypt sensitive data
-  - **Good Example:**
-```kotlin
-class SecureStorage {
-    private val masterKey = MasterKey.Builder(context)
-        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-        .build()
-    
-    private val encryptedPrefs = EncryptedSharedPreferences.create(
-        context,
-        "secure_prefs",
-        masterKey,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
-}
-```
-  - **Bad Example:**
-```kotlin
-class InsecureStorage {
-    private val prefs = context.getSharedPreferences("data", Context.MODE_PRIVATE)
-    
-    fun savePassword(password: String) {
-        prefs.edit().putString("password", password).apply()
-    }
-}
-```
-  - **Measurement:** Security audit
-  - **Reference:** Android Security Best Practices
-
-**AND-010** (MUST): Use HTTPS for all network communications
-  - **Good Example:**
-```kotlin
-class ApiClient {
-    private val client = OkHttpClient.Builder()
-        .certificatePinner(
-            CertificatePinner.Builder()
-                .add("api.example.com", "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
-                .build()
-        )
-        .build()
-}
-```
-  - **Bad Example:**
-```kotlin
-class ApiClient {
-    private val client = OkHttpClient.Builder()
-        .build()
-    // No certificate pinning
-}
-```
-  - **Measurement:** Network security scan
-  - **Reference:** Android Network Security Config
-
-
-**AND-011** (MUST): Follow Kotlin naming conventions
-  - **Good Example:**
-```kotlin
-class UserRepository {
-    private val userDao: UserDao
-    private val apiService: ApiService
-    
-    suspend fun getUserById(userId: String): User {
-        // Implementation
-    }
-}
-```
-  - **Bad Example:**
-```kotlin
-class userRepository {
-    private val UserDao: userDao
-    private val API_SERVICE: ApiService
-    
-    suspend fun GetUserByID(user_id: String): User {
-        // Implementation
-    }
-}
-```
-  - **Measurement:** Code review
-  - **Reference:** Kotlin Coding Conventions
-
-**AND-012** (GOOD): Use consistent code formatting
-  - **Good Example:**
-```kotlin
-class DataProcessor {
-    fun processData(
-        input: List<String>,
-        filter: (String) -> Boolean
-    ): List<String> {
-        return input
-            .filter(filter)
-            .map { it.trim() }
-            .distinct()
-    }
-}
-```
-  - **Bad Example:**
-```kotlin
-class DataProcessor{
-fun processData(input:List<String>,filter:(String)->Boolean):List<String>{
-return input.filter(filter).map{it.trim()}.distinct()
-}
-}
-```
-  - **Measurement:** Automated formatting
-  - **Reference:** Kotlin Style Guide
-
-
-**AND-013** (MUST): Support different screen sizes
-  - **Good Example:**
-```xml
-<LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
-    
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="@dimen/text_size_medium" />
-</LinearLayout>
-```
-  - **Bad Example:**
-```xml
-<LinearLayout
-    android:layout_width="300dp"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
-    
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp" />
-</LinearLayout>
-```
-  - **Measurement:** UI testing on different devices
-  - **Reference:** Android Responsive Design
-
-**AND-014** (MUST): Implement accessibility features
-  - **Good Example:**
-```xml
-<Button
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="@string/submit"
-    android:contentDescription="@string/submit_button_description"
-    android:importantForAccessibility="yes" />
-```
-  - **Bad Example:**
-```xml
-<Button
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Submit" />
-```
-  - **Measurement:** Accessibility testing
-  - **Reference:** Android Accessibility Guide
-
-
-**AND-015** (MUST): Use Retrofit for API calls
-  - **Good Example:**
-```kotlin
-interface ApiService {
-    @GET("users/{id}")
-    suspend fun getUser(@Path("id") userId: String): User
-    
-    @POST("users")
-    suspend fun createUser(@Body user: User): Response<User>
-}
-```
-  - **Bad Example:**
-```kotlin
-class ApiService {
-    fun getUser(userId: String) {
-        val url = "https://api.example.com/users/$userId"
-        // Manual HTTP implementation
-    }
-}
-```
-  - **Measurement:** Code review
-  - **Reference:** Retrofit Documentation
-
-**AND-016** (MUST): Handle API errors gracefully
-  - **Good Example:**
-```kotlin
-suspend fun fetchUser(userId: String): Result<User> {
-    return try {
-        val response = apiService.getUser(userId)
-        if (response.isSuccessful) {
-            Result.success(response.body()!!)
-        } else {
-            Result.failure(ApiException(response.code(), response.message()))
-        }
-    } catch (e: Exception) {
-        Result.failure(e)
-    }
-}
-```
-  - **Bad Example:**
-```kotlin
-suspend fun fetchUser(userId: String): User {
-    val response = apiService.getUser(userId)
-    return response.body()!! // Potential crash
-}
-```
-  - **Measurement:** Error monitoring
-  - **Reference:** Android Error Handling
-
-
-**AND-017** (GOOD): Implement proper logging
-  - **Good Example:**
-```kotlin
-class UserRepository {
-    private val logger = Logger.getLogger(UserRepository::class.java.name)
-    
-    suspend fun saveUser(user: User) {
-        logger.info("Saving user: ${user.id}")
-        try {
-            userDao.insert(user)
-            logger.info("User saved successfully: ${user.id}")
-        } catch (e: Exception) {
-            logger.error("Failed to save user: ${user.id}", e)
-            throw e
-        }
-    }
-}
-```
-  - **Bad Example:**
-```kotlin
-class UserRepository {
-    suspend fun saveUser(user: User) {
-        Log.d("User", "Saving user")
-        userDao.insert(user)
-        Log.d("User", "User saved")
-    }
-}
-```
-  - **Measurement:** Log analysis
-  - **Reference:** Android Logging Best Practices
-
-
-**AND-018** (MUST): Use Hilt for dependency injection
+**AND-010** (GOOD): Organize dependencies in modules
   - **Good Example:**
 ```kotlin
 @Module
 @InstallIn(SingletonComponent::class)
-object NetworkModule {
-    
-    @Provides
-    @Singleton
-    fun provideApiService(): ApiService {
-        return Retrofit.Builder()
-            .baseUrl("https://api.example.com/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(ApiService::class.java)
-    }
-}
+object NetworkModule
 ```
   - **Bad Example:**
 ```kotlin
-class UserRepository {
-    private val apiService = ApiService() // Direct instantiation
-}
+All dependencies in Application class
 ```
-  - **Measurement:** Dependency analysis
-  - **Reference:** Hilt Documentation
+  - **Measurement:** Module organization review
+  - **Reference:** https://developer.android.com/training/dependency-injection/hilt-android
 
+### Scopes
 
-**AND-019** (MUST): Use coroutines for asynchronous operations
+**AND-011** (GOOD): Use appropriate scopes for dependencies
   - **Good Example:**
 ```kotlin
-class UserViewModel : ViewModel() {
-    private val _users = MutableLiveData<List<User>>()
-    val users: LiveData<List<User>> = _users
-    
-    fun loadUsers() {
-        viewModelScope.launch {
-            try {
-                val users = userRepository.getUsers()
-                _users.value = users
-            } catch (e: Exception) {
-                // Handle error
-            }
-        }
-    }
-}
+@Singleton
+class UserRepository
 ```
   - **Bad Example:**
 ```kotlin
-class UserViewModel : ViewModel() {
-    fun loadUsers() {
-        Thread {
-            val users = userRepository.getUsers()
-            // Update UI on background thread - potential crash
-        }.start()
-    }
-}
+No scope annotations
 ```
-  - **Measurement:** Threading analysis
-  - **Reference:** Kotlin Coroutines Guide
+  - **Measurement:** Scope usage analysis
+  - **Reference:** https://developer.android.com/training/dependency-injection/hilt-android
 
-**AND-020** (GOOD): Use WorkManager for background tasks
+### Testing
+
+**AND-012** (GOOD): Use test modules for unit testing
   - **Good Example:**
 ```kotlin
-@HiltWorker
-class DataSyncWorker @AssistedInject constructor(
-    @Assisted context: Context,
-    @Assisted workerParams: WorkerParameters,
-    private val repository: DataRepository
-) : CoroutineWorker(context, workerParams) {
-    
-    override suspend fun doWork(): Result {
-        return try {
-            repository.syncData()
-            Result.success()
-        } catch (e: Exception) {
-            Result.failure()
-        }
-    }
-}
+@TestInstallIn
+@Module
+object TestDatabaseModule
 ```
   - **Bad Example:**
 ```kotlin
-class DataSyncService : Service() {
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Manual background processing
-        return START_STICKY
-    }
-}
+Using production dependencies in tests
 ```
-  - **Measurement:** Background task monitoring
-  - **Reference:** WorkManager Guide
+  - **Measurement:** Test isolation verification
+  - **Reference:** https://developer.android.com/training/dependency-injection/hilt-android
 
+## Performance
 
-**AND-021** (MUST): Use Room for local database operations
+### Memory
+
+**AND-013** (MUST): Avoid memory leaks by managing listeners
   - **Good Example:**
 ```kotlin
-@Entity(tableName = "users")
-data class User(
-    @PrimaryKey val id: String,
-    val name: String,
-    val email: String
-)
-
-@Dao
-interface UserDao {
-    @Query("SELECT * FROM users")
-    suspend fun getAllUsers(): List<User>
-    
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertUser(user: User)
-}
+removeListener() in onDestroy()
 ```
   - **Bad Example:**
 ```kotlin
-class UserDatabase {
-    fun saveUser(user: User) {
-        // Manual SQLite implementation
-        val db = writableDatabase
-        val values = ContentValues()
-        values.put("id", user.id)
-        values.put("name", user.name)
-        db.insert("users", null, values)
-    }
-}
+Forgetting to remove listeners
 ```
-  - **Measurement:** Database performance
-  - **Reference:** Room Documentation
+  - **Measurement:** LeakCanary detection
+  - **Reference:** https://square.github.io/leakcanary/
 
-**AND-022** (GOOD): Use DataStore instead of SharedPreferences
+### Images
+
+**AND-014** (MUST): Use appropriate image loading library
   - **Good Example:**
 ```kotlin
-class UserPreferencesRepository @Inject constructor(
-    private val dataStore: DataStore<Preferences>
-) {
-    val userTheme: Flow<String> = dataStore.data
-        .map { preferences ->
-            preferences[USER_THEME] ?: "system"
-        }
-    
-    suspend fun updateTheme(theme: String) {
-        dataStore.edit { preferences ->
-            preferences[USER_THEME] = theme
-        }
-    }
-}
+Glide.with(context).load(url).into(imageView)
 ```
   - **Bad Example:**
 ```kotlin
-class UserPreferences {
-    private val prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-    
-    fun saveTheme(theme: String) {
-        prefs.edit().putString("theme", theme).apply()
-    }
-}
+Loading images on main thread
 ```
-  - **Measurement:** Preference usage analysis
-  - **Reference:** DataStore Documentation
+  - **Measurement:** Memory profiling tools
+  - **Reference:** https://bumptech.github.io/glide/
 
+### Lists
 
-**AND-023** (GOOD): Write clear commit messages
+**AND-015** (MUST): Use ViewHolder pattern for RecyclerView
   - **Good Example:**
-```
-feat: add user authentication with biometric login
-
-- Implement BiometricPrompt for secure authentication
-- Add fallback to PIN/password authentication
-- Update login flow to support multiple auth methods
-
-Closes #123
+```kotlin
+class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 ```
   - **Bad Example:**
+```kotlin
+findViewById in onBindViewHolder
 ```
+  - **Measurement:** UI performance metrics
+  - **Reference:** https://developer.android.com/guide/topics/ui/layout/recyclerview
+
+### Background
+
+**AND-016** (MUST): Use background threads for heavy operations
+  - **Good Example:**
+```kotlin
+lifecycleScope.launch(Dispatchers.IO) { heavyOperation() }
+```
+  - **Bad Example:**
+```kotlin
+heavyOperation() on main thread
+```
+  - **Measurement:** ANR detection tools
+  - **Reference:** https://developer.android.com/kotlin/coroutines
+
+## Logging
+
+### Levels
+
+**AND-017** (MUST): Use appropriate log levels
+  - **Good Example:**
+```kotlin
+Log.d(TAG, "Debug info"), Log.e(TAG, "Error", exception)
+```
+  - **Bad Example:**
+```kotlin
+Log.d(TAG, "Error occurred")
+```
+  - **Measurement:** Log analysis tools
+  - **Reference:** https://developer.android.com/reference/android/util/Log
+
+### Tags
+
+**AND-018** (GOOD): Use consistent TAG naming
+  - **Good Example:**
+```kotlin
+companion object { private const val TAG = "UserProfileActivity" }
+```
+  - **Bad Example:**
+```kotlin
+Log.d("TAG", "message")
+```
+  - **Measurement:** Log filtering analysis
+  - **Reference:** https://developer.android.com/reference/android/util/Log
+
+### Production
+
+**AND-019** (MUST): Remove debug logs in production
+  - **Good Example:**
+```kotlin
+if (BuildConfig.DEBUG) Log.d(TAG, message)
+```
+  - **Bad Example:**
+```kotlin
+Log.d(TAG, "Sensitive data: $password")
+```
+  - **Measurement:** Build configuration review
+  - **Reference:** https://developer.android.com/studio/build/build-variants
+
+## Threading
+
+### Main Thread
+
+**AND-020** (MUST): Keep main thread free for UI operations
+  - **Good Example:**
+```kotlin
+lifecycleScope.launch { updateUI() }
+```
+  - **Bad Example:**
+```kotlin
+Thread.sleep(1000) on main thread
+```
+  - **Measurement:** ANR detection tools
+  - **Reference:** https://developer.android.com/kotlin/coroutines
+
+### Coroutines
+
+**AND-021** (GOOD): Use coroutines instead of threads
+  - **Good Example:**
+```kotlin
+lifecycleScope.launch(Dispatchers.IO) { apiCall() }
+```
+  - **Bad Example:**
+```kotlin
+Thread { apiCall() }.start()
+```
+  - **Measurement:** Thread usage analysis
+  - **Reference:** https://developer.android.com/kotlin/coroutines
+
+### Scope
+
+**AND-022** (GOOD): Use appropriate coroutine scope
+  - **Good Example:**
+```kotlin
+viewModelScope.launch { fetchData() }
+```
+  - **Bad Example:**
+```kotlin
+GlobalScope.launch { fetchData() }
+```
+  - **Measurement:** Scope usage review
+  - **Reference:** https://developer.android.com/kotlin/coroutines
+
+## API Usage
+
+### Retrofit
+
+**AND-023** (GOOD): Use Retrofit for network calls
+  - **Good Example:**
+```kotlin
+@GET("users/{id}") suspend fun getUser(@Path("id") id: Int): User
+```
+  - **Bad Example:**
+```kotlin
+Manual HTTP requests with HttpURLConnection
+```
+  - **Measurement:** Network library adoption
+  - **Reference:** https://square.github.io/retrofit/
+
+### Error Handling
+
+**AND-024** (MUST): Handle API errors properly
+  - **Good Example:**
+```kotlin
+try { response = api.getData() } catch (e: HttpException) { handleError(e) }
+```
+  - **Bad Example:**
+```kotlin
+val data = api.getData() // No error handling
+```
+  - **Measurement:** API error monitoring
+  - **Reference:** https://square.github.io/retrofit/
+
+### Caching
+
+**AND-025** (GOOD): Implement proper caching strategy
+  - **Good Example:**
+```kotlin
+@Headers("Cache-Control: max-age=300")
+```
+  - **Bad Example:**
+```kotlin
+No caching headers or strategy
+```
+  - **Measurement:** Network performance metrics
+  - **Reference:** https://square.github.io/okhttp/
+
+### Pagination
+
+**AND-026** (GOOD): Handle paginated API responses
+  - **Good Example:**
+```kotlin
+data class ApiResponse<T>(val data: List<T>, val nextPage: String?)
+```
+  - **Bad Example:**
+```kotlin
+Loading all data at once
+```
+  - **Measurement:** API response size analysis
+  - **Reference:** https://developer.android.com/topic/architecture/data-layer
+
+## Security
+
+### Data Storage
+
+**AND-027** (MUST): Use Android Keystore for sensitive data
+  - **Good Example:**
+```kotlin
+EncryptedSharedPreferences.create("secret_prefs")
+```
+  - **Bad Example:**
+```kotlin
+Storing passwords in plain SharedPreferences
+```
+  - **Measurement:** Security audit tools
+  - **Reference:** https://developer.android.com/topic/security/best-practices
+
+### Network
+
+**AND-028** (MUST): Use HTTPS for all network communications
+  - **Good Example:**
+```kotlin
+https://api.example.com/users
+```
+  - **Bad Example:**
+```kotlin
+http://api.example.com/users
+```
+  - **Measurement:** Network security scanner
+  - **Reference:** https://developer.android.com/topic/security/best-practices
+
+### Input Validation
+
+**AND-029** (MUST): Validate all user inputs
+  - **Good Example:**
+```kotlin
+if (email.isValidEmail()) processEmail(email)
+```
+  - **Bad Example:**
+```kotlin
+processEmail(email) // No validation
+```
+  - **Measurement:** Input validation tests
+  - **Reference:** https://developer.android.com/topic/security/best-practices
+
+### Logging
+
+**AND-030** (MUST): Never log sensitive information
+  - **Good Example:**
+```kotlin
+Log.d(TAG, "User login successful")
+```
+  - **Bad Example:**
+```kotlin
+Log.d(TAG, "Password: $password")
+```
+  - **Measurement:** Log security audit
+  - **Reference:** https://developer.android.com/topic/security/best-practices
+
+## Git
+
+### Commits
+
+**AND-031** (GOOD): Write clear commit messages
+  - **Good Example:**
+```kotlin
+feat: add user profile validation
+```
+  - **Bad Example:**
+```kotlin
 fix stuff
 ```
   - **Measurement:** Commit message analysis
-  - **Reference:** Conventional Commits
+  - **Reference:** https://www.conventionalcommits.org/
 
-**AND-024** (GOOD): Use feature branches for development
+### Branching
+
+**AND-032** (GOOD): Use feature branches for development
   - **Good Example:**
-```
+```kotlin
 feature/user-authentication
-bugfix/login-crash-fix
-hotfix/security-patch
 ```
   - **Bad Example:**
+```kotlin
+Committing directly to main branch
 ```
-working-on-login
-test
-fix
-```
-  - **Measurement:** Branch naming analysis
-  - **Reference:** Git Flow Guide
+  - **Measurement:** Branch strategy review
+  - **Reference:** https://git-scm.com/book/en/v2/Git-Branching-Branching-Workflows
 
+### Pull Requests
+
+**AND-033** (GOOD): Create pull requests for code review
+  - **Good Example:**
+```kotlin
+PR with clear description and tests
+```
+  - **Bad Example:**
+```kotlin
+Direct merge without review
+```
+  - **Measurement:** PR review metrics
+  - **Reference:** https://docs.github.com/en/pull-requests
+
+## UI/UX
+
+### Material Design
+
+**AND-034** (GOOD): Follow Material Design guidelines
+  - **Good Example:**
+```kotlin
+Using Material Design components and themes
+```
+  - **Bad Example:**
+```kotlin
+Custom UI that doesn't follow guidelines
+```
+  - **Measurement:** Design system compliance
+  - **Reference:** https://material.io/design
+
+### Accessibility
+
+**AND-035** (MUST): Add accessibility labels and content descriptions
+  - **Good Example:**
+```kotlin
+android:contentDescription="Save button"
+```
+  - **Bad Example:**
+```kotlin
+No accessibility labels
+```
+  - **Measurement:** Accessibility testing tools
+  - **Reference:** https://developer.android.com/guide/topics/ui/accessibility
+
+### Responsive
+
+**AND-036** (GOOD): Design for different screen sizes
+  - **Good Example:**
+```kotlin
+Using ConstraintLayout with proper constraints
+```
+  - **Bad Example:**
+```kotlin
+Fixed pixel values for all dimensions
+```
+  - **Measurement:** Multi-device testing
+  - **Reference:** https://material.io/design/layout/responsive-layout-grid.html
+
+### Loading States
+
+**AND-037** (GOOD): Show loading states for async operations
+  - **Good Example:**
+```kotlin
+ProgressBar while loading data
+```
+  - **Bad Example:**
+```kotlin
+Blank screen during loading
+```
+  - **Measurement:** User experience metrics
+  - **Reference:** https://material.io/design/communication/loading.html
+
+## Architecture
+
+### MVVM
+
+**AND-038** (GOOD): Follow MVVM architecture pattern
+  - **Good Example:**
+```kotlin
+ViewModel handles business logic, View observes LiveData
+```
+  - **Bad Example:**
+```kotlin
+Business logic mixed in Activity
+```
+  - **Measurement:** Architecture review
+  - **Reference:** https://developer.android.com/jetpack/guide
+
+### Repository
+
+**AND-039** (GOOD): Use Repository pattern for data access
+  - **Good Example:**
+```kotlin
+class UserRepository(private val api: UserApi, private val db: UserDao)
+```
+  - **Bad Example:**
+```kotlin
+Direct API calls from ViewModels
+```
+  - **Measurement:** Architecture components usage
+  - **Reference:** https://developer.android.com/jetpack/guide
+
+### Separation
+
+**AND-040** (MUST): Separate concerns properly
+  - **Good Example:**
+```kotlin
+UI logic in View, business logic in ViewModel
+```
+  - **Bad Example:**
+```kotlin
+All logic in Activity
+```
+  - **Measurement:** Code organization review
+  - **Reference:** https://developer.android.com/jetpack/guide
+
+### Data Flow
+
+**AND-041** (GOOD): Use unidirectional data flow
+  - **Good Example:**
+```kotlin
+View -> ViewModel -> Repository -> API
+```
+  - **Bad Example:**
+```kotlin
+Circular dependencies between components
+```
+  - **Measurement:** Data flow analysis
+  - **Reference:** https://developer.android.com/jetpack/guide
+
+## Permissions
+
+### Runtime
+
+**AND-042** (MUST): Request permissions at runtime
+  - **Good Example:**
+```kotlin
+requestPermissions(arrayOf(CAMERA), REQUEST_CODE)
+```
+  - **Bad Example:**
+```kotlin
+Assuming permissions are granted
+```
+  - **Measurement:** Permission usage analysis
+  - **Reference:** https://developer.android.com/training/permissions/requesting
+
+### Rationale
+
+**AND-043** (GOOD): Show rationale for permission requests
+  - **Good Example:**
+```kotlin
+Explaining why camera access is needed
+```
+  - **Bad Example:**
+```kotlin
+Requesting permission without explanation
+```
+  - **Measurement:** User permission grant rate
+  - **Reference:** https://developer.android.com/training/permissions/requesting
+
+### Minimal
+
+**AND-044** (MUST): Request only necessary permissions
+  - **Good Example:**
+```kotlin
+Only CAMERA permission for camera feature
+```
+  - **Bad Example:**
+```kotlin
+Requesting all permissions upfront
+```
+  - **Measurement:** Permission audit
+  - **Reference:** https://developer.android.com/training/permissions/requesting
+
+## License
+
+### Dependencies
+
+**AND-045** (MUST): Include license information for dependencies
+  - **Good Example:**
+```kotlin
+License report in build output
+```
+  - **Bad Example:**
+```kotlin
+No license tracking
+```
+  - **Measurement:** License compliance audit
+  - **Reference:** https://developer.android.com/studio/build/manage-dependencies
+
+### Attribution
+
+**AND-046** (MUST): Provide proper attribution for open source libraries
+  - **Good Example:**
+```kotlin
+About screen with library credits
+```
+  - **Bad Example:**
+```kotlin
+No attribution for used libraries
+```
+  - **Measurement:** Attribution compliance check
+  - **Reference:** https://developer.android.com/studio/build/manage-dependencies
+
+### Compatibility
+
+**AND-047** (MUST): Ensure license compatibility
+  - **Good Example:**
+```kotlin
+Using MIT/Apache licensed libraries
+```
+  - **Bad Example:**
+```kotlin
+Mixing incompatible licenses
+```
+  - **Measurement:** License compatibility analysis
+  - **Reference:** https://developer.android.com/studio/build/manage-dependencies
+
+## Storage
+
+### Database
+
+**AND-048** (GOOD): Use Room for local database operations
+  - **Good Example:**
+```kotlin
+@Entity
+@Dao
+class UserDao
+```
+  - **Bad Example:**
+```kotlin
+Raw SQL queries in code
+```
+  - **Measurement:** Database library adoption
+  - **Reference:** https://developer.android.com/training/data-storage/room
+
+### Preferences
+
+**AND-049** (GOOD): Use DataStore for preferences
+  - **Good Example:**
+```kotlin
+val userPreferences = DataStore(PreferencesDataStoreFactory.create())
+```
+  - **Bad Example:**
+```kotlin
+SharedPreferences for complex data
+```
+  - **Measurement:** Preferences usage analysis
+  - **Reference:** https://developer.android.com/topic/libraries/architecture/datastore
+
+### Files
+
+**AND-050** (MUST): Store files in appropriate directories
+  - **Good Example:**
+```kotlin
+context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+```
+  - **Bad Example:**
+```kotlin
+Storing files in root directory
+```
+  - **Measurement:** File storage audit
+  - **Reference:** https://developer.android.com/training/data-storage
+
+### Cache
+
+**AND-051** (GOOD): Implement proper cache management
+  - **Good Example:**
+```kotlin
+Cache with TTL and size limits
+```
+  - **Bad Example:**
+```kotlin
+Unlimited cache growth
+```
+  - **Measurement:** Cache performance metrics
+  - **Reference:** https://developer.android.com/topic/architecture/data-layer
+
+## Logic
+
+### Business Rules
+
+**AND-052** (GOOD): Centralize business logic in appropriate layers
+  - **Good Example:**
+```kotlin
+Business logic in UseCase classes
+```
+  - **Bad Example:**
+```kotlin
+Business logic scattered in UI
+```
+  - **Measurement:** Logic organization review
+  - **Reference:** https://developer.android.com/jetpack/guide
+
+### Validation
+
+**AND-053** (MUST): Validate data at multiple layers
+  - **Good Example:**
+```kotlin
+Input validation in UI, business validation in UseCase
+```
+  - **Bad Example:**
+```kotlin
+No validation or validation in one place only
+```
+  - **Measurement:** Validation coverage analysis
+  - **Reference:** https://developer.android.com/jetpack/guide
+
+### State
+
+**AND-054** (GOOD): Manage state consistently
+  - **Good Example:**
+```kotlin
+Single source of truth for state
+```
+  - **Bad Example:**
+```kotlin
+State scattered across multiple variables
+```
+  - **Measurement:** State management review
+  - **Reference:** https://developer.android.com/jetpack/compose/state
+
+## CodeStyle
+
+### Functions
+
+**AND-055** (GOOD): Keep functions small and focused
+  - **Good Example:**
+```kotlin
+fun validateEmail(email: String): Boolean
+```
+  - **Bad Example:**
+```kotlin
+fun processUserDataAndSendEmailAndUpdateDatabase()
+```
+  - **Measurement:** Function complexity analysis
+  - **Reference:** https://developer.android.com/kotlin/style-guide
+
+### Classes
+
+**AND-056** (GOOD): Follow Single Responsibility Principle
+  - **Good Example:**
+```kotlin
+class EmailValidator, class UserRepository
+```
+  - **Bad Example:**
+```kotlin
+class UserManager (handles validation, storage, networking)
+```
+  - **Measurement:** Class responsibility analysis
+  - **Reference:** https://developer.android.com/kotlin/style-guide
+
+### Constants
+
+**AND-057** (GOOD): Use constants for magic numbers and strings
+  - **Good Example:**
+```kotlin
+companion object { private const val MAX_RETRY_COUNT = 3 }
+```
+  - **Bad Example:**
+```kotlin
+if (retryCount < 3) // Magic number
+```
+  - **Measurement:** Magic number detection
+  - **Reference:** https://developer.android.com/kotlin/style-guide
+
+### Readability
+
+**AND-058** (GOOD): Write self-documenting code
+  - **Good Example:**
+```kotlin
+val isValidUser = user.isActive && user.hasPermission
+```
+  - **Bad Example:**
+```kotlin
+val flag = user.flag1 && user.flag2
+```
+  - **Measurement:** Code readability metrics
+  - **Reference:** https://developer.android.com/kotlin/style-guide
+
+## Testing
+
+### Unit Tests
+
+**AND-059** (GOOD): Write unit tests for business logic
+  - **Good Example:**
+```kotlin
+@Test fun validateEmail_returnsTrue_forValidEmail()
+```
+  - **Bad Example:**
+```kotlin
+No unit tests for critical logic
+```
+  - **Measurement:** Test coverage reports
+  - **Reference:** https://developer.android.com/training/testing/unit-testing
+
+### Integration
+
+**AND-060** (GOOD): Write integration tests for data layer
+  - **Good Example:**
+```kotlin
+@RunWith(AndroidJUnit4::class)
+class UserDaoTest
+```
+  - **Bad Example:**
+```kotlin
+Only unit tests, no integration tests
+```
+  - **Measurement:** Integration test coverage
+  - **Reference:** https://developer.android.com/training/testing/integration-tests
+
+### UI Tests
+
+**AND-061** (GOOD): Write UI tests for critical user flows
+  - **Good Example:**
+```kotlin
+@Test fun login_withValidCredentials_opensHomeScreen()
+```
+  - **Bad Example:**
+```kotlin
+No UI tests for user flows
+```
+  - **Measurement:** UI test coverage
+  - **Reference:** https://developer.android.com/training/testing/ui-tests
+
+### Mocking
+
+**AND-062** (GOOD): Use proper mocking for dependencies
+  - **Good Example:**
+```kotlin
+@Mock lateinit var userRepository: UserRepository
+```
+  - **Bad Example:**
+```kotlin
+Using real dependencies in tests
+```
+  - **Measurement:** Test isolation analysis
+  - **Reference:** https://developer.android.com/training/testing/unit-testing
