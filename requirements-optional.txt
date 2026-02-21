@@ -1,0 +1,11 @@
+# Optional dependencies for extra code metrics (patch-level).
+# Install with: pip install -r requirements-optional.txt
+
+# LOC by language (alternative to CLOC when CLOC binary not available)
+pygount>=1.2.0
+
+# Python complexity & maintainability (for .py files in patch)
+radon>=6.0.0
+
+# Future: project-level analysis
+# semgrep  # uncomment when adding Semgrep integration

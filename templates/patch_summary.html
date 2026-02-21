@@ -1,0 +1,403 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+  {% if in_review_flow|default(false) %}
+  <!-- Step indicator -->
+  <nav aria-label="Review steps" class="mb-3">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item text-muted">Start</li>
+      <li class="breadcrumb-item text-muted">Patch</li>
+      <li class="breadcrumb-item active" aria-current="page">Patch analysis &amp; summary</li>
+      <li class="breadcrumb-item text-muted">Checklist review</li>
+    </ol>
+  </nav>
+  {% endif %}
+
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <h4 class="mb-0">
+      <i class="bi bi-git me-2"></i>Patch analysis &amp; summary
+    </h4>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      {% if has_patch|default(true) %}
+      <a href="{{ url_for('review_code') }}" class="btn btn-primary">
+        <i class="bi bi-code-slash me-1"></i>View changes
+      </a>
+      {% endif %}
+      {% if in_review_flow|default(false) %}
+      <a href="{{ url_for('review_all_categories') if session.get('single_page_mode') else url_for('review_category', idx=0) }}" class="btn btn-success">
+        <i class="bi bi-list-check me-1"></i>Continue to checklist review
+      </a>
+      {% else %}
+      <a href="{{ url_for('start_review_page') }}" class="btn btn-outline-primary">
+        <i class="bi bi-list-check me-1"></i>Start checklist review
+      </a>
+      {% endif %}
+      {% if has_patch|default(true) %}
+      <a href="{{ url_for('review_patch') if in_review_flow|default(false) else url_for('upload_patch') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-repeat me-1"></i>Upload new patch
+      </a>
+      <form action="{{ url_for('patch_clear') }}" method="post" class="d-inline">
+        <button type="submit" class="btn btn-outline-danger">
+          <i class="bi bi-trash me-1"></i>Clear patch
+        </button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if in_review_flow|default(false) and not has_patch|default(true) %}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body text-center py-4">
+      <p class="text-muted mb-3">No patch uploaded. You skipped the patch step.</p>
+      <a href="{{ url_for('review_all_categories') if session.get('single_page_mode') else url_for('review_category', idx=0) }}" class="btn btn-primary btn-lg">
+        <i class="bi bi-list-check me-2"></i>Continue to checklist review
+      </a>
+    </div>
+  </div>
+  {% else %}
+  <!-- Stats row -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card patch-summary-card border-0 shadow-sm h-100">
+        <div class="card-body d-flex align-items-center">
+          <div class="stat added me-3"><i class="bi bi-plus-circle-fill"></i> {{ summary.lines_added|default(0) }}</div>
+          <div>
+            <div class="fw-semibold">Lines added</div>
+            <small class="text-muted">Green in diff</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card patch-summary-card border-0 shadow-sm h-100">
+        <div class="card-body d-flex align-items-center">
+          <div class="stat deleted me-3"><i class="bi bi-dash-circle-fill"></i> {{ summary.lines_deleted|default(0) }}</div>
+          <div>
+            <div class="fw-semibold">Lines deleted</div>
+            <small class="text-muted">Red in diff</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card patch-summary-card border-0 shadow-sm h-100">
+        <div class="card-body d-flex align-items-center">
+          <div class="stat files me-3"><i class="bi bi-files"></i> {{ summary.files_count|default(0) }}</div>
+          <div>
+            <div class="fw-semibold">Files changed</div>
+            <small class="text-muted">Android project</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="small text-muted mb-0 mt-2">
+    Stats are from the patch file. If GitLab shows different numbers (e.g. fewer files or fewer deletions), 
+    that’s because GitLab uses rename detection on the MR diff; the patch itself lists each changed path separately.
+  </p>
+
+  {% if summary.diffstat %}
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-secondary bg-opacity-10 d-flex align-items-center">
+      <i class="bi bi-graph-down text-secondary me-2"></i>Diffstat
+      <span class="ms-2">{{ summary.diffstat.files_changed|default(0) }} files</span>
+      <span class="text-success ms-2">+{{ summary.diffstat.insertions|default(0) }}</span>
+      <span class="text-danger">−{{ summary.diffstat.deletions|default(0) }}</span>
+    </div>
+    {% if summary.diffstat.raw %}
+    <div class="card-body py-2"><pre class="small mb-0 font-monospace">{{ summary.diffstat.raw }}</pre></div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if summary.cloc and summary.cloc.by_lang %}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-dark bg-opacity-10 d-flex align-items-center">
+      <i class="bi bi-bar-chart-steps text-dark me-2"></i>Lines of code (CLOC) — changed files
+      <span class="badge bg-dark ms-2">{{ summary.cloc.by_lang|length }} languages</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Language</th>
+              <th class="text-end">Files</th>
+              <th class="text-end">Code</th>
+              <th class="text-end">Comment</th>
+              <th class="text-end">Blank</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for lang, stats in (summary.cloc.by_lang.items()|list)|sort %}
+            <tr>
+              <td><strong>{{ lang }}</strong></td>
+              <td class="text-end">{{ stats.files|default(0) }}</td>
+              <td class="text-end">{{ stats.code|default(0) }}</td>
+              <td class="text-end">{{ stats.comment|default(0) }}</td>
+              <td class="text-end">{{ stats.blank|default(0) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if summary.cloc.SUM %}
+      <div class="p-2 bg-light small text-muted">
+        Total (changed files): {{ summary.cloc.SUM.code|default(0) }} code, {{ summary.cloc.SUM.comment|default(0) }} comment, {{ summary.cloc.SUM.blank|default(0) }} blank lines.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if summary.pygount and summary.pygount.by_lang and not summary.cloc %}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-info bg-opacity-10 d-flex align-items-center">
+      <i class="bi bi-bar-chart text-info me-2"></i>Lines of code (Pygount) — changed files
+      <span class="badge bg-info ms-2">{{ summary.pygount.by_lang|length }} languages</span>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-sm table-hover mb-0">
+        <thead><tr><th>Language</th><th class="text-end">Files</th><th class="text-end">Code</th></tr></thead>
+        <tbody>
+          {% for lang, stats in (summary.pygount.by_lang.items()|list)|sort %}
+          <tr><td><strong>{{ lang }}</strong></td><td class="text-end">{{ stats.files|default(0) }}</td><td class="text-end">{{ stats.code|default(0) }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if summary.pygount.SUM %}
+      <div class="p-2 bg-light small">Total: {{ summary.pygount.SUM.code|default(0) }} code, {{ summary.pygount.SUM.files|default(0) }} files.</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if summary.radon %}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-warning bg-opacity-10 d-flex align-items-center">
+      <i class="bi bi-speedometer2 text-warning me-2"></i>Python complexity (Radon)
+    </div>
+    <div class="card-body p-0">
+      {% if summary.radon.mi %}
+      <div class="p-2 small">
+        <strong>Maintainability index</strong> (higher is better):
+        {% for item in summary.radon.mi %}
+        <span class="me-2">{{ item.file }}: {{ item.mi|round(1) }} ({{ item.rank|default('') }})</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if summary.radon.cc %}
+      <div class="p-2 small border-top">
+        <strong>Cyclomatic complexity</strong>: {{ summary.radon.cc|length }} block(s). 
+        <a href="#" class="collapse-link" data-bs-toggle="collapse" data-bs-target="#radon-cc-detail">Show details</a>
+        <div id="radon-cc-detail" class="collapse mt-1"><small>{{ summary.radon.cc|length }} blocks with complexity data.</small></div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Android-specific file categories (collapsible, default collapsed) -->
+  <h5 class="mb-3"><i class="bi bi-android2 me-2"></i>By Android category</h5>
+
+  {% set mf = summary.manifest_files|default([]) %}
+  {% set mf_added = mf|sum(attribute='added') %}
+  {% set mf_deleted = mf|sum(attribute='deleted') %}
+  <div class="card border-0 shadow-sm mb-2">
+    <div class="card-header bg-primary bg-opacity-10 d-flex align-items-center py-2 cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-manifest" aria-expanded="false" aria-controls="collapse-manifest" role="button">
+      <i class="bi bi-chevron-right collapse-chevron me-1"></i>
+      <i class="bi bi-file-earmark-text text-primary me-2"></i>Manifests
+      <span class="badge bg-primary ms-2">{{ mf|length }}</span>
+      <span class="text-success ms-2">+{{ mf_added }}</span>
+      <span class="text-danger">−{{ mf_deleted }}</span>
+    </div>
+    <div id="collapse-manifest" class="collapse">
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for f in mf %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <code class="small text-break">{{ f.path }}</code>
+            <span class="badge bg-success me-1">+{{ f.added }}</span>
+            <span class="badge bg-danger">−{{ f.deleted }}</span>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted">No manifest files</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  {% set gf = summary.gradle_files|default([]) %}
+  {% set gf_added = gf|sum(attribute='added') %}
+  {% set gf_deleted = gf|sum(attribute='deleted') %}
+  <div class="card border-0 shadow-sm mb-2">
+    <div class="card-header bg-warning bg-opacity-10 d-flex align-items-center py-2 cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-gradle" aria-expanded="false" aria-controls="collapse-gradle" role="button">
+      <i class="bi bi-chevron-right collapse-chevron me-1"></i>
+      <i class="bi bi-gear text-warning me-2"></i>Gradle files
+      <span class="badge bg-warning text-dark ms-2">{{ gf|length }}</span>
+      <span class="text-success ms-2">+{{ gf_added }}</span>
+      <span class="text-danger">−{{ gf_deleted }}</span>
+    </div>
+    <div id="collapse-gradle" class="collapse">
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for f in gf %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <code class="small text-break">{{ f.path }}</code>
+            <span class="badge bg-success me-1">+{{ f.added }}</span>
+            <span class="badge bg-danger">−{{ f.deleted }}</span>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted">No Gradle files</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  {% set rf = summary.resource_files|default([]) %}
+  {% set rf_added = rf|sum(attribute='added') %}
+  {% set rf_deleted = rf|sum(attribute='deleted') %}
+  <div class="card border-0 shadow-sm mb-2">
+    <div class="card-header bg-info bg-opacity-10 d-flex align-items-center py-2 cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-resource" aria-expanded="false" aria-controls="collapse-resource" role="button">
+      <i class="bi bi-chevron-right collapse-chevron me-1"></i>
+      <i class="bi bi-palette text-info me-2"></i>Resource files
+      <span class="badge bg-info ms-2">{{ rf|length }}</span>
+      <span class="text-success ms-2">+{{ rf_added }}</span>
+      <span class="text-danger">−{{ rf_deleted }}</span>
+    </div>
+    <div id="collapse-resource" class="collapse">
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for f in rf %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <code class="small text-break">{{ f.path }}</code>
+            <span class="badge bg-success me-1">+{{ f.added }}</span>
+            <span class="badge bg-danger">−{{ f.deleted }}</span>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted">No resource files (res/ layout, drawable, values, etc.)</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  {% set sf = summary.source_files|default([]) %}
+  {% set sf_added = sf|sum(attribute='added') %}
+  {% set sf_deleted = sf|sum(attribute='deleted') %}
+  <div class="card border-0 shadow-sm mb-2">
+    <div class="card-header bg-primary bg-opacity-10 d-flex align-items-center py-2 cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-source" aria-expanded="false" aria-controls="collapse-source" role="button">
+      <i class="bi bi-chevron-right collapse-chevron me-1"></i>
+      <i class="bi bi-code-slash text-primary me-2"></i>Source (Kotlin/Java)
+      <span class="badge bg-primary ms-2">{{ sf|length }}</span>
+      <span class="text-success ms-2">+{{ sf_added }}</span>
+      <span class="text-danger">−{{ sf_deleted }}</span>
+    </div>
+    <div id="collapse-source" class="collapse">
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for f in sf %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <code class="small text-break">{{ f.path }}</code>
+            <span class="badge bg-success me-1">+{{ f.added }}</span>
+            <span class="badge bg-danger">−{{ f.deleted }}</span>
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted">No source files</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  {% set tf = summary.test_files|default([]) %}
+  {% set tf_added = tf|sum(attribute='added') %}
+  {% set tf_deleted = tf|sum(attribute='deleted') %}
+  {% set tf_new = tf|selectattr('is_new')|list|length %}
+  {% set tf_deleted_count = tf|selectattr('is_deleted')|list|length %}
+  {% set tf_modified = (tf|length) - tf_new - tf_deleted_count %}
+  {% set test_cases_added_count = summary.test_cases_added_count|default(0) %}
+  {% set test_cases_removed_count = summary.test_cases_removed_count|default(0) %}
+  <div class="card border-0 shadow-sm mb-2">
+    <div class="card-header bg-success bg-opacity-10 d-flex flex-wrap align-items-center py-2 cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-test" aria-expanded="false" aria-controls="collapse-test" role="button">
+      <i class="bi bi-chevron-right collapse-chevron me-1"></i>
+      <i class="bi bi-bug text-success me-2"></i>Test files
+      <span class="badge bg-success ms-2">{{ tf|length }}</span>
+      <span class="text-success ms-2">+{{ tf_added }}</span>
+      <span class="text-danger">−{{ tf_deleted }}</span>
+      {% if test_cases_added_count or test_cases_removed_count %}
+      <span class="ms-2 small text-muted">(tests: +{{ test_cases_added_count }} −{{ test_cases_removed_count }})</span>
+      {% endif %}
+    </div>
+    <div id="collapse-test" class="collapse">
+      <div class="card-body p-0">
+        {% if tf_new or tf_modified %}
+        <div class="px-3 py-2 small text-muted border-bottom">
+          {{ tf_new }} new, {{ tf_modified }} modified
+        </div>
+        {% endif %}
+        <ul class="list-group list-group-flush">
+          {% for f in tf %}
+          <li class="list-group-item">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-1">
+              <code class="small text-break">{{ f.path }}</code>
+              <span class="d-flex align-items-center gap-1">
+                {% if f.is_new %}<span class="badge bg-info">new</span>{% endif %}
+                {% if f.is_deleted %}<span class="badge bg-danger">deleted</span>{% endif %}
+                <span class="badge bg-success">+{{ f.added }}</span>
+                <span class="badge bg-danger">−{{ f.deleted }}</span>
+              </span>
+            </div>
+            {% if f.test_cases_added|default([]) or f.test_cases_removed|default([]) %}
+            <div class="mt-2 small">
+              {% if f.test_cases_added %}
+              <span class="text-success">Added: {{ f.test_cases_added|join(', ') }}</span>
+              {% endif %}
+              {% if f.test_cases_removed %}
+              {% if f.test_cases_added %}<br>{% endif %}
+              <span class="text-danger">Removed: {{ f.test_cases_removed|join(', ') }}</span>
+              {% endif %}
+            </div>
+            {% endif %}
+          </li>
+          {% else %}
+          <li class="list-group-item text-muted">No test files</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  {% set of = summary.other_files|default([]) %}
+  {% if of %}
+  {% set of_added = of|sum(attribute='added') %}
+  {% set of_deleted = of|sum(attribute='deleted') %}
+  <div class="card border-0 shadow-sm mb-2">
+    <div class="card-header bg-secondary bg-opacity-10 d-flex align-items-center py-2 cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-other" aria-expanded="false" aria-controls="collapse-other" role="button">
+      <i class="bi bi-chevron-right collapse-chevron me-1"></i>
+      <i class="bi bi-file-earmark text-secondary me-2"></i>Other files
+      <span class="badge bg-secondary ms-2">{{ of|length }}</span>
+      <span class="text-success ms-2">+{{ of_added }}</span>
+      <span class="text-danger">−{{ of_deleted }}</span>
+    </div>
+    <div id="collapse-other" class="collapse">
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for f in of %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <code class="small text-break">{{ f.path }}</code>
+            <span class="badge bg-success me-1">+{{ f.added }}</span>
+            <span class="badge bg-danger">−{{ f.deleted }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

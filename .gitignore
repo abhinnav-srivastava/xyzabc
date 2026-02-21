@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# App runtime
+temp/
+
 # Distribution / packaging
 .Python
 build/
@@ -165,5 +168,13 @@ yarn.lock
 *.temp
 *.bak
 *.backup
+
+# Bundled tools (keep READMEs; binaries are optional and often large)
+tools/git/*
+!tools/git/README.md
+tools/cloc/*
+!tools/cloc/README.md
+tools/diffstat/*
+!tools/diffstat/README.md
 
 

@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-0">
+  <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom bg-white">
+    <h4 class="mb-0">
+      <i class="bi bi-code-slash me-2"></i>Changes
+    </h4>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('patch_summary') }}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-graph-up me-1"></i>Summary
+      </a>
+      <a href="{{ url_for('start_review_page') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-list-check me-1"></i>Checklist review
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-0 flex-nowrap" style="min-height: calc(100vh - 140px);">
+    {# Left: file tree #}
+    <div class="col-auto border-end bg-white" style="width: 320px; max-width: 40vw;">
+      <div class="p-2 border-bottom bg-light">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="fw-semibold">Files</span>
+          <span class="badge bg-primary rounded-pill">{{ files_count|default(files|length) }}</span>
+        </div>
+        <input type="text" class="form-control form-control-sm" id="file-search" placeholder="Search (e.g. *.vue)" aria-label="Search files">
+      </div>
+      <div class="overflow-auto py-2" style="max-height: calc(100vh - 220px);">
+        {% include 'review_code_tree.html' %}
+      </div>
+    </div>
+
+    {# Right: stacked diffs #}
+    <div class="col overflow-auto bg-gray-50" style="min-width: 0;">
+      {% for file in files %}
+      <div class="diff-file-block border-bottom bg-white" id="diff-file-{{ loop.index0 }}" data-file-path="{{ file.new_path|e }}">
+        <div class="diff-file-header d-flex align-items-center flex-wrap gap-2 px-3 py-2 border-bottom bg-light">
+          <span class="file-type-icon file-type-{{ file.file_type }}" title="{{ file.file_type }}"></span>
+          <div class="diff-file-path flex-grow-1 min-w-0">
+            {% if file.old_path != file.new_path and file.old_path and file.new_path %}
+            <code class="text-dark">{{ file.old_path }}</code>
+            <i class="bi bi-arrow-right mx-1 small text-muted"></i>
+            <code class="text-dark">{{ file.new_path }}</code>
+            {% elif file.is_deleted %}
+            <code class="text-dark">{{ file.old_path }}</code>
+            <span class="badge bg-danger ms-2">deleted</span>
+            {% else %}
+            <code class="text-dark">{{ file.new_path }}</code>
+            {% endif %}
+          </div>
+          <span class="badge bg-success">+{{ file.lines_added }}</span>
+          <span class="badge bg-danger">−{{ file.lines_deleted }}</span>
+          <button type="button" class="btn btn-link btn-sm text-muted p-0" title="Copy path" data-copy-path="{{ file.new_path|e }}">
+            <i class="bi bi-clipboard"></i>
+          </button>
+          <div class="dropdown">
+            <button class="btn btn-link btn-sm text-muted p-0" type="button" data-bs-toggle="dropdown" aria-label="More">
+              <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item small" href="#diff-file-{{ loop.index0 }}"><i class="bi bi-link me-1"></i>Copy link</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="diff-file-body">
+          {% for hunk in file.hunks %}
+          <div class="diff-hunk">
+            <div class="diff-hunk-header px-3 py-1 small text-muted font-monospace">
+              @@ -{{ hunk.old_start }},{{ hunk.old_count }} +{{ hunk.new_start }},{{ hunk.new_count }} @@ {{ hunk.context_line }}
+            </div>
+            {% for line in hunk.lines %}
+            <div class="diff-line diff-line-{{ line.kind }}">
+              <span class="diff-num diff-num-old">{{ line.old_lineno if line.old_lineno is not none else '' }}</span>
+              <span class="diff-num diff-num-new">{{ line.new_lineno if line.new_lineno is not none else '' }}</span>
+              <span class="diff-content">{{ line.content|e }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% endfor %}
+          {% if not file.hunks and file.is_deleted %}
+          <div class="px-3 py-2 text-muted small">File deleted.</div>
+          {% elif not file.hunks %}
+          <div class="px-3 py-2 text-muted small">No diff content.</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if not files %}
+  <div class="p-4 text-center text-muted">
+    <p class="mb-0">No file changes to display.</p>
+    <a href="{{ url_for('upload_patch') }}">Upload a patch</a>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+(function() {
+  var search = document.getElementById('file-search');
+  var treeItems = document.querySelectorAll('.diff-tree-file');
+  if (search && treeItems.length) {
+    search.addEventListener('input', function() {
+      var q = (this.value || '').trim().toLowerCase();
+      treeItems.forEach(function(el) {
+        var path = (el.getAttribute('data-path') || '').toLowerCase();
+        var show = !q || path.indexOf(q) !== -1;
+        el.style.display = show ? '' : 'none';
+      });
+    });
+  }
+  document.querySelectorAll('[data-copy-path]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var path = this.getAttribute('data-copy-path');
+      if (path && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(path);
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}

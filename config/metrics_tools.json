@@ -1,0 +1,90 @@
+{
+  "description": "Registry of code metrics tools: patch-level (run on patch or reconstructed files) and project-level (future: run on repo path + commit). All are optional.",
+  "patch_tools": {
+    "git": {
+      "name": "Git",
+      "type": "binary",
+      "purpose": "Exact diff stats (apply --numstat).",
+      "install": "Bundled in tools/git/ or system PATH.",
+      "download_url": "https://git-scm.com/download/win (Windows), https://git-scm.com (others)",
+      "enabled": true
+    },
+    "cloc": {
+      "name": "CLOC",
+      "type": "binary",
+      "purpose": "Lines of code by language.",
+      "install": "Bundled in tools/cloc/ or system PATH.",
+      "download_url": "https://github.com/AlDanial/cloc/releases",
+      "enabled": true
+    },
+    "diffstat": {
+      "name": "diffstat",
+      "type": "binary",
+      "purpose": "Insertions/deletions summary from patch (optional; we have equivalent from Git).",
+      "install": "Bundled in tools/diffstat/ or system PATH. Windows: GnuWin32 diffstat or WSL.",
+      "download_url": "https://gnuwin32.sourceforge.net/packages/diffstat.htm",
+      "enabled": true
+    },
+    "pygount": {
+      "name": "Pygount",
+      "type": "python",
+      "purpose": "LOC by language (Python alternative to CLOC).",
+      "install": "pip install pygount",
+      "enabled": true
+    },
+    "radon": {
+      "name": "Radon",
+      "type": "python",
+      "purpose": "Cyclomatic complexity & maintainability (Python files in patch).",
+      "install": "pip install radon",
+      "enabled": true
+    }
+  },
+  "project_tools_future": {
+    "detekt": {
+      "name": "Detekt",
+      "type": "binary",
+      "purpose": "Kotlin static analysis (style, complexity, bugs).",
+      "scope": "project",
+      "install": "Gradle plugin or standalone JAR. Place in tools/detekt/.",
+      "download_url": "https://github.com/detekt/detekt/releases",
+      "input": "Project root or list of Kotlin files"
+    },
+    "android_lint": {
+      "name": "Android Lint",
+      "type": "binary",
+      "purpose": "Android-specific issues (SDK, resources, security).",
+      "scope": "project",
+      "install": "Android SDK (sdk/cmdline-tools/.../bin/lint) or Gradle :app:lint.",
+      "download_url": "https://developer.android.com/studio",
+      "input": "Android project root"
+    },
+    "ktlint": {
+      "name": "ktlint",
+      "type": "binary",
+      "purpose": "Kotlin code style.",
+      "scope": "project",
+      "install": "Gradle plugin or standalone. Place in tools/ktlint/ or PATH.",
+      "download_url": "https://github.com/pinterest/ktlint/releases",
+      "input": "Project or file list"
+    },
+    "pmd": {
+      "name": "PMD",
+      "type": "binary",
+      "purpose": "Java/Kotlin/XML static analysis.",
+      "scope": "project",
+      "install": "JAR in tools/pmd/. Supports Kotlin with plugin.",
+      "download_url": "https://github.com/pmd/pmd/releases",
+      "input": "Project root or source list"
+    },
+    "semgrep": {
+      "name": "Semgrep",
+      "type": "binary",
+      "purpose": "Pattern-based rules (security, style). Many languages.",
+      "scope": "project",
+      "install": "pip install semgrep or standalone binary.",
+      "download_url": "https://github.com/semgrep/semgrep/releases",
+      "input": "Repo path or diff"
+    }
+  }
+}

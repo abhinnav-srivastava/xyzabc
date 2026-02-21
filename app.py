@@ -2,8 +2,9 @@ import os
 import io
 import time
 import json
+import uuid
 from datetime import datetime
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Optional
 from pathlib import Path
 
 from flask import (
@@ -19,7 +20,7 @@ from flask import (
 
 \
 try:
-    from utils.path_utils import get_scripts_path, get_checklists_path, get_templates_path, get_project_root
+    from utils.path_utils import get_scripts_path, get_checklists_path, get_templates_path, get_project_root, get_temp_dir
 except ImportError:
     \
     import sys
@@ -48,12 +49,22 @@ except ImportError:
     def get_project_root() -> Path:
         return Path(get_base_dir())
 
+    def get_temp_dir() -> Path:
+        temp_dir = get_project_root() / "temp"
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        return temp_dir
+
 from services.checklist_loader import (
     load_roles_config,
     build_all_steps,
 )
 from services.network_security import network_security
 from services.dynamic_categories import dynamic_categories
+from services.patch_parser import (
+    parse_patch,
+    file_diffs_to_json_serializable,
+    file_diffs_from_session,
+)
 
 def create_app() -> Flask:
     app = Flask(__name__)
@@ -772,11 +783,197 @@ def create_app() -> Flask:
             "project_name": project_name
         }
 
-        \
-        if single_page_mode:
+        # Flow: Start → Patch → Patch summary → Checklist
+        return redirect(url_for("review_patch"))
+
+    @app.route("/review/patch", methods=["GET", "POST"])
+    def review_patch():
+        """Step 2: Upload patch (or skip). Requires session from POST /start."""
+        if request.method == "POST":
+            skip = request.form.get("skip_patch") == "1"
+            if skip:
+                return _redirect_to_checklist()
+            content = None
+            f = request.files.get("patch_file") if request.files else None
+            if f and f.filename:
+                try:
+                    raw = f.read()
+                    content = raw.decode("utf-8", errors="replace") if isinstance(raw, bytes) else raw
+                except Exception:
+                    content = raw.decode("latin-1", errors="replace") if isinstance(raw, bytes) else None
+            if not content or not content.strip():
+                from flask import flash
+                flash("Please upload a .patch file (or drag and drop), or click Skip.", "warning")
+                return redirect(url_for("review_patch"))
+            try:
+                files, summary = parse_patch(content)
+                if not files:
+                    from flask import flash
+                    flash("No valid diff content found. Use a unified diff (e.g. from GitLab MR).", "warning")
+                    return redirect(url_for("review_patch"))
+                patch_data = {
+                    "summary": summary,
+                    "files": file_diffs_to_json_serializable(files),
+                }
+                session["patch_data_key"] = _save_patch_data(patch_data)
+                return redirect(url_for("patch_summary"))
+            except Exception as e:
+                from flask import flash
+                flash(f"Failed to parse patch: {str(e)}", "danger")
+                return redirect(url_for("review_patch"))
+        # GET: must have started a review (session has reviewer_name, selected_role)
+        if not session.get("reviewer_name") or not session.get("selected_role"):
+            return redirect(url_for("start_review_page"))
+        return render_template("review_patch.html")
+
+    def _redirect_to_checklist():
+        if session.get("single_page_mode"):
             return redirect(url_for("review_all_categories"))
-        else:
-            return redirect(url_for("review_category", idx=0))
+        return redirect(url_for("review_category", idx=0))
+
+    def _patch_store_dir() -> Path:
+        d = get_temp_dir() / "patch_store"
+        d.mkdir(parents=True, exist_ok=True)
+        return d
+
+    def _save_patch_data(patch_data: Dict[str, Any]) -> str:
+        key = str(uuid.uuid4())
+        path = _patch_store_dir() / f"{key}.json"
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(patch_data, f, ensure_ascii=False)
+        return key
+
+    def _load_patch_data(key: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        k = key or session.get("patch_data_key")
+        if not k:
+            return session.get("patch_data")
+        path = _patch_store_dir() / f"{k}.json"
+        if not path.exists():
+            return session.get("patch_data")
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return session.get("patch_data")
+
+    def _clear_patch_storage():
+        k = session.pop("patch_data_key", None)
+        session.pop("patch_data", None)
+        if k:
+            path = _patch_store_dir() / f"{k}.json"
+            try:
+                if path.exists():
+                    path.unlink()
+            except Exception:
+                pass
+
+    @app.route("/upload-patch", methods=["GET", "POST"])
+    def upload_patch():
+        """Upload a git patch (.patch file, drag and drop)."""
+        if request.method == "POST":
+            content = None
+            f = request.files.get("patch_file") if request.files else None
+            if f and f.filename:
+                try:
+                    raw = f.read()
+                    content = raw.decode("utf-8", errors="replace") if isinstance(raw, bytes) else raw
+                except Exception:
+                    content = raw.decode("latin-1", errors="replace") if isinstance(raw, bytes) else None
+            if not content or not content.strip():
+                from flask import flash
+                flash("Please upload a .patch file (or drag and drop).", "warning")
+                return redirect(url_for("upload_patch"))
+            try:
+                files, summary = parse_patch(content)
+                if not files:
+                    from flask import flash
+                    flash("No valid diff content found. Use a unified diff (e.g. from GitLab MR).", "warning")
+                    return redirect(url_for("upload_patch"))
+                patch_data = {
+                    "summary": summary,
+                    "files": file_diffs_to_json_serializable(files),
+                }
+                session["patch_data_key"] = _save_patch_data(patch_data)
+                return redirect(url_for("patch_summary"))
+            except Exception as e:
+                from flask import flash
+                flash(f"Failed to parse patch: {str(e)}", "danger")
+                return redirect(url_for("upload_patch"))
+        return render_template("upload_patch.html")
+
+    @app.route("/patch-summary")
+    def patch_summary():
+        """Patch analysis & summary. In review flow: allow no patch (then show Continue to checklist)."""
+        in_review_flow = bool(session.get("reviewer_name") and session.get("selected_role"))
+        patch_data = _load_patch_data()
+        if not in_review_flow and not patch_data:
+            return redirect(url_for("upload_patch"))
+        if not in_review_flow and patch_data:
+            summary = patch_data.get("summary", {})
+            return render_template("patch_summary.html", summary=summary, in_review_flow=False, has_patch=True)
+        if in_review_flow:
+            summary = (patch_data or {}).get("summary", {}) if patch_data else {}
+            return render_template(
+                "patch_summary.html",
+                summary=summary,
+                in_review_flow=True,
+                has_patch=bool(patch_data),
+            )
+        return redirect(url_for("upload_patch"))
+
+    @app.route("/patch-clear", methods=["POST"])
+    def patch_clear():
+        """Remove patch from session and storage."""
+        _clear_patch_storage()
+        if session.get("reviewer_name") and session.get("selected_role"):
+            return redirect(url_for("patch_summary"))
+        return redirect(url_for("upload_patch"))
+
+    def _build_file_tree(files):
+        """Build a nested tree (folders + files) for the left sidebar. Each node is a dict."""
+        root = []
+        for i, f in enumerate(files):
+            path = (getattr(f, "new_path", None) or "").replace("\\", "/")
+            parts = path.split("/") if path else []
+            if not parts:
+                root.append({"type": "file", "name": path or "(unnamed)", "path": path, "file_index": i})
+                continue
+            current = root
+            for j, part in enumerate(parts):
+                is_leaf = j == len(parts) - 1
+                if is_leaf:
+                    node = {
+                        "type": "file",
+                        "name": part,
+                        "path": path,
+                        "file_index": i,
+                        "add": getattr(f, "lines_added", 0),
+                        "del": getattr(f, "lines_deleted", 0),
+                        "file_type": getattr(f, "file_type", "other"),
+                    }
+                    current.append(node)
+                else:
+                    child = next((n for n in current if n.get("type") == "folder" and n.get("name") == part), None)
+                    if not child:
+                        child = {"type": "folder", "name": part, "children": []}
+                        current.append(child)
+                    current = child["children"]
+        return root
+
+    @app.route("/review/code")
+    def review_code():
+        """GitLab-style diff viewer: file list and per-file diff."""
+        patch_data = _load_patch_data()
+        if not patch_data:
+            return redirect(url_for("upload_patch"))
+        files = file_diffs_from_session(patch_data.get("files", []))
+        file_tree = _build_file_tree(files)
+        return render_template(
+            "review_code.html",
+            files=files,
+            files_count=len(files),
+            file_tree=file_tree,
+        )
 
     @app.route("/review/all", methods=["GET", "POST"])
     def review_all_categories():

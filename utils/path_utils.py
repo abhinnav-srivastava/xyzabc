@@ -193,3 +193,127 @@ def get_checklist_columns_config_path() -> Path:
 def get_conversion_config_path() -> Path:
     """Get the path to conversion_config.json config file."""
     return get_config_path("conversion_config.json")
+
+
+def get_tools_dir() -> Path:
+    """Get the path to the tools directory (bundled git, cloc, etc.)."""
+    return get_project_root() / "tools"
+
+
+def get_git_executable() -> str:
+    """
+    Return path to git executable: prefer bundled tools/git, else 'git' (PATH).
+    Bundled: tools/git/cmd/git.exe, or tools/git/PortableGit-*/cmd/git.exe after extracting .7z.
+    """
+    import sys
+    tools = get_tools_dir()
+    git_dir = tools / "git"
+    if git_dir.exists():
+        if sys.platform == "win32":
+            for name in ("cmd/git.exe", "bin/git.exe", "git.exe"):
+                p = git_dir / name
+                if p.exists():
+                    return str(p)
+            for sub in git_dir.iterdir():
+                if sub.is_dir():
+                    for name in ("cmd/git.exe", "bin/git.exe"):
+                        p = sub / name
+                        if p.exists():
+                            return str(p)
+        else:
+            for name in ("bin/git", "git"):
+                p = git_dir / name
+                if p.exists():
+                    return str(p)
+            for sub in git_dir.iterdir():
+                if sub.is_dir():
+                    p = sub / "bin" / "git"
+                    if p.exists():
+                        return str(p)
+    return "git"
+
+
+def get_cloc_executable() -> str:
+    """
+    Return path to cloc: prefer bundled tools/cloc, else 'cloc' (PATH).
+    Bundled: cloc.exe, cloc-2.08.exe, or any cloc*.exe / cloc* in tools/cloc/.
+    """
+    import sys
+    tools = get_tools_dir()
+    cloc_dir = tools / "cloc"
+    if cloc_dir.exists():
+        if sys.platform == "win32":
+            for name in ("cloc.exe", "cloc.pl"):
+                p = cloc_dir / name
+                if p.exists():
+                    return str(p)
+            for p in sorted(cloc_dir.glob("cloc*.exe")):
+                return str(p)
+        else:
+            for name in ("cloc", "cloc.pl"):
+                p = cloc_dir / name
+                if p.exists():
+                    return str(p)
+            for p in sorted(cloc_dir.glob("cloc*")):
+                if p.is_file() and os.access(p, os.X_OK):
+                    return str(p)
+    return "cloc"
+
+
+def get_diffstat_executable() -> str:
+    """
+    Return path to diffstat: prefer bundled native binary only (no JAR).
+    Bundled: diffstat.exe (Windows) or diffstat (Unix). JARs are ignored — they often
+    open a GUI window and are not suitable for headless use when the app starts.
+    """
+    import sys
+    tools = get_tools_dir()
+    ds_dir = tools / "diffstat"
+    if ds_dir.exists():
+        if sys.platform == "win32":
+            for p in sorted(ds_dir.glob("diffstat*.exe")):
+                return str(p)
+            p = ds_dir / "diffstat.exe"
+            if p.exists():
+                return str(p)
+        else:
+            for name in ("diffstat",):
+                p = ds_dir / name
+                if p.is_file() and os.access(p, os.X_OK):
+                    return str(p)
+        # Do not use *.jar — DiffStats.jar etc. are typically GUI apps and open a window
+    return "diffstat"
+
+
+def get_tool_executable(
+    tool_id: str,
+    exe_names: Optional[list] = None,
+    glob_pattern: Optional[str] = None,
+) -> str:
+    """
+    Generic lookup: tools/<tool_id>/ then PATH.
+    exe_names: e.g. ["cloc.exe", "cloc"] for Windows then fallback.
+    glob_pattern: e.g. "cloc*.exe" to find first match in tool dir.
+    Returns executable path or bare command name for PATH.
+    """
+    import sys
+    tools = get_tools_dir()
+    tool_dir = tools / tool_id
+    if not tool_dir.exists():
+        return tool_id
+    if exe_names:
+        for name in exe_names:
+            p = tool_dir / name
+            if p.exists() and (p.is_file() or (p.is_dir() and (tool_dir / "bin" / name).exists())):
+                if p.is_file():
+                    return str(p)
+                q = tool_dir / "bin" / name
+                if q.exists():
+                    return str(q)
+    if glob_pattern:
+        for p in sorted(tool_dir.glob(glob_pattern)):
+            if p.is_file():
+                if sys.platform != "win32" and not os.access(p, os.X_OK):
+                    continue
+                return str(p)
+    return tool_id

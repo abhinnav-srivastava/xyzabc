@@ -1,0 +1,20 @@
+{% macro render_tree(nodes, recurse) %}
+{% for node in nodes %}
+  {% if node.type == 'folder' %}
+  <div class="diff-tree-folder">
+    <span class="diff-tree-folder-name"><i class="bi bi-folder2 me-1"></i>{{ node.name }}</span>
+    <div class="diff-tree-children ms-2">
+      {{ recurse(node.children, recurse) }}
+    </div>
+  </div>
+  {% else %}
+  <a href="#diff-file-{{ node.file_index }}" class="diff-tree-file d-flex align-items-center gap-2 py-1 px-2 text-decoration-none text-dark rounded" data-path="{{ node.path|e }}">
+    <span class="file-type-icon file-type-{{ node.file_type }} small" title="{{ node.file_type }}"></span>
+    <span class="diff-tree-file-name text-break flex-grow-1 small">{{ node.name }}</span>
+    <span class="text-success small">+{{ node.add }}</span>
+    <span class="text-danger small">−{{ node.del }}</span>
+  </a>
+  {% endif %}
+{% endfor %}
+{% endmacro %}
+{{ render_tree(file_tree|default([]), render_tree) }}
