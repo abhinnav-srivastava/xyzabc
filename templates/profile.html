@@ -198,7 +198,9 @@
               <div class="profile-form-group">
                 <label for="project_type" class="profile-form-label">Type</label>
                 <select class="form-select form-select-sm" id="project_type" name="project_type">
+                  {% if not app_config.get('features', {}).get('disable_add_remote_projects') %}
                   <option value="remote">Remote (git URL)</option>
+                  {% endif %}
                   <option value="local">Local path</option>
                 </select>
               </div>

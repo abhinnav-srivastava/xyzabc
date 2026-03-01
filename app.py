@@ -665,7 +665,11 @@ def create_app() -> Flask:
                 name = request.form.get("project_name", "").strip()
                 url_or_path = request.form.get("project_url_or_path", "").strip()
                 project_type = request.form.get("project_type", "remote").strip()
-                if url_or_path:
+                is_remote_url = url_or_path.startswith(("https://", "http://", "git@", "ssh://"))
+                if app_config.get("features", {}).get("disable_add_remote_projects") and (project_type == "remote" or is_remote_url):
+                    from flask import flash
+                    flash("Adding remote projects is temporarily disabled.", "warning")
+                elif url_or_path:
                     proj = add_user_project(current_user_id, name, url_or_path, project_type)
                     if proj:
                         from flask import flash
@@ -1895,6 +1899,8 @@ def create_app() -> Flask:
     def api_project_diff(project_id: str):
         """Fetch diff between source and target branches (GitLab MR style, local repos only)."""
         try:
+            if app_config.get("features", {}).get("disable_mr_diff_fetch"):
+                return {"status": "error", "message": "MR diff fetch is temporarily disabled"}, 403
             user_id = session.get("user_username") or session.get("reviewer_username") or ""
             if not user_id:
                 from services.user_profile import get_profile_by_name
