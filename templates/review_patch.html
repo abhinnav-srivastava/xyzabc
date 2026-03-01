@@ -66,7 +66,7 @@
               </div>
 
               <!-- MR mode fields -->
-              <div id="mr-fields" class="patch-mode-fields mt-3" style="display: none;">
+              <div id="mr-fields" class="patch-mode-fields mt-3" style="display: {{ 'block' if mr_details.patch_mode != 'commit' else 'none' }};">
                 <div class="row g-2">
                   <div class="col-6">
                     <label for="target_branch" class="form-label small">Target <span class="text-muted">(into)</span></label>
@@ -90,7 +90,7 @@
               </div>
 
               <!-- Commit mode fields -->
-              <div id="commit-fields" class="patch-mode-fields mt-3" style="display: none;">
+              <div id="commit-fields" class="patch-mode-fields mt-3" style="display: {{ 'block' if mr_details.patch_mode == 'commit' else 'none' }};">
                 <div class="mb-2">
                   <label for="branch_name" class="form-label small">Branch</label>
                   <select class="form-select form-select-sm" id="branch_name" name="branch_name">
@@ -161,6 +161,7 @@
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
 (function() {
   var zone = document.getElementById('patch-drop-zone');
   var input = document.getElementById('patch_file');
@@ -237,6 +238,7 @@
     zone.addEventListener('dragover', function(e) {
       e.preventDefault();
       e.stopPropagation();
+      e.dataTransfer.dropEffect = 'copy';
       highlight(true);
     });
     zone.addEventListener('dragleave', function(e) {
@@ -506,5 +508,6 @@
   }
 
 })();
+});
 </script>
 {% endblock %}
