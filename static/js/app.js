@@ -52,21 +52,16 @@ function initializeApp() {
 function setupCustomTitlebar() {
     if (typeof window.electronAPI === 'undefined') return;
 
+    const titlebar = document.getElementById('app-titlebar');
     const controls = document.getElementById('titlebar-controls');
-    const nav = document.querySelector('.custom-titlebar');
-    const brand = document.querySelector('.titlebar-drag');
+    const titlebarName = document.querySelector('.titlebar-name');
     const buttons = document.querySelector('.titlebar-buttons');
 
-    if (controls && nav) {
+    if (titlebar && controls) {
+        titlebar.classList.add('visible');
         controls.style.display = 'flex';
-        nav.classList.add('has-titlebar-controls');
-        if (nav) nav.style.webkitAppRegion = 'drag';
-        if (brand) brand.style.webkitAppRegion = 'drag';
+        if (titlebarName) titlebarName.style.webkitAppRegion = 'drag';
         if (buttons) buttons.style.webkitAppRegion = 'no-drag';
-        const collapse = document.getElementById('navbarNav');
-        if (collapse) collapse.style.webkitAppRegion = 'no-drag';
-        const toggler = document.querySelector('.navbar-toggler');
-        if (toggler) toggler.style.webkitAppRegion = 'no-drag';
     }
 
     const minimizeBtn = document.getElementById('titlebar-minimize');
