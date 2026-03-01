@@ -1,12 +1,53 @@
 const { app, BrowserWindow, Menu, BrowserView } = require('electron');
 const path = require('path');
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 
 const PORT = 5000;
 const APP_URL = `http://127.0.0.1:${PORT}`;
 
 let backendProcess = null;
 let mainWindow = null;
+
+/** Kill any process listening on the given port (e.g. leftover Flask instances). */
+function killProcessesOnPort(port) {
+  const isWin = process.platform === 'win32';
+  try {
+    if (isWin) {
+      const out = execSync(`netstat -ano | findstr ":${port}" | findstr "LISTENING"`, {
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'pipe']
+      }).trim();
+      const pids = new Set();
+      for (const line of out.split(/\r?\n/)) {
+        const m = line.trim().match(/\s+(\d+)\s*$/);
+        if (m) pids.add(m[1]);
+      }
+      for (const pid of pids) {
+        try {
+          execSync(`taskkill /F /PID ${pid}`, { stdio: 'ignore' });
+        } catch (_) {}
+      }
+    } else {
+      execSync(`lsof -ti:${port} | xargs kill -9 2>/dev/null || true`, { stdio: 'ignore' });
+    }
+  } catch (_) {
+    // No process on port or command failed
+  }
+}
+
+/** Stop the backend process and its children. */
+function stopBackend() {
+  if (!backendProcess) return;
+  try {
+    const pid = backendProcess.pid;
+    if (pid && process.platform === 'win32') {
+      execSync(`taskkill /F /T /PID ${pid}`, { stdio: 'ignore' });
+    } else {
+      backendProcess.kill('SIGKILL');
+    }
+  } catch (_) {}
+  backendProcess = null;
+}
 
 function getBackendPath() {
   if (app.isPackaged) {
@@ -17,6 +58,7 @@ function getBackendPath() {
 
 function startBackend() {
   return new Promise((resolve, reject) => {
+    killProcessesOnPort(PORT);
     const backendPath = getBackendPath();
     const isWin = process.platform === 'win32';
 
@@ -125,10 +167,10 @@ app.whenReady().then(async () => {
   }
 });
 
+app.on('before-quit', () => {
+  stopBackend();
+});
+
 app.on('window-all-closed', () => {
-  if (backendProcess) {
-    backendProcess.kill();
-    backendProcess = null;
-  }
   app.quit();
 });
