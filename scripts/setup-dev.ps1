@@ -18,6 +18,19 @@ param(
 if ($Proxy -in '--build','-build','build') { $Proxy = $null; $Build = $true }
 if ($Proxy -in '--venv','-venv','venv') { $Proxy = $null; $Venv = $true }
 
+# Prompt for proxy settings if not provided (interactive)
+if (-not $Proxy) { $Proxy = Read-Host "Proxy URL (e.g. http://proxy:8080) [Enter to skip]" }
+if ($Proxy -and -not $ProxyUser) { $ProxyUser = Read-Host "Proxy username [Enter to skip]" }
+if ($Proxy -and $ProxyUser -and -not $ProxyPass) {
+    $sec = Read-Host "Proxy password [Enter to skip]" -AsSecureString
+    $ProxyPass = if ($sec.Length -gt 0) { [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)) } else { "" }
+}
+
+# Prompt for Name, Venv, Build if not provided (interactive)
+if (-not $Name) { $Name = Read-Host "App name to restore (e.g. CodeCritique) [Enter to skip]" }
+if (-not $Venv) { $r = Read-Host "Create virtual environment (.venv)? [y/N]"; $Venv = ($r -match '^[yY]') }
+if (-not $Build) { $r = Read-Host "Run Electron build after setup? [y/N]"; $Build = ($r -match '^[yY]') }
+
 # Build proxy URL with auth: Proxy + ProxyUser + ProxyPass (auto URL-encodes special chars)
 if ($Proxy -and $ProxyUser -and $ProxyPass) {
     $encUser = [Uri]::EscapeDataString($ProxyUser)

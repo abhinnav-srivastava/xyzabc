@@ -25,6 +25,31 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Prompt for proxy settings if not provided (interactive)
+if [[ -z "$PIP_PROXY" ]]; then
+  read -p "Proxy URL (e.g. http://proxy:8080) [Enter to skip]: " PIP_PROXY
+fi
+if [[ -n "$PIP_PROXY" && -z "$PIP_PROXY_USER" ]]; then
+  read -p "Proxy username [Enter to skip]: " PIP_PROXY_USER
+fi
+if [[ -n "$PIP_PROXY" && -n "$PIP_PROXY_USER" && -z "$PIP_PROXY_PASS" ]]; then
+  read -s -p "Proxy password [Enter to skip]: " PIP_PROXY_PASS
+  echo ""
+fi
+
+# Prompt for Name, Venv, Build if not provided (interactive)
+if [[ -z "$APP_NAME" ]]; then
+  read -p "App name to restore (e.g. CodeCritique) [Enter to skip]: " APP_NAME
+fi
+if [[ "$VENV" != "true" ]]; then
+  read -p "Create virtual environment (.venv)? [y/N]: " r
+  [[ "$r" =~ ^[yY] ]] && VENV=true
+fi
+if [[ "$BUILD" != "true" ]]; then
+  read -p "Run Electron build after setup? [y/N]: " r
+  [[ "$r" =~ ^[yY] ]] && BUILD=true
+fi
+
 # Build proxy URL with auth (auto URL-encodes special chars in user/pass)
 if [[ -n "$PIP_PROXY" && -n "$PIP_PROXY_USER" && -n "$PIP_PROXY_PASS" ]]; then
   ENC_USER=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$PIP_PROXY_USER")

@@ -5,7 +5,7 @@ Quick setup for a new development machine.
 > **Restore app name:** Pass `-Name "YourApp"` to setup: `.\scripts\setup-dev.ps1 -Name "YourApp"` or `./scripts/setup-dev.sh --name "YourApp"`  
 > **Electron build:** Add `-Build` (PowerShell) or `--build` (bash) to run `npm run build:win` after setup.  
 > **Venv:** Add `-Venv` (PowerShell) or `--venv` (bash) to create `.venv` and install deps there.  
-> **Proxy with auth:** Use `-ProxyUser` / `-ProxyPass` (PowerShell) or `--proxy-user` / `--proxy-pass` (bash) — no URL-encoding needed.
+> **Interactive mode:** Run without args — script prompts for proxy, app name, venv, and build. Pass args/env to skip prompts.
 
 ## Option 1: Docker (web only)
 

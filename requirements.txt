@@ -6,5 +6,4 @@ openpyxl==3.1.2
 PyInstaller==6.3.0
 setuptools>=65.0.0
 wheel>=0.40.0
-upx-ucl>=1.0.0
 waitress>=2.1.2
