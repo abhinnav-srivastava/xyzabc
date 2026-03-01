@@ -1,6 +1,7 @@
 # CodeReview - Development environment setup (Windows PowerShell)
 # Run from project root: .\scripts\setup-dev.ps1
 # Optional: .\scripts\setup-dev.ps1 -Proxy "http://proxy:8080" -Name "YourApp" -Build
+# Note: Use -Build (PowerShell style), not --build
 # Env: $env:PIP_PROXY, $env:APP_NAME
 
 param(
@@ -8,6 +9,9 @@ param(
     [string]$Name = $env:APP_NAME,
     [switch]$Build
 )
+
+# Fix: --build wrongly captured as Proxy (env or typo)
+if ($Proxy -in '--build','-build','build') { $Proxy = $null; $Build = $true }
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
