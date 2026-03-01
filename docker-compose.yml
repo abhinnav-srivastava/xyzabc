@@ -1,0 +1,13 @@
+# CodeCritique - Web development
+# Run: docker compose up
+# Open: http://localhost:5000
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - FLASK_ENV=production

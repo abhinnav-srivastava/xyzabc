@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+.venv
+venv
+env
+
+# Node
+node_modules
+dist-electron
+dist-electron-*
+dist-electron-build
+
+# Build
+build/
+dist/
+*.egg-info
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs and temp
+*.log
+temp/
+
+# Optional: exclude large tools
+# tools/git/PortableGit*.7z
+# tools/cloc/*.exe
