@@ -64,7 +64,16 @@ function main() {
     console.error(`PyInstaller did not produce dist/${exeName}.exe`);
     process.exit(1);
   }
-  console.log(`  -> dist/${exeName}.exe created\n`);
+  console.log(`  -> dist/${exeName}.exe created`);
+
+  // Ensure dist/CodeReview.exe exists for electron-builder (package.json + main.js expect it)
+  const electronExePath = path.join(rootDir, 'dist', 'CodeReview.exe');
+  if (exeName !== 'CodeReview') {
+    fs.copyFileSync(exePath, electronExePath);
+    console.log(`  -> copied to dist/CodeReview.exe for Electron\n`);
+  } else {
+    console.log('\n');
+  }
 
   // 2. Install npm deps if needed
   if (!fs.existsSync(path.join(rootDir, 'node_modules'))) {
