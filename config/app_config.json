@@ -140,7 +140,7 @@
   "data_egress": {
     "block_external_resources": false,
     "block_external_downloads": false,
-    "block_git_remote": false
+    "block_git_remote": true
   },
   "data_retention": {
     "patch_retention_days": 30
