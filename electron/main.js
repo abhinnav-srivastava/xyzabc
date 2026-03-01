@@ -15,7 +15,8 @@ function killProcessesOnPort(port) {
     if (isWin) {
       const out = execSync(`netstat -ano | findstr ":${port}" | findstr "LISTENING"`, {
         encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'pipe']
+        stdio: ['pipe', 'pipe', 'pipe'],
+        shell: true
       }).trim();
       const pids = new Set();
       for (const line of out.split(/\r?\n/)) {
@@ -24,7 +25,7 @@ function killProcessesOnPort(port) {
       }
       for (const pid of pids) {
         try {
-          execSync(`taskkill /F /PID ${pid}`, { stdio: 'ignore' });
+          execSync(`taskkill /F /PID ${pid}`, { stdio: 'ignore', shell: true });
         } catch (_) {}
       }
     } else {
@@ -37,16 +38,18 @@ function killProcessesOnPort(port) {
 
 /** Stop the backend process and its children. */
 function stopBackend() {
-  if (!backendProcess) return;
-  try {
-    const pid = backendProcess.pid;
-    if (pid && process.platform === 'win32') {
-      execSync(`taskkill /F /T /PID ${pid}`, { stdio: 'ignore' });
-    } else {
-      backendProcess.kill('SIGKILL');
-    }
-  } catch (_) {}
-  backendProcess = null;
+  if (backendProcess) {
+    try {
+      const pid = backendProcess.pid;
+      if (pid && process.platform === 'win32') {
+        execSync(`taskkill /F /T /PID ${pid}`, { stdio: 'ignore', shell: true });
+      } else if (pid) {
+        backendProcess.kill('SIGKILL');
+      }
+    } catch (_) {}
+    backendProcess = null;
+  }
+  killProcessesOnPort(PORT);
 }
 
 function getBackendPath() {
