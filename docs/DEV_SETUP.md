@@ -18,12 +18,16 @@ Open http://localhost:5000
 
 ```bash
 ./scripts/setup-dev.sh
+# With proxy: ./scripts/setup-dev.sh --proxy http://proxy:8080
+# Or: export PIP_PROXY=http://proxy:8080 && ./scripts/setup-dev.sh
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
 .\scripts\setup-dev.ps1
+# With proxy: .\scripts\setup-dev.ps1 -Proxy "http://proxy:8080"
+# Or: $env:PIP_PROXY = "http://proxy:8080"; .\scripts\setup-dev.ps1
 ```
 
 ### Prerequisites

@@ -1,8 +1,18 @@
 #!/usr/bin/env bash
 # CodeCritique - Development environment setup (Linux / macOS / WSL)
 # Run from project root: ./scripts/setup-dev.sh
+# Optional proxy: ./scripts/setup-dev.sh --proxy http://proxy:8080
+# Or set env: export PIP_PROXY=http://proxy:8080
 
 set -e
+
+PIP_PROXY="${PIP_PROXY:-}"
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --proxy) PIP_PROXY="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -10,6 +20,7 @@ cd "$PROJECT_ROOT"
 
 echo "=== CodeCritique Dev Setup ==="
 echo "Project root: $PROJECT_ROOT"
+[[ -n "$PIP_PROXY" ]] && echo "Pip proxy: $PIP_PROXY"
 echo ""
 
 # Python
@@ -30,8 +41,10 @@ if ! $PYTHON_CMD -c "import sys; exit(0 if sys.version_info >= (3, 8) else 1)" 2
 fi
 
 echo "Installing Python dependencies..."
-$PYTHON_CMD -m pip install --upgrade pip -q
-$PYTHON_CMD -m pip install -r requirements.txt -q
+PIP_EXTRA=""
+[[ -n "$PIP_PROXY" ]] && PIP_EXTRA="--proxy $PIP_PROXY"
+$PYTHON_CMD -m pip install --upgrade pip $PIP_EXTRA -q
+$PYTHON_CMD -m pip install -r requirements.txt $PIP_EXTRA -q
 echo "  OK"
 echo ""
 

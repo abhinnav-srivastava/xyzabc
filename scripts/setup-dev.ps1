@@ -1,12 +1,19 @@
 # CodeCritique - Development environment setup (Windows PowerShell)
 # Run from project root: .\scripts\setup-dev.ps1
+# Optional proxy: .\scripts\setup-dev.ps1 -Proxy "http://proxy:8080"
+# Or set env: $env:PIP_PROXY = "http://proxy:8080"
+
+param(
+    [string]$Proxy = $env:PIP_PROXY
+)
 
 $ErrorActionPreference = "Stop"
-$ProjectRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $ProjectRoot
 
 Write-Host "=== CodeCritique Dev Setup ===" -ForegroundColor Cyan
 Write-Host "Project root: $ProjectRoot"
+if ($Proxy) { Write-Host "Pip proxy: $Proxy" }
 Write-Host ""
 
 # Python
@@ -25,8 +32,11 @@ if (-not $pythonCmd) {
 
 Invoke-Expression "$pythonCmd --version"
 Write-Host "Installing Python dependencies..."
-Invoke-Expression "$pythonCmd -m pip install --upgrade pip -q"
-Invoke-Expression "$pythonCmd -m pip install -r requirements.txt -q"
+$pipArgs = "-q"
+if (-not $env:VIRTUAL_ENV) { $pipArgs = "--user -q" }
+if ($Proxy) { $pipArgs = "$pipArgs --proxy $Proxy" }
+Invoke-Expression "$pythonCmd -m pip install --upgrade pip $pipArgs"
+Invoke-Expression "$pythonCmd -m pip install -r requirements.txt $pipArgs"
 Write-Host "  OK" -ForegroundColor Green
 Write-Host ""
 
