@@ -39,6 +39,14 @@ Open http://localhost:5000
 # With venv:  .\scripts\setup-dev.ps1 -Venv
 ```
 
+### Windows (CMD)
+
+```cmd
+scripts\setup-dev.bat
+REM Env: PIP_PROXY, PIP_PROXY_USER, PIP_PROXY_PASS, APP_NAME
+REM Prompts for proxy, app name, venv, build (or use env vars)
+```
+
 ### Prerequisites
 
 - **Python 3.8+** — [python.org](https://www.python.org/)

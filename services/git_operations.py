@@ -5,11 +5,31 @@ Uses Git's credential helper (Windows Credential Manager, Git Credential Manager
 when running git commands — no manual credential handling required.
 """
 
+import json
 import os
 import subprocess
 import logging
 from pathlib import Path
 from typing import Optional, Tuple, Dict, Any
+
+
+def _block_git_remote() -> bool:
+    """Check if git remote operations are blocked. Built app: always block. Dev: config/env."""
+    import sys
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return True  # Built app: no uploads
+    if os.environ.get("BLOCK_GIT_REMOTE", "").lower() in ("1", "true", "yes"):
+        return True
+    try:
+        config_path = get_project_root() / "config" / "app_config.json"
+        if config_path.exists():
+            with open(config_path, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+            if cfg.get("data_egress", {}).get("block_git_remote"):
+                return True
+    except Exception:
+        pass
+    return False
 
 try:
     from utils.path_utils import get_git_executable, get_project_root
@@ -129,6 +149,10 @@ def git_pull(
     path = Path(repo_path) if repo_path else get_project_root()
     result: Dict[str, Any] = {"success": False, "stdout": "", "stderr": "", "message": ""}
 
+    if _block_git_remote():
+        result["message"] = "Git remote operations disabled (data_egress.block_git_remote)"
+        return result
+
     # Verify repo
     ok, _, err = _run_git(path, ["rev-parse", "--is-inside-work-tree"])
     if not ok:
@@ -166,6 +190,10 @@ def git_push(
     path = Path(repo_path) if repo_path else get_project_root()
     result: Dict[str, Any] = {"success": False, "stdout": "", "stderr": "", "message": ""}
 
+    if _block_git_remote():
+        result["message"] = "Git remote operations disabled (data_egress.block_git_remote)"
+        return result
+
     # Verify repo
     ok, _, err = _run_git(path, ["rev-parse", "--is-inside-work-tree"])
     if not ok:
@@ -201,6 +229,10 @@ def git_fetch(
     """
     path = Path(repo_path) if repo_path else get_project_root()
     result: Dict[str, Any] = {"success": False, "stdout": "", "stderr": "", "message": ""}
+
+    if _block_git_remote():
+        result["message"] = "Git remote operations disabled (data_egress.block_git_remote)"
+        return result
 
     ok, _, err = _run_git(path, ["rev-parse", "--is-inside-work-tree"])
     if not ok:

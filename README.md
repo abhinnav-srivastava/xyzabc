@@ -70,6 +70,7 @@ Additional routes: `/refresh`, `/refresh-categories`, `/refresh-all` (reload che
 
 - **Network** – `network_security` service validates each request (e.g. IP allowlist); config in `config/network_security.json`.
 - **App config** – `app_config.json`: roles/categories (overlap with `roles.json`), review settings, UI, export, security, logging, features (PWA, offline, auto-launch browser, etc.).
+- **Corporate** – See `docs/SECURITY_CORPORATE.md` for secrets, CORS, SSO (REMOTE_USER), audit logging, data retention. `docs/PRIVACY_NOTICE.md` for data handling.
 
 ---
 

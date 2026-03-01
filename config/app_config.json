@@ -134,6 +134,17 @@
     "secure_cookies": false,
     "http_only_cookies": true
   },
+  "auth": {
+    "use_remote_user": false
+  },
+  "data_egress": {
+    "block_external_resources": false,
+    "block_external_downloads": false,
+    "block_git_remote": false
+  },
+  "data_retention": {
+    "patch_retention_days": 30
+  },
   "logging": {
     "level": "INFO",
     "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",

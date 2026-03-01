@@ -5,10 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Code Review Report - {{ reviewer_name }}</title>
     
-    <!-- Bootstrap CSS -->
+    <!-- Bootstrap CSS (local inline when block_external_resources, else CDN) -->
+    {% if inline_bootstrap_css %}
+    <style>{{ inline_bootstrap_css }}</style>
+    {% else %}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% endif %}
     <!-- Bootstrap Icons -->
+    {% if inline_icons_css %}
+    <style>{{ inline_icons_css }}</style>
+    {% else %}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    {% endif %}
     
     <!-- Custom Styles to match the web app -->
     <style>
@@ -333,7 +341,9 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
+    <!-- Bootstrap JS (only when not blocking external - report is static, JS optional) -->
+    {% if not inline_bootstrap_css %}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% endif %}
 </body>
 </html>

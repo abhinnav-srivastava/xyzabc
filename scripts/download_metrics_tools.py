@@ -5,8 +5,11 @@ Run from project root: python scripts/download_metrics_tools.py
 
 CLOC: downloads cloc-2.08.exe (Windows) or cloc tarball (Linux/macOS) from GitHub.
 diffstat / Git: prints install links (no auto-download for all platforms).
+
+Set NO_EXTERNAL_DOWNLOADS=1 or data_egress.block_external_downloads in config to skip downloads.
 """
 
+import json
 import os
 import sys
 import urllib.request
@@ -14,6 +17,24 @@ from pathlib import Path
 
 # Project root (parent of scripts/)
 ROOT = Path(__file__).resolve().parent.parent
+
+
+def _block_external_downloads() -> bool:
+    """Check if external downloads are blocked. Built app: always block. Dev: config/env."""
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return True  # Built app: no downloads
+    if os.environ.get("NO_EXTERNAL_DOWNLOADS", "").lower() in ("1", "true", "yes"):
+        return True
+    config_path = ROOT / "config" / "app_config.json"
+    if config_path.exists():
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+            if cfg.get("data_egress", {}).get("block_external_downloads"):
+                return True
+        except (json.JSONDecodeError, KeyError):
+            pass
+    return False
 TOOLS = ROOT / "tools"
 CLOC_DIR = TOOLS / "cloc"
 CLOC_WIN_URL = "https://github.com/AlDanial/cloc/releases/download/v2.08/cloc-2.08.exe"
@@ -32,6 +53,11 @@ def download_file(url: str, dest: Path) -> bool:
 def main():
     os.chdir(ROOT)
     CLOC_DIR.mkdir(parents=True, exist_ok=True)
+
+    if _block_external_downloads():
+        print("External downloads disabled (NO_EXTERNAL_DOWNLOADS or data_egress.block_external_downloads).")
+        print("Install tools manually. See docs/CODE_METRICS_AND_TOOLS.md")
+        return
 
     if sys.platform == "win32":
         exe = CLOC_DIR / "cloc-2.08.exe"

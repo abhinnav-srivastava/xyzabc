@@ -1,4 +1,5 @@
 import os
+import sys
 import io
 import time
 import json
@@ -69,6 +70,7 @@ from services.user_profile import (
     update_profile_roles,
 )
 from services.network_security import network_security
+from services.audit_log import audit_log
 from services.dynamic_categories import dynamic_categories
 from services.patch_parser import (
     parse_patch,
@@ -83,17 +85,40 @@ from services.git_operations import (
 
 def create_app() -> Flask:
     app = Flask(__name__)
-    app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
-    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=365)
 
-    \
     config_path = Path(__file__).parent / "config" / "app_config.json"
     app_config = {}
     if config_path.exists():
         with open(config_path, 'r', encoding='utf-8') as f:
             app_config = json.load(f)
-    else:
-        pass
+
+    # Built app (frozen): no downloads, no uploads. Dev: downloads ok (deps, CDN), no uploads.
+    is_frozen = getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS")
+    if is_frozen:
+        app_config.setdefault("data_egress", {})
+        app_config["data_egress"]["block_external_resources"] = True
+        app_config["data_egress"]["block_external_downloads"] = True
+        app_config["data_egress"]["block_git_remote"] = True
+
+    # Secrets: env overrides config; reject defaults in production server (not portable/Electron)
+    sec = app_config.get("security", {})
+    secret = os.environ.get("FLASK_SECRET_KEY") or sec.get("session_secret_key") or "dev-secret-key"
+    is_production_server = (
+        os.environ.get("FLASK_ENV") == "production"
+        and not (getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"))
+    )
+    if is_production_server and secret in ("dev-secret-key", "dev-secret-key-change-in-production"):
+        raise RuntimeError(
+            "Production server requires FLASK_SECRET_KEY (env) or security.session_secret_key in config. "
+            "Do not use default secrets. Use a vault or secure secret store."
+        )
+    app.secret_key = secret
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=365)
+
+    # Cookies: secure when over HTTPS
+    app.config["SESSION_COOKIE_SECURE"] = sec.get("secure_cookies", False)
+    app.config["SESSION_COOKIE_HTTPONLY"] = sec.get("http_only_cookies", True)
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
     @app.context_processor
     def inject_config():
@@ -105,10 +130,7 @@ def create_app() -> Flask:
 
     try:
         import subprocess
-        import sys
 
-        \
-\
         is_portable = getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
         auto_update_enabled = app_config.get('features', {}).get('auto_update', True)
         env_disabled = os.environ.get('AUTO_UPDATE_CHECKLISTS', '').lower() == 'false'
@@ -143,6 +165,24 @@ def create_app() -> Flask:
         pass
 
     @app.before_request
+    def check_remote_user():
+        """Corporate: trust REMOTE_USER from reverse proxy (SSO/LDAP)."""
+        auth_cfg = app_config.get("auth", {})
+        if not auth_cfg.get("use_remote_user"):
+            return None
+        remote = request.environ.get("REMOTE_USER") or request.environ.get("HTTP_X_FORWARDED_USER")
+        if remote and not session.get("user_name"):
+            session.permanent = True
+            session["user_name"] = remote
+            session["user_username"] = remote
+            profile = get_profile(remote)
+            if profile and profile.get("preferred_roles"):
+                session["user_roles"] = profile["preferred_roles"]
+            else:
+                session["user_roles"] = []
+                save_profile(user_id=remote, name=remote, preferred_roles=[])
+
+    @app.before_request
     def require_login():
         """Redirect to login if not authenticated. Landing (index) and login are public."""
         if request.endpoint in (None, "static", "manifest", "service_worker", "offline"):
@@ -170,6 +210,24 @@ def create_app() -> Flask:
 
         if not is_allowed:
             return f"Access denied: {reason}", 403
+
+    @app.after_request
+    def add_security_headers(response):
+        """CORS and Content-Security-Policy. When block_external_resources, prevent external fetches."""
+        origins = sec.get("allowed_origins") or []
+        if origins:
+            if "*" in origins:
+                response.headers["Access-Control-Allow-Origin"] = "*"
+            else:
+                origin = request.environ.get("HTTP_ORIGIN")
+                if origin and origin in origins:
+                    response.headers["Access-Control-Allow-Origin"] = origin
+        if app_config.get("data_egress", {}).get("block_external_resources"):
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'"
+            )
+        return response
 
     def _get_steps() -> List[Dict[str, Any]]:
         config = load_roles_config()
@@ -477,10 +535,14 @@ def create_app() -> Flask:
                 if profile and profile.get("preferred_roles"):
                     session["user_roles"] = profile["preferred_roles"]
                     save_profile(user_id=username, name=name, preferred_roles=profile["preferred_roles"])
+                    audit_log("login", user_id=username, user_name=name, roles=profile["preferred_roles"],
+                              ip=request.environ.get("REMOTE_ADDR"))
                     next_url = request.args.get("next") or url_for("dashboard")
                     return redirect(next_url)
                 else:
                     save_profile(user_id=username, name=name, preferred_roles=[])
+                    audit_log("login", user_id=username, user_name=name, roles=[],
+                              ip=request.environ.get("REMOTE_ADDR"))
                     next_url = request.args.get("next") or url_for("dashboard")
                     return redirect(url_for("select_roles", next=next_url))
         if session.get("user_name") and session.get("user_roles"):
@@ -512,6 +574,8 @@ def create_app() -> Flask:
                 name = session.get("user_name", "")
                 session["user_roles"] = roles
                 save_profile(user_id=username, name=name, preferred_roles=roles)
+                audit_log("select_roles", user_id=username, user_name=name, roles=roles,
+                          ip=request.environ.get("REMOTE_ADDR"))
                 next_url = request.args.get("next") or url_for("dashboard")
                 return redirect(next_url)
         if session.get("user_roles"):
@@ -523,6 +587,9 @@ def create_app() -> Flask:
     @app.route("/logout")
     def logout():
         """Clear session and redirect to landing page."""
+        user_id = session.get("user_username")
+        user_name = session.get("user_name")
+        audit_log("logout", user_id=user_id, user_name=user_name, ip=request.environ.get("REMOTE_ADDR"))
         session.clear()
         return redirect(url_for("index"))
 
@@ -565,6 +632,11 @@ def create_app() -> Flask:
                 p = get_profile(user_id)
                 display_name = p.get("name", user_id) if p else user_id
                 delete_profile(user_id)
+                audit_log("profile_delete",
+                          user_id=session.get("user_username"),
+                          user_name=session.get("user_name"),
+                          ip=request.environ.get("REMOTE_ADDR"),
+                          details={"deleted_user_id": user_id})
                 from flask import flash
                 flash(f"Profile '{display_name}' deleted.", "info")
             elif action == "set_default" and user_id:
@@ -982,6 +1054,11 @@ def create_app() -> Flask:
                     "files": file_diffs_to_json_serializable(files),
                 }
                 session["patch_data_key"] = _save_patch_data(patch_data)
+                audit_log("patch_upload",
+                          user_id=session.get("user_username"),
+                          user_name=session.get("user_name"),
+                          ip=request.environ.get("REMOTE_ADDR"),
+                          details={"files_count": len(files)})
                 return redirect(url_for("patch_summary"))
             except Exception as e:
                 from flask import flash
@@ -1060,6 +1137,11 @@ def create_app() -> Flask:
                     "files": file_diffs_to_json_serializable(files),
                 }
                 session["patch_data_key"] = _save_patch_data(patch_data)
+                audit_log("patch_upload",
+                          user_id=session.get("user_username"),
+                          user_name=session.get("user_name"),
+                          ip=request.environ.get("REMOTE_ADDR"),
+                          details={"files_count": len(files)})
                 return redirect(url_for("patch_summary"))
             except Exception as e:
                 from flask import flash
@@ -1156,8 +1238,13 @@ def create_app() -> Flask:
 
                 session["responses"] = responses
 
-                \
-\
+                audit_log("review_submit",
+                          user_id=session.get("user_username"),
+                          user_name=session.get("user_name"),
+                          roles=session.get("user_roles"),
+                          ip=request.environ.get("REMOTE_ADDR"),
+                          details={"total_items": len(responses)})
+
                 debug_log("DEBUG: Redirecting to summary")
                 return redirect(url_for("summary"))
             except Exception as e:
@@ -1374,6 +1461,36 @@ def create_app() -> Flask:
             review_timing = _calculate_review_time()
             mr_details = session.get("mr_details", {})
 
+            # When block_external_resources, inline CSS so downloaded HTML needs no external fetches
+            inline_bootstrap_css = None
+            inline_icons_css = None
+            if app_config.get("data_egress", {}).get("block_external_resources"):
+                import base64
+                import re
+                static_root = Path(__file__).parent / "static"
+                bs_css = static_root / "vendor" / "bootstrap" / "css" / "bootstrap.min.css"
+                icons_css_path = static_root / "vendor" / "bootstrap-icons" / "bootstrap-icons.css"
+                icons_font_woff2 = static_root / "vendor" / "bootstrap-icons" / "fonts" / "bootstrap-icons.woff2"
+                if bs_css.exists():
+                    inline_bootstrap_css = bs_css.read_text(encoding="utf-8", errors="replace")
+                if icons_css_path.exists():
+                    inline_icons_css = icons_css_path.read_text(encoding="utf-8", errors="replace")
+                    if icons_font_woff2.exists():
+                        font_b64 = base64.b64encode(icons_font_woff2.read_bytes()).decode("ascii")
+                        inline_icons_css = re.sub(
+                            r'url\("fonts/bootstrap-icons\.woff2[^"]*"\)',
+                            f'url("data:font/woff2;base64,{font_b64}")',
+                            inline_icons_css,
+                        )
+                    woff_path = static_root / "vendor" / "bootstrap-icons" / "fonts" / "bootstrap-icons.woff"
+                    if woff_path.exists():
+                        woff_b64 = base64.b64encode(woff_path.read_bytes()).decode("ascii")
+                        inline_icons_css = re.sub(
+                            r'url\("fonts/bootstrap-icons\.woff[^"]*"\)',
+                            f'url("data:font/woff;base64,{woff_b64}")',
+                            inline_icons_css,
+                        )
+
             html = render_template("report_standalone.html",
                                  summary=summary_data,
                                  counts_overall=counts_overall,
@@ -1381,7 +1498,9 @@ def create_app() -> Flask:
                                  reviewer_username=reviewer_username,
                                  selected_role=selected_role,
                                  review_timing=review_timing,
-                                 mr_details=mr_details)
+                                 mr_details=mr_details,
+                                 inline_bootstrap_css=inline_bootstrap_css,
+                                 inline_icons_css=inline_icons_css)
             response = make_response(html)
             response.headers["Content-Type"] = "text/html; charset=utf-8"
             response.headers["Content-Disposition"] = "attachment; filename=code_review_report.html"
