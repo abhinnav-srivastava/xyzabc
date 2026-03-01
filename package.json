@@ -4,7 +4,7 @@
   "description": "CodeReview - Code review checklist app",
   "main": "electron/main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "npx electron .",
     "build:win": "node scripts/build-electron-win.js",
     "pack:win": "electron-builder --win --dir",
     "dist:win": "electron-builder --win"

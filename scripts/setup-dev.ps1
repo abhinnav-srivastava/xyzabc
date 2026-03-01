@@ -1,11 +1,12 @@
 # CodeReview - Development environment setup (Windows PowerShell)
 # Run from project root: .\scripts\setup-dev.ps1
-# Optional: .\scripts\setup-dev.ps1 -Proxy "http://proxy:8080" -Name "YourApp"
+# Optional: .\scripts\setup-dev.ps1 -Proxy "http://proxy:8080" -Name "YourApp" -Build
 # Env: $env:PIP_PROXY, $env:APP_NAME
 
 param(
     [string]$Proxy = $env:PIP_PROXY,
-    [string]$Name = $env:APP_NAME
+    [string]$Name = $env:APP_NAME,
+    [switch]$Build
 )
 
 $ErrorActionPreference = "Stop"
@@ -16,6 +17,7 @@ Write-Host "=== CodeReview Dev Setup ===" -ForegroundColor Cyan
 Write-Host "Project root: $ProjectRoot"
 if ($Proxy) { Write-Host "Pip proxy: $Proxy" }
 if ($Name) { Write-Host "Restore app name to: $Name" }
+if ($Build) { Write-Host "Run Electron build (build:win) after setup" }
 Write-Host ""
 
 # Restore app name (if -Name passed)
@@ -85,6 +87,18 @@ Write-Host ""
 if (-not (Test-Path data)) { New-Item -ItemType Directory -Path data | Out-Null }
 Write-Host "Data dir: $ProjectRoot\data"
 Write-Host ""
+
+# Electron build (if -Build passed)
+if ($Build) {
+    Write-Host "--- Electron build (build:win) ---" -ForegroundColor Yellow
+    if (Get-Command node -ErrorAction SilentlyContinue) {
+        npm run build:win
+        Write-Host "  OK" -ForegroundColor Green
+    } else {
+        Write-Host "Node.js required for build. Skipping." -ForegroundColor Red
+    }
+    Write-Host ""
+}
 
 Write-Host "=== Setup complete ===" -ForegroundColor Green
 Write-Host ""

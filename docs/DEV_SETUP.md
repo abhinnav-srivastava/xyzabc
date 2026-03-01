@@ -2,7 +2,8 @@
 
 Quick setup for a new development machine.
 
-> **Restore app name:** Pass `-Name "YourApp"` to setup: `.\scripts\setup-dev.ps1 -Name "YourApp"` or `./scripts/setup-dev.sh --name "YourApp"`
+> **Restore app name:** Pass `-Name "YourApp"` to setup: `.\scripts\setup-dev.ps1 -Name "YourApp"` or `./scripts/setup-dev.sh --name "YourApp"`  
+> **Electron build:** Add `-Build` (PowerShell) or `--build` (bash) to run `npm run build:win` after setup.
 
 ## Option 1: Docker (web only)
 
@@ -21,7 +22,7 @@ Open http://localhost:5000
 ```bash
 ./scripts/setup-dev.sh
 # With proxy: ./scripts/setup-dev.sh --proxy http://proxy:8080
-# Or: export PIP_PROXY=http://proxy:8080 && ./scripts/setup-dev.sh
+# With build: ./scripts/setup-dev.sh --build
 ```
 
 ### Windows (PowerShell)
@@ -29,7 +30,7 @@ Open http://localhost:5000
 ```powershell
 .\scripts\setup-dev.ps1
 # With proxy: .\scripts\setup-dev.ps1 -Proxy "http://proxy:8080"
-# Or: $env:PIP_PROXY = "http://proxy:8080"; .\scripts\setup-dev.ps1
+# With build: .\scripts\setup-dev.ps1 -Build
 ```
 
 ### Prerequisites

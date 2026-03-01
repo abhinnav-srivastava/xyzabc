@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 # CodeReview - Development environment setup (Linux / macOS / WSL)
 # Run from project root: ./scripts/setup-dev.sh
-# Optional: ./scripts/setup-dev.sh --proxy http://proxy:8080 --name "YourApp"
+# Optional: ./scripts/setup-dev.sh --proxy http://proxy:8080 --name "YourApp" --build
 # Env: PIP_PROXY, APP_NAME
 
 set -e
 
 PIP_PROXY="${PIP_PROXY:-}"
 APP_NAME="${APP_NAME:-}"
+BUILD=false
 while [[ $# -gt 0 ]]; do
   case $1 in
     --proxy) PIP_PROXY="$2"; shift 2 ;;
     --name)  APP_NAME="$2"; shift 2 ;;
+    --build) BUILD=true; shift ;;
     *) shift ;;
   esac
 done
@@ -24,6 +26,7 @@ echo "=== CodeReview Dev Setup ==="
 echo "Project root: $PROJECT_ROOT"
 [[ -n "$PIP_PROXY" ]] && echo "Pip proxy: $PIP_PROXY"
 [[ -n "$APP_NAME" ]] && echo "Restore app name to: $APP_NAME"
+$BUILD && echo "Run Electron build (build:win) after setup"
 echo ""
 
 # Restore app name (if --name passed)
@@ -88,6 +91,18 @@ echo ""
 mkdir -p data
 echo "Data dir: $PROJECT_ROOT/data"
 echo ""
+
+# Electron build (if --build passed)
+if $BUILD; then
+  echo "--- Electron build (build:win) ---"
+  if command -v node &>/dev/null; then
+    npm run build:win
+    echo "  OK"
+  else
+    echo "Node.js required for build. Skipping."
+  fi
+  echo ""
+fi
 
 echo "=== Setup complete ==="
 echo ""

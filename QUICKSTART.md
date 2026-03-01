@@ -9,6 +9,7 @@
    ```powershell
    .\scripts\setup-dev.ps1
    ```
+   Add `-Build` to run the Electron Windows build after setup.
 
 3. **Run:**
    ```powershell
