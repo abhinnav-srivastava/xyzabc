@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, BrowserView } = require('electron');
+const { app, BrowserWindow, Menu, BrowserView, ipcMain } = require('electron');
 const path = require('path');
 const { spawn, execSync } = require('child_process');
 
@@ -73,13 +73,13 @@ function startBackend() {
         env: { ...process.env, FLASK_ENV: 'production' }
       });
     } else {
-      // Development: spawn Python
+      // Development: spawn Python (use development env so default secret is allowed)
       const appPath = path.join(__dirname, '..');
       const pythonCmd = isWin ? 'python' : 'python3';
       const args = ['app.py', '--no-browser', '--port', String(PORT)];
       backendProcess = spawn(pythonCmd, args, {
         cwd: appPath,
-        env: { ...process.env, FLASK_ENV: 'production' }
+        env: { ...process.env, FLASK_ENV: 'development' }
       });
     }
 
@@ -100,8 +100,27 @@ function startBackend() {
       reject(err);
     });
 
-    // Fallback: assume ready after 3 seconds
-    setTimeout(resolve, 3000);
+    // Fallback: assume ready after 5 seconds
+    setTimeout(resolve, 5000);
+  });
+}
+
+/** Wait for backend to respond on port (retry until ready or timeout). */
+function waitForBackend(port, timeoutMs = 15000) {
+  const start = Date.now();
+  return new Promise((resolve) => {
+    const check = () => {
+      const http = require('http');
+      const req = http.get(`http://127.0.0.1:${port}/`, { timeout: 2000 }, (res) => {
+        res.resume();
+        resolve(true);
+      });
+      req.on('error', () => {
+        if (Date.now() - start > timeoutMs) resolve(false);
+        else setTimeout(check, 300);
+      });
+    };
+    setTimeout(check, 500);
   });
 }
 
@@ -110,48 +129,31 @@ function createWindow() {
 
   mainWindow = new BrowserWindow({
     width: 1280,
-    height: 800,
+    height: 720,
     minWidth: 800,
     minHeight: 600,
+    frame: false,
+    titleBarStyle: 'hidden',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
     },
     icon: path.join(__dirname, '..', 'static', 'icons', 'icon.ico'),
     show: false,
   });
 
-  const progressBar = new BrowserView({
-    webPreferences: { nodeIntegration: false },
-  });
-  mainWindow.setBrowserView(progressBar);
-  progressBar.setBounds({ x: 0, y: 0, width: 1280, height: 5 });
-  progressBar.webContents.loadURL(
-    'data:text/html;charset=utf-8,' + encodeURIComponent(`
-      <!DOCTYPE html><html><head><style>
-        *{margin:0}body{height:5px;background:#e9ecef;overflow:hidden}
-        body::after{content:'';display:block;height:100%;width:30%;background:linear-gradient(90deg,#0d6efd,#0a58ca);
-          animation:l 1.2s ease-in-out infinite}
-        @keyframes l{0%{transform:translateX(-100%)}100%{transform:translateX(400%)}}
-      </style></head><body></body></html>`
-    )
-  );
+  mainWindow.loadURL(APP_URL);
 
-  mainWindow.webContents.on('did-finish-load', () => {
-    mainWindow.setBrowserView(null);
-  });
-
-  mainWindow.on('resize', () => {
-    const [w, h] = mainWindow.getContentSize();
-    if (mainWindow.getBrowserView()) {
-      mainWindow.getBrowserView().setBounds({ x: 0, y: 0, width: w, height: 5 });
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    if (errorCode !== -3) {
+      console.error('Failed to load app:', errorCode, errorDescription);
     }
   });
 
-  mainWindow.loadURL(APP_URL);
-
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
+    mainWindow.maximize();
     mainWindow.focus();
   });
 
@@ -160,9 +162,27 @@ function createWindow() {
   });
 }
 
+ipcMain.on('window-minimize', () => {
+  if (mainWindow) mainWindow.minimize();
+});
+ipcMain.on('window-maximize', () => {
+  if (mainWindow) {
+    if (mainWindow.isMaximized()) mainWindow.unmaximize();
+    else mainWindow.maximize();
+  }
+});
+ipcMain.on('window-close', () => {
+  if (mainWindow) mainWindow.close();
+});
+ipcMain.handle('window-is-maximized', () => {
+  return mainWindow ? mainWindow.isMaximized() : false;
+});
+
 app.whenReady().then(async () => {
   try {
     await startBackend();
+    const ready = await waitForBackend(PORT);
+    if (!ready) console.warn('Backend may not be ready; loading anyway.');
     createWindow();
   } catch (err) {
     console.error('Failed to start:', err);

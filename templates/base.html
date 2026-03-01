@@ -39,16 +39,16 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
   </head>
   <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm" style="background: var(--primary-gradient);">
-      <div class="container">
-        <a class="navbar-brand fw-bold" href="{% if session.get('user_name') %}{{ url_for('dashboard') }}{% else %}{{ url_for('index') }}{% endif %}">
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm custom-titlebar" style="background: var(--primary-gradient);">
+      <div class="container d-flex align-items-center">
+        <a class="navbar-brand fw-bold titlebar-drag" href="{% if session.get('user_name') %}{{ url_for('dashboard') }}{% else %}{{ url_for('index') }}{% endif %}">
           <i class="bi bi-clipboard-check me-2"></i>CodeReview
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-              <ul class="navbar-nav ms-auto">
+              <ul class="navbar-nav ms-auto align-items-center">
                 {% if session.get('user_name') %}
                 <li class="nav-item">
                   <a class="nav-link" href="{{ url_for('dashboard') }}">
@@ -73,6 +73,19 @@
                 </li>
                 {% endif %}
               </ul>
+        </div>
+      </div>
+      <div class="titlebar-controls-wrapper" id="titlebar-controls" style="display: none;">
+        <div class="titlebar-buttons d-flex">
+          <button type="button" class="titlebar-btn" id="titlebar-minimize" title="Minimize" aria-label="Minimize">
+            <i class="bi bi-dash"></i>
+          </button>
+          <button type="button" class="titlebar-btn" id="titlebar-maximize" title="Maximize" aria-label="Maximize">
+            <i class="bi bi-square"></i>
+          </button>
+          <button type="button" class="titlebar-btn titlebar-btn-close" id="titlebar-close" title="Close" aria-label="Close">
+            <i class="bi bi-x-lg"></i>
+          </button>
         </div>
       </div>
     </nav>

@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('CodeReview: Initializing application...');
     
     initializeApp();
+    setupCustomTitlebar();
     setupEventListeners();
     setupOfflineHandling();
     setupFormValidation();
@@ -43,6 +44,51 @@ function initializeApp() {
     popoverTriggerList.map(function (popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl);
     });
+}
+
+/**
+ * Setup custom title bar for Electron (frameless window)
+ */
+function setupCustomTitlebar() {
+    if (typeof window.electronAPI === 'undefined') return;
+
+    const controls = document.getElementById('titlebar-controls');
+    const nav = document.querySelector('.custom-titlebar');
+    const brand = document.querySelector('.titlebar-drag');
+    const buttons = document.querySelector('.titlebar-buttons');
+
+    if (controls && nav) {
+        controls.style.display = 'flex';
+        nav.classList.add('has-titlebar-controls');
+        if (nav) nav.style.webkitAppRegion = 'drag';
+        if (brand) brand.style.webkitAppRegion = 'drag';
+        if (buttons) buttons.style.webkitAppRegion = 'no-drag';
+        const collapse = document.getElementById('navbarNav');
+        if (collapse) collapse.style.webkitAppRegion = 'no-drag';
+        const toggler = document.querySelector('.navbar-toggler');
+        if (toggler) toggler.style.webkitAppRegion = 'no-drag';
+    }
+
+    const minimizeBtn = document.getElementById('titlebar-minimize');
+    const maximizeBtn = document.getElementById('titlebar-maximize');
+    const closeBtn = document.getElementById('titlebar-close');
+
+    if (minimizeBtn) {
+        minimizeBtn.addEventListener('click', () => window.electronAPI.minimize());
+    }
+    if (maximizeBtn) {
+        maximizeBtn.addEventListener('click', () => window.electronAPI.maximize());
+        const updateMaxIcon = async () => {
+            const isMax = await window.electronAPI.isMaximized();
+            const icon = maximizeBtn.querySelector('i');
+            if (icon) icon.className = isMax ? 'bi bi-fullscreen-exit' : 'bi bi-square';
+        };
+        updateMaxIcon();
+        window.addEventListener('resize', updateMaxIcon);
+    }
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => window.electronAPI.close());
+    }
 }
 
 /**

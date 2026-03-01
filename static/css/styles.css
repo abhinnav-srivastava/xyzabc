@@ -378,6 +378,54 @@ footer p {
   transform: translateY(-1px);
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
+/* Custom title bar (Electron frameless window) */
+.custom-titlebar {
+  -webkit-app-region: no-drag; /* Set by JS when in Electron */
+  position: relative;
+}
+.titlebar-controls-wrapper {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding-right: 0;
+}
+/* Reserve space for window controls so nav links don't overlap */
+.custom-titlebar.has-titlebar-controls .container {
+  padding-right: 138px;
+}
+.titlebar-buttons {
+  -webkit-app-region: no-drag;
+}
+.titlebar-btn {
+  width: 46px;
+  height: 100%;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border-radius: 0;
+  padding: 0;
+}
+.titlebar-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+.titlebar-btn-close:hover {
+  background: rgba(220, 38, 38, 0.9);
+  color: white;
+}
+.titlebar-btn i {
+  font-size: 0.9rem;
+}
+
 .navbar {
   background: var(--primary-gradient) !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
