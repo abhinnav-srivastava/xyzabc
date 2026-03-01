@@ -188,7 +188,9 @@
     "gitlab_integration": false,
     "github_integration": false,
     "jira_integration": false,
-    "slack_integration": false
+    "slack_integration": false,
+    "disable_add_remote_projects": true,
+    "disable_mr_diff_fetch": true
   },
   "limits": {
     "max_file_size": 52428800,
