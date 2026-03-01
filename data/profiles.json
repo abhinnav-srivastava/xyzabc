@@ -8,9 +8,20 @@
         "architect",
         "fo"
       ],
-      "last_used": "2026-03-01T19:53:43.512710"
+      "last_used": "2026-03-01T20:10:58.149255"
+    },
+    "Abhj": {
+      "user_id": "Abhj",
+      "name": "Abhi",
+      "username": "Abhj",
+      "preferred_roles": [
+        "architect",
+        "fo",
+        "self"
+      ],
+      "last_used": "2026-03-01T20:16:04.551327"
     }
   },
   "last_used_name": "Abhinav Srivastava",
-  "last_used_user_id": "abhinnav.srivastava@gmail.com"
+  "last_used_user_id": "Abhj"
 }

@@ -1,3 +1,11 @@
 {"event": "login", "user_id": "abhinnav.srivastava@gmail.com", "user_name": "Abhinav Srivastava", "roles": ["architect", "fo"], "ip": "127.0.0.1", "timestamp": "2026-03-01T10:50:08.268572Z"}
 {"event": "logout", "user_id": "abhinnav.srivastava@gmail.com", "user_name": "Abhinav Srivastava", "roles": null, "ip": "127.0.0.1", "timestamp": "2026-03-01T10:51:17.943670Z"}
 {"event": "login", "user_id": "abhinnav.srivastava@gmail.com", "user_name": "Abhinav Srivastava", "roles": ["architect", "fo"], "ip": "127.0.0.1", "timestamp": "2026-03-01T10:53:32.137685Z"}
+{"event": "login", "user_id": "abhinnav.srivastava@gmail.com", "user_name": "Abhinav Srivastava", "roles": ["architect", "fo"], "ip": "127.0.0.1", "timestamp": "2026-03-01T11:10:58.150810Z"}
+{"event": "logout", "user_id": "abhinnav.srivastava@gmail.com", "user_name": "Abhinav Srivastava", "roles": null, "ip": "127.0.0.1", "timestamp": "2026-03-01T11:11:01.702200Z"}
+{"event": "login", "user_id": "Abhj", "user_name": "Abhi", "roles": [], "ip": "127.0.0.1", "timestamp": "2026-03-01T11:11:08.984093Z"}
+{"event": "select_roles", "user_id": "Abhj", "user_name": "Abhi", "roles": ["architect"], "ip": "127.0.0.1", "timestamp": "2026-03-01T11:11:11.590493Z"}
+{"event": "logout", "user_id": "Abhj", "user_name": "Abhi", "roles": null, "ip": "127.0.0.1", "timestamp": "2026-03-01T11:11:35.825274Z"}
+{"event": "login", "user_id": "Abhj", "user_name": "Abhi", "roles": ["architect"], "ip": "127.0.0.1", "timestamp": "2026-03-01T11:11:39.813979Z"}
+{"event": "logout", "user_id": "Abhj", "user_name": "Abhi", "roles": null, "ip": "127.0.0.1", "timestamp": "2026-03-01T11:15:02.436264Z"}
+{"event": "login", "user_id": "Abhj", "user_name": "Abhi", "roles": ["architect", "fo", "self"], "ip": "127.0.0.1", "timestamp": "2026-03-01T11:16:04.553159Z"}

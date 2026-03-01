@@ -6,12 +6,12 @@
     <div class="card shadow-sm border-0">
       <div class="card-header py-3" style="background: var(--primary-gradient); color: #fff;">
         <h5 class="mb-0">
-          <i class="bi bi-person-circle me-2"></i>Profiles
+          <i class="bi bi-person-circle me-2"></i>Profile
         </h5>
       </div>
       <div class="card-body p-4">
         <p class="text-muted mb-4">
-          Manage your profiles. Username (userId) is the unique identifier. Your default profile is pre-filled at login.
+          Manage your profile. Username (userId) is the unique identifier. Your preferred roles are pre-filled at login.
         </p>
 
         {% if not profiles %}
@@ -61,13 +61,6 @@
                 <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#edit-roles-{{ loop.index }}">
                   <i class="bi bi-pencil me-1"></i>Edit roles
                 </button>
-                <form method="post" class="d-inline" onsubmit="return confirm('Delete this profile?');">
-                  <input type="hidden" name="action" value="delete">
-                  <input type="hidden" name="user_id" value="{{ p.user_id or p.username }}">
-                  <button type="submit" class="btn btn-outline-danger btn-sm">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </form>
               </div>
             </div>
             <div class="collapse mt-3" id="edit-roles-{{ loop.index }}">

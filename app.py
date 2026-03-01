@@ -65,7 +65,6 @@ from services.user_profile import (
     get_profile,
     save_profile,
     get_all_profiles,
-    delete_profile,
     set_last_used,
     update_profile_roles,
 )
@@ -623,23 +622,18 @@ def create_app() -> Flask:
 
     @app.route("/profile", methods=["GET", "POST"])
     def profile_page():
-        """Profile management: view, set default, delete, edit roles."""
+        """Profile management: view, set default, edit roles. Shows only current user's profile."""
+        if not session.get("user_name") or not session.get("user_username"):
+            return redirect(url_for("login", next=url_for("profile_page")))
+        current_user_id = session.get("user_username")
         if request.method == "POST":
             action = request.form.get("action")
             user_id = request.form.get("user_id", "").strip()
-            name = request.form.get("name", "").strip()
-            if action == "delete" and user_id:
-                p = get_profile(user_id)
-                display_name = p.get("name", user_id) if p else user_id
-                delete_profile(user_id)
-                audit_log("profile_delete",
-                          user_id=session.get("user_username"),
-                          user_name=session.get("user_name"),
-                          ip=request.environ.get("REMOTE_ADDR"),
-                          details={"deleted_user_id": user_id})
+            if user_id != current_user_id:
                 from flask import flash
-                flash(f"Profile '{display_name}' deleted.", "info")
-            elif action == "set_default" and user_id:
+                flash("You can only modify your own profile.", "warning")
+                return redirect(url_for("profile_page"))
+            if action == "set_default" and user_id:
                 if set_last_used(user_id):
                     from flask import flash
                     p = get_profile(user_id)
@@ -651,10 +645,18 @@ def create_app() -> Flask:
                 if roles and update_profile_roles(user_id, roles):
                     from flask import flash
                     flash("Roles updated.", "success")
-                    if session.get("user_username") == user_id:
-                        session["user_roles"] = roles
+                    session["user_roles"] = roles
             return redirect(url_for("profile_page"))
-        profiles = get_all_profiles()
+        profile = get_profile(current_user_id)
+        if not profile:
+            profile = {
+                "user_id": current_user_id,
+                "name": session.get("user_name", current_user_id),
+                "username": current_user_id,
+                "preferred_roles": session.get("user_roles", []),
+                "last_used": "",
+            }
+        profiles = [profile]
         last_used_id = get_last_used_user_id()
         config = load_roles_config()
         role_map = {r["id"]: r["name"] for r in config.get("roles", [])}
@@ -1259,28 +1261,9 @@ def create_app() -> Flask:
 
         saved_responses = session.get("responses", {})
 
-        \
-        all_steps = _get_steps()
-        total_items = len(all_steps)
-        answered_items = 0
-
-        for step in all_steps:
-            key = f"{step['role_id']}|{step['category_id']}|{step['item_id']}"
-            if key in saved_responses:
-                response = saved_responses[key].get("status", "")
-                if response and response != "UNANSWERED":
-                    answered_items += 1
-
-        progress = {
-            "answered_items": answered_items,
-            "total_items": total_items,
-            "percent": int((answered_items / total_items) * 100) if total_items > 0 else 0,
-        }
-
         return render_template(
             "review_all_categories.html",
             categories=categories,
-            progress=progress,
             saved_responses=saved_responses,
         )
 

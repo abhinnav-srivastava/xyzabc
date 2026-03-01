@@ -6,26 +6,10 @@
     <!-- Header Section -->
     <div class="card shadow-sm border-0 mb-4">
       <div class="card-body">
-        <div class="row align-items-center">
-          <div class="col-md-8">
-            <h4 class="mb-1 fw-bold">
-              <i class="bi bi-clipboard-check me-2"></i>Complete Review - All Categories
-            </h4>
-            <p class="text-muted mb-0">Review all categories in a single page</p>
-          </div>
-          <div class="col-md-4 text-end">
-            <div class="alert alert-light border-0 mb-0">
-              <h6 class="alert-heading fw-semibold mb-1">
-                <i class="bi bi-graph-up me-2"></i>Progress
-              </h6>
-              <div class="progress mb-2" style="height: 8px;">
-                <div class="progress-bar" role="progressbar" style="width: {{ progress.percent }}%" 
-                     aria-valuenow="{{ progress.percent }}" aria-valuemin="0" aria-valuemax="100"></div>
-              </div>
-              <p class="mb-0 small" id="progress-text">{{ progress.answered_items }} of {{ progress.total_items }} items answered ({{ progress.percent }}% Complete)</p>
-            </div>
-          </div>
-        </div>
+        <h4 class="mb-1 fw-bold">
+          <i class="bi bi-clipboard-check me-2"></i>Complete Review - All Categories
+        </h4>
+        <p class="text-muted mb-0">Review all categories in a single page</p>
       </div>
     </div>
 
@@ -417,8 +401,6 @@ document.addEventListener('DOMContentLoaded', function() {
           }
           if (commentButton) commentButton.innerHTML = '<i class="bi bi-chat-text-fill"></i>';
         }
-
-        updateProgress();
       });
 
       // Apply initial state on page load
@@ -427,35 +409,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
-
-  // Update progress in real-time
-  function updateProgress() {
-    const totalItems = {{ progress.total_items }};
-    let answeredItems = 0;
-    
-    // Count answered items by checking all radio buttons
-    const allRadioButtons = document.querySelectorAll('input[type="radio"]:checked');
-    answeredItems = allRadioButtons.length;
-    
-    // Calculate percentage
-    const percentage = totalItems > 0 ? Math.round((answeredItems / totalItems) * 100) : 0;
-    
-    // Update progress bar
-    const progressBar = document.querySelector('.progress-bar');
-    if (progressBar) {
-      progressBar.style.width = percentage + '%';
-      progressBar.setAttribute('aria-valuenow', percentage);
-    }
-    
-    // Update progress text
-    const progressText = document.getElementById('progress-text');
-    if (progressText) {
-      progressText.textContent = `${answeredItems} of ${totalItems} items answered (${percentage}% Complete)`;
-    }
-  }
-
-  // Initialize progress on page load
-  updateProgress();
 });
 </script>
 {% endblock %}

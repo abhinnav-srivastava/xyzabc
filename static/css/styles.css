@@ -392,6 +392,11 @@ footer p {
   -webkit-app-region: drag;
   flex-shrink: 0;
 }
+/* Ensure main content and nav are clickable in Electron (drag region can block pointer events) */
+nav.navbar,
+main.container {
+  -webkit-app-region: no-drag;
+}
 .app-titlebar.visible {
   display: flex;
 }
