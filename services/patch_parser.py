@@ -1,5 +1,5 @@
 """
-Patch Parser Service for CodeCritique
+Patch Parser Service for CodeReview
 Parses unified diff / git patch format. Uses git binary for exact stats (GitLab-accurate)
 when available; falls back to pure-Python parsing. Android-focused categories.
 """

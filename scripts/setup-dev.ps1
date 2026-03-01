@@ -1,20 +1,42 @@
-# CodeCritique - Development environment setup (Windows PowerShell)
+# CodeReview - Development environment setup (Windows PowerShell)
 # Run from project root: .\scripts\setup-dev.ps1
-# Optional proxy: .\scripts\setup-dev.ps1 -Proxy "http://proxy:8080"
-# Or set env: $env:PIP_PROXY = "http://proxy:8080"
+# Optional: .\scripts\setup-dev.ps1 -Proxy "http://proxy:8080" -Name "YourApp"
+# Env: $env:PIP_PROXY, $env:APP_NAME
 
 param(
-    [string]$Proxy = $env:PIP_PROXY
+    [string]$Proxy = $env:PIP_PROXY,
+    [string]$Name = $env:APP_NAME
 )
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $ProjectRoot
 
-Write-Host "=== CodeCritique Dev Setup ===" -ForegroundColor Cyan
+Write-Host "=== CodeReview Dev Setup ===" -ForegroundColor Cyan
 Write-Host "Project root: $ProjectRoot"
 if ($Proxy) { Write-Host "Pip proxy: $Proxy" }
+if ($Name) { Write-Host "Restore app name to: $Name" }
 Write-Host ""
+
+# Restore app name (if -Name passed)
+if ($Name) {
+    Write-Host "--- Restore app name ---" -ForegroundColor Yellow
+    $Id = ($Name -replace '\s', '').ToLower()
+    $count = 0
+    Get-ChildItem -Path $ProjectRoot -Recurse -File -Include *.py,*.js,*.json,*.html,*.md,*.yml,*.sh,*.ps1,*.bat -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -notmatch '\\node_modules\\|\\\.git\\|\\dist|\\build' } | ForEach-Object {
+        $content = Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue
+        if ($content -and ($content -match 'CodeReview|codereview')) {
+            $newContent = $content -replace 'CodeReview', $Name -replace 'codereview', $Id
+            if ($newContent -ne $content) {
+                Set-Content $_.FullName -Value $newContent -NoNewline
+                $count++
+            }
+        }
+    }
+    Write-Host "  Updated $count files" -ForegroundColor Green
+    Write-Host ""
+}
 
 # Python
 Write-Host "--- Python ---" -ForegroundColor Yellow

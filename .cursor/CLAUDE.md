@@ -1,4 +1,4 @@
-# CodeCritique — Cursor / AI context
+# CodeReview — Cursor / AI context
 
 **Primary context:** See **project root `CLAUDE.md`** for full project overview, key paths, conventions, and run instructions.
 

@@ -1,5 +1,5 @@
-# CodeCritique - Web development
-# Run: docker compose up   or   docker run -p 5000:5000 codecritique
+# CodeReview - Web development
+# Run: docker compose up   or   docker run -p 5000:5000 codereview
 FROM python:3.11-slim
 
 WORKDIR /app

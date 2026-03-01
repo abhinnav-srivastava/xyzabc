@@ -1,5 +1,5 @@
 """
-Path Utilities for CodeCritique
+Path Utilities for CodeReview
 Provides consistent path handling for both development and portable app environments
 """
 
@@ -145,11 +145,11 @@ def get_writable_data_dir() -> Path:
     """
     if is_portable_mode():
         if sys.platform == "win32":
-            base = Path(os.environ.get("APPDATA", os.path.expanduser("~"))) / "CodeCritique"
+            base = Path(os.environ.get("APPDATA", os.path.expanduser("~"))) / "CodeReview"
         elif sys.platform == "darwin":
-            base = Path.home() / "Library" / "Application Support" / "CodeCritique"
+            base = Path.home() / "Library" / "Application Support" / "CodeReview"
         else:
-            base = Path.home() / ".local" / "share" / "CodeCritique"
+            base = Path.home() / ".local" / "share" / "CodeReview"
         base.mkdir(parents=True, exist_ok=True)
         return base
     return get_project_root()

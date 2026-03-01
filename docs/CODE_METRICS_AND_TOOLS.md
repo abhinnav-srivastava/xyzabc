@@ -1,4 +1,4 @@
-# Code Metrics & Tools — CodeCritique
+# Code Metrics & Tools — CodeReview
 
 This document describes the **patch-level** code metrics (used when analyzing an uploaded patch) and the **project-level** tools planned for full Android code review (repo path + commit IDs).
 
@@ -26,7 +26,7 @@ These run on the **patch file** or on **reconstructed files** from the patch (e.
 - **Linux:** `apt install diffstat` / `yum install diffstat`
 - **macOS:** `brew install diffstat`
 - **Windows:** [GnuWin32 diffstat](https://gnuwin32.sourceforge.net/packages/diffstat.htm) — extract to `tools/diffstat/` (e.g. `diffstat.exe`).  
-  If not present, CodeCritique uses a **pure-Python** equivalent (parses the patch).
+  If not present, CodeReview uses a **pure-Python** equivalent (parses the patch).
 
 ### CLOC
 

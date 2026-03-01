@@ -1,6 +1,6 @@
 # Portable Windows & Electron Distribution
 
-CodeCritique is intended to be distributed as a **portable Windows app** (e.g. Electron-based) with **no installation required** — no system Python, Java, or PATH dependencies. Everything the app needs must live **inside the app directory**.
+CodeReview is intended to be distributed as a **portable Windows app** (e.g. Electron-based) with **no installation required** — no system Python, Java, or PATH dependencies. Everything the app needs must live **inside the app directory**.
 
 ---
 
@@ -60,9 +60,9 @@ Run `npm run build:win` to produce:
 
 | Artifact | Use |
 |----------|-----|
-| **CodeCritique 1.0.0.exe** (portable) | Single file — copy to target machine, double-click to run. No installation, no admin. |
-| **CodeCritique-portable.zip** | Unzip anywhere on target machine, run `CodeCritique.exe`. No installation, no admin. |
-| **win-unpacked/** | Unpacked folder — copy the whole folder to target, run `CodeCritique.exe`. No installation, no admin. |
+| **CodeReview 1.0.0.exe** (portable) | Single file — copy to target machine, double-click to run. No installation, no admin. |
+| **CodeReview-portable.zip** | Unzip anywhere on target machine, run `CodeReview.exe`. No installation, no admin. |
+| **win-unpacked/** | Unpacked folder — copy the whole folder to target, run `CodeReview.exe`. No installation, no admin. |
 
 All artifacts are in `dist-electron/`. No NSIS installer is produced; the build is **portable-only**.
 

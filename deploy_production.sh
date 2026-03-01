@@ -1,8 +1,8 @@
 #!/bin/bash
-# Production deployment script for CodeCritique
-# This script provides options for running CodeCritique in production
+# Production deployment script for CodeReview
+# This script provides options for running CodeReview in production
 
-echo "CodeCritique Production Deployment Options"
+echo "CodeReview Production Deployment Options"
 echo "========================================="
 echo ""
 echo "Choose your deployment method:"

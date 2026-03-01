@@ -1,6 +1,6 @@
-# CodeCritique Electron App
+# CodeReview Electron App
 
-Desktop wrapper for CodeCritique. **Fully bundled** — no Python or Flask required on the target machine.
+Desktop wrapper for CodeReview. **Fully bundled** — no Python or Flask required on the target machine.
 
 ## Prerequisites (build time only)
 
@@ -31,7 +31,7 @@ node scripts/build-electron-win.js
 ```
 
 This will:
-1. Run **PyInstaller** to bundle the Flask app + Python + deps into `CodeCritique.exe`
+1. Run **PyInstaller** to bundle the Flask app + Python + deps into `CodeReview.exe`
 2. Run **electron-builder** to package it as a Windows app
 
 Output: `dist-electron/` — installer (NSIS) and portable exe. **No Python required** on the target machine.

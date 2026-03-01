@@ -10,7 +10,7 @@ let mainWindow = null;
 
 function getBackendPath() {
   if (app.isPackaged) {
-    return path.join(process.resourcesPath, 'backend', 'CodeCritique.exe');
+    return path.join(process.resourcesPath, 'backend', 'CodeReview.exe');
   }
   return null;
 }

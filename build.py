@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CodeCritique - Master Build Script
+CodeReview - Master Build Script
 Handles all build processes: portable, desktop, and distribution
 """
 
@@ -146,7 +146,7 @@ def clean_build():
 
 def main():
     """Main build function"""
-    parser = argparse.ArgumentParser(description='CodeCritique Master Build Script')
+    parser = argparse.ArgumentParser(description='CodeReview Master Build Script')
     parser.add_argument('--portable-only', action='store_true', help='Build only portable version')
     parser.add_argument('--desktop-only', action='store_true', help='Build only desktop version')
     parser.add_argument('--setup-desktop', action='store_true', help='Setup desktop dependencies only')
@@ -159,7 +159,7 @@ def main():
     if not any([args.portable_only, args.desktop_only, args.setup_desktop, args.clean]):
         args.all = True
     
-    logger.info("🚀 CodeCritique Master Build Script")
+    logger.info("🚀 CodeReview Master Build Script")
     logger.info("=" * 50)
     
     # Check prerequisites

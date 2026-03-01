@@ -1627,7 +1627,7 @@ def create_app() -> Flask:
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description='CodeCritique Flask Application')
+    parser = argparse.ArgumentParser(description='CodeReview Flask Application')
     parser.add_argument('--no-browser', action='store_true',
                        help='Disable auto-launch browser')
     parser.add_argument('--port', type=int, default=5000,
@@ -1671,7 +1671,7 @@ if __name__ == "__main__":
     port = args.port
     host = '0.0.0.0' if args.bind_all else args.host
 
-    print(f"Starting CodeCritique on http://{host}:{port}")
+    print(f"Starting CodeReview on http://{host}:{port}")
     
     # Default to production WSGI server unless dev-server is explicitly requested
     if args.dev_server:

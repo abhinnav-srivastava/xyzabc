@@ -2,6 +2,8 @@
 
 Quick setup for a new development machine.
 
+> **Restore app name:** Pass `-Name "YourApp"` to setup: `.\scripts\setup-dev.ps1 -Name "YourApp"` or `./scripts/setup-dev.sh --name "YourApp"`
+
 ## Option 1: Docker (web only)
 
 No Python/Node install needed. Requires [Docker](https://docs.docker.com/get-docker/).

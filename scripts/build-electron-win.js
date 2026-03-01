@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Build CodeCritique as a fully bundled Windows desktop app.
- * 1. PyInstaller bundles Flask + Python + deps into CodeCritique.exe
+ * Build CodeReview as a fully bundled Windows desktop app.
+ * 1. PyInstaller bundles Flask + Python + deps into CodeReview.exe
  * 2. Electron wraps it - no Python/Flask required on target machine
  *
  * Prerequisites: Node.js, npm, Python (for build only)
@@ -26,7 +26,7 @@ function runPy(args) {
 }
 
 function main() {
-  console.log('Building CodeCritique for Windows (fully bundled)...\n');
+  console.log('Building CodeReview for Windows (fully bundled)...\n');
 
   // 1. PyInstaller: bundle Flask app
   console.log('Step 1: Bundling Flask backend with PyInstaller...');
@@ -37,12 +37,12 @@ function main() {
   }
   runPy(['-m', 'PyInstaller', '--clean', '--noconfirm', 'app.spec']);
 
-  const exePath = path.join(rootDir, 'dist', 'CodeCritique.exe');
+  const exePath = path.join(rootDir, 'dist', 'CodeReview.exe');
   if (!fs.existsSync(exePath)) {
-    console.error('PyInstaller did not produce dist/CodeCritique.exe');
+    console.error('PyInstaller did not produce dist/CodeReview.exe');
     process.exit(1);
   }
-  console.log('  -> dist/CodeCritique.exe created\n');
+  console.log('  -> dist/CodeReview.exe created\n');
 
   // 2. Install npm deps if needed
   if (!fs.existsSync(path.join(rootDir, 'node_modules'))) {
@@ -62,20 +62,20 @@ function main() {
   const winDirPath = path.join(distDir, 'win-unpacked');
   if (fs.existsSync(winDirPath)) {
     console.log('\nStep 4: Creating portable zip...');
-    const zipPath = path.join(distDir, 'CodeCritique-portable.zip');
+    const zipPath = path.join(distDir, 'CodeReview-portable.zip');
     const winContents = path.join(winDirPath, '*');
     try {
       execSync(
         `powershell -NoProfile -Command "Compress-Archive -Path '${winContents}' -DestinationPath '${zipPath}' -Force"`,
         { stdio: 'inherit', cwd: rootDir }
       );
-      console.log('  -> CodeCritique-portable.zip created');
+      console.log('  -> CodeReview-portable.zip created');
     } catch (e) {
       console.warn('  (Zip creation skipped - PowerShell may be unavailable)');
     }
     console.log(`\nDone! Artifacts in ${outDir}/:`);
-    console.log('  - CodeCritique X.X.X.exe (portable) - copy & run, no install');
-    console.log('  - CodeCritique-portable.zip - unzip anywhere, run CodeCritique.exe');
+    console.log('  - CodeReview X.X.X.exe (portable) - copy & run, no install');
+    console.log('  - CodeReview-portable.zip - unzip anywhere, run CodeReview.exe');
   } else {
     console.log(`\nDone! Output in ${outDir}/`);
   }

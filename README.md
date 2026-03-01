@@ -1,8 +1,8 @@
-# CodeCritique – Project Analysis
+# CodeReview – Project Analysis
 
 ## What It Is
 
-**CodeCritique** is a **code review checklist app**: reviewers go through role-based, category-driven checklists and record pass/fail/comment per item. It’s a **Flask** web app with **PWA** support, optional **offline**, and **HTML/PDF export**.
+**CodeReview** is a **code review checklist app**: reviewers go through role-based, category-driven checklists and record pass/fail/comment per item. It’s a **Flask** web app with **PWA** support, optional **offline**, and **HTML/PDF export**.
 
 ---
 
@@ -101,13 +101,13 @@ You can **pack git, cloc, and diffstat** in the project so patch metrics work wi
 - **Run (dev)** – `python app.py --dev-server` (Flask dev server, debug on).
 - **Run (default)** – `python app.py` uses Waitress if available.
 - **Portable (recommended)** – `npm run build:win` produces fully bundled Windows artifacts in `dist-electron/`:
-  - **CodeCritique 1.0.0.exe** — single file, copy to target and run. No install, no admin.
-  - **CodeCritique-portable.zip** — unzip anywhere, run `CodeCritique.exe`.
-  - **win-unpacked/** — copy folder to target, run `CodeCritique.exe`.
+  - **CodeReview 1.0.0.exe** — single file, copy to target and run. No install, no admin.
+  - **CodeReview-portable.zip** — unzip anywhere, run `CodeReview.exe`.
+  - **win-unpacked/** — copy folder to target, run `CodeReview.exe`.
   Requires: Node.js, Python (build time only). Target machine needs nothing.
 
 ---
 
 ## Summary
 
-CodeCritique is a **session-based, role-driven code review checklist app**: config and checklists come from **JSON + Markdown (+ optional Excel)**, the **Flask app** serves the UI and API, **services** handle checklist loading and categories, and **network_security** enforces access rules. The same codebase supports **web**, **PWA/offline**, and **portable desktop** builds.
+CodeReview is a **session-based, role-driven code review checklist app**: config and checklists come from **JSON + Markdown (+ optional Excel)**, the **Flask app** serves the UI and API, **services** handle checklist loading and categories, and **network_security** enforces access rules. The same codebase supports **web**, **PWA/offline**, and **portable desktop** builds.

@@ -1,5 +1,5 @@
 """
-Code metrics for CodeCritique: patch-level and (future) project-level.
+Code metrics for CodeReview: patch-level and (future) project-level.
 
 Patch-level: run on patch content or on reconstructed files from the patch.
 - Git, CLOC: used in patch_parser.

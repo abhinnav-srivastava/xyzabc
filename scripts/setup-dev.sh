@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
-# CodeCritique - Development environment setup (Linux / macOS / WSL)
+# CodeReview - Development environment setup (Linux / macOS / WSL)
 # Run from project root: ./scripts/setup-dev.sh
-# Optional proxy: ./scripts/setup-dev.sh --proxy http://proxy:8080
-# Or set env: export PIP_PROXY=http://proxy:8080
+# Optional: ./scripts/setup-dev.sh --proxy http://proxy:8080 --name "YourApp"
+# Env: PIP_PROXY, APP_NAME
 
 set -e
 
 PIP_PROXY="${PIP_PROXY:-}"
+APP_NAME="${APP_NAME:-}"
 while [[ $# -gt 0 ]]; do
   case $1 in
     --proxy) PIP_PROXY="$2"; shift 2 ;;
+    --name)  APP_NAME="$2"; shift 2 ;;
     *) shift ;;
   esac
 done
@@ -18,10 +20,25 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-echo "=== CodeCritique Dev Setup ==="
+echo "=== CodeReview Dev Setup ==="
 echo "Project root: $PROJECT_ROOT"
 [[ -n "$PIP_PROXY" ]] && echo "Pip proxy: $PIP_PROXY"
+[[ -n "$APP_NAME" ]] && echo "Restore app name to: $APP_NAME"
 echo ""
+
+# Restore app name (if --name passed)
+if [[ -n "$APP_NAME" ]]; then
+  echo "--- Restore app name ---"
+  ID=$(echo "$APP_NAME" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
+  count=0
+  while IFS= read -r f; do
+    if grep -q -E 'CodeReview|codereview' "$f" 2>/dev/null; then
+      perl -i -pe "s/CodeReview/$APP_NAME/g; s/codereview/$ID/g" "$f" 2>/dev/null && ((count++))
+    fi
+  done < <(find "$PROJECT_ROOT" -type f \( -name "*.py" -o -name "*.js" -o -name "*.json" -o -name "*.html" -o -name "*.md" -o -name "*.yml" -o -name "*.sh" \) ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/dist/*" ! -path "*/build/*" 2>/dev/null)
+  echo "  Updated $count files"
+  echo ""
+fi
 
 # Python
 echo "--- Python ---"

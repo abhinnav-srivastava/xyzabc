@@ -1,5 +1,5 @@
 """
-Network Security Service for CodeCritique
+Network Security Service for CodeReview
 Implements network security controls and connection blocking.
 """
 

@@ -1,5 +1,5 @@
 /**
- * CodeCritique Application JavaScript
+ * CodeReview Application JavaScript
  * Main application logic and utilities
  */
 
@@ -12,7 +12,7 @@ const AppState = {
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('CodeCritique: Initializing application...');
+    console.log('CodeReview: Initializing application...');
     
     initializeApp();
     setupEventListeners();
@@ -372,7 +372,7 @@ const Utils = {
 };
 
 // Export for use in other scripts
-window.CodeCritique = {
+window.CodeReview = {
     AppState,
     Utils,
     showNotification,

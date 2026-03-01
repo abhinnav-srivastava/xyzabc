@@ -1,8 +1,8 @@
 @echo off
-REM Production deployment script for CodeCritique
-REM This script provides options for running CodeCritique in production
+REM Production deployment script for CodeReview
+REM This script provides options for running CodeReview in production
 
-echo CodeCritique Production Deployment Options
+echo CodeReview Production Deployment Options
 echo =========================================
 echo.
 echo Choose your deployment method:

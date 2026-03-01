@@ -1,7 +1,7 @@
 {
-  "name": "codecritique",
+  "name": "codereview",
   "version": "1.0.0",
-  "description": "CodeCritique - Code review checklist app",
+  "description": "CodeReview - Code review checklist app",
   "main": "electron/main.js",
   "scripts": {
     "start": "electron .",
@@ -16,8 +16,8 @@
     "electron-builder": "^24.9.1"
   },
   "build": {
-    "appId": "com.codecritique.app",
-    "productName": "CodeCritique",
+    "appId": "com.codereview.app",
+    "productName": "CodeReview",
     "directories": {
       "output": "dist-electron"
     },
@@ -35,8 +35,8 @@
     ],
     "extraResources": [
       {
-        "from": "dist/CodeCritique.exe",
-        "to": "backend/CodeCritique.exe"
+        "from": "dist/CodeReview.exe",
+        "to": "backend/CodeReview.exe"
       }
     ],
     "win": {

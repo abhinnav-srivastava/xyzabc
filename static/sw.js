@@ -1,11 +1,11 @@
 /**
- * CodeCritique Service Worker
+ * CodeReview Service Worker
  * Provides offline functionality and caching for the PWA
  */
 
-const CACHE_NAME = 'codecritique-v1.0.0';
-const STATIC_CACHE_NAME = 'codecritique-static-v1.0.0';
-const DYNAMIC_CACHE_NAME = 'codecritique-dynamic-v1.0.0';
+const CACHE_NAME = 'codereview-v1.0.0';
+const STATIC_CACHE_NAME = 'codereview-static-v1.0.0';
+const DYNAMIC_CACHE_NAME = 'codereview-dynamic-v1.0.0';
 
 // Files to cache for offline functionality
 const STATIC_FILES = [
@@ -154,7 +154,7 @@ self.addEventListener('push', (event) => {
   console.log('Service Worker: Push notification received');
   
   const options = {
-    body: event.data ? event.data.text() : 'New notification from CodeCritique',
+    body: event.data ? event.data.text() : 'New notification from CodeReview',
     icon: '/static/icons/icon-192x192.png',
     badge: '/static/icons/icon-72x72.png',
     vibrate: [100, 50, 100],
@@ -177,7 +177,7 @@ self.addEventListener('push', (event) => {
   };
   
   event.waitUntil(
-    self.registration.showNotification('CodeCritique', options)
+    self.registration.showNotification('CodeReview', options)
   );
 });
 

@@ -1,6 +1,6 @@
 {
-  "name": "CodeCritique - Code Review Tool",
-  "short_name": "CodeCritique",
+  "name": "CodeReview - Code Review Tool",
+  "short_name": "CodeReview",
   "description": "Professional code review tool with role-based, category-driven checklists for comprehensive quality assurance",
   "start_url": "/",
   "display": "standalone",
@@ -66,14 +66,14 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "CodeCritique Desktop Interface"
+      "label": "CodeReview Desktop Interface"
     },
     {
       "src": "/static/screenshots/mobile-screenshot.png",
       "sizes": "375x667",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "CodeCritique Mobile Interface"
+      "label": "CodeReview Mobile Interface"
     }
   ],
   "shortcuts": [

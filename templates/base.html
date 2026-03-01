@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CodeCritique</title>
+    <title>CodeReview</title>
     
     <!-- PWA Meta Tags -->
-    <meta name="application-name" content="CodeCritique">
+    <meta name="application-name" content="CodeReview">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="CodeCritique">
+    <meta name="apple-mobile-web-app-title" content="CodeReview">
     <meta name="description" content="Professional code review tool with role-based, category-driven checklists for comprehensive quality assurance">
     <meta name="format-detection" content="telephone=no">
     <meta name="mobile-web-app-capable" content="yes">
@@ -42,7 +42,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark shadow-sm" style="background: var(--primary-gradient);">
       <div class="container">
         <a class="navbar-brand fw-bold" href="{% if session.get('user_name') %}{{ url_for('dashboard') }}{% else %}{{ url_for('index') }}{% endif %}">
-          <i class="bi bi-clipboard-check me-2"></i>CodeCritique
+          <i class="bi bi-clipboard-check me-2"></i>CodeReview
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span class="navbar-toggler-icon"></span>
@@ -91,7 +91,7 @@
               <i class="bi bi-download-circle text-primary fs-4"></i>
             </div>
             <div class="flex-grow-1 ms-3">
-              <h6 class="card-title mb-2">Install CodeCritique</h6>
+              <h6 class="card-title mb-2">Install CodeReview</h6>
               <p class="card-text small mb-3">Install this app on your device for a better experience and offline access.</p>
               <div class="d-flex gap-2">
                 <button id="pwa-install-btn" class="btn btn-primary btn-sm">
