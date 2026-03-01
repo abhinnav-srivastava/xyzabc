@@ -1,11 +1,14 @@
 # CodeReview - Development environment setup (Windows PowerShell)
 # Run from project root: .\scripts\setup-dev.ps1
 # Optional: .\scripts\setup-dev.ps1 -Proxy "http://proxy:8080" -Name "YourApp" -Build -Venv
+# With auth (no encoding needed): .\scripts\setup-dev.ps1 -Proxy "http://proxy:8080" -ProxyUser "user" -ProxyPass "sr!n@v9914"
 # Note: Use -Build, -Venv (PowerShell style), not --build, --venv
-# Env: $env:PIP_PROXY, $env:APP_NAME
+# Env: $env:PIP_PROXY, $env:PIP_PROXY_USER, $env:PIP_PROXY_PASS, $env:APP_NAME
 
 param(
     [string]$Proxy = $env:PIP_PROXY,
+    [string]$ProxyUser = $env:PIP_PROXY_USER,
+    [string]$ProxyPass = $env:PIP_PROXY_PASS,
     [string]$Name = $env:APP_NAME,
     [switch]$Build,
     [switch]$Venv
@@ -15,13 +18,25 @@ param(
 if ($Proxy -in '--build','-build','build') { $Proxy = $null; $Build = $true }
 if ($Proxy -in '--venv','-venv','venv') { $Proxy = $null; $Venv = $true }
 
+# Build proxy URL with auth: Proxy + ProxyUser + ProxyPass (auto URL-encodes special chars)
+if ($Proxy -and $ProxyUser -and $ProxyPass) {
+    $encUser = [Uri]::EscapeDataString($ProxyUser)
+    $encPass = [Uri]::EscapeDataString($ProxyPass)
+    if ($Proxy -match '^(https?)://(.+)$') {
+        $Proxy = "$($Matches[1])://${encUser}:${encPass}@$($Matches[2])"
+    }
+}
+
 $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $ProjectRoot
 
 Write-Host "=== CodeReview Dev Setup ===" -ForegroundColor Cyan
 Write-Host "Project root: $ProjectRoot"
-if ($Proxy) { Write-Host "Pip proxy: $Proxy" }
+if ($Proxy) {
+    $displayProxy = if ($Proxy -match '^([^:]+://)[^:]+:[^@]+@(.+)$') { $Matches[1] + '***:***@' + $Matches[2] } else { $Proxy }
+    Write-Host "Pip proxy: $displayProxy"
+}
 if ($Name) { Write-Host "Restore app name to: $Name" }
 if ($Build) { Write-Host "Run Electron build (build:win) after setup" }
 if ($Venv) { Write-Host "Create venv (.venv) for dependencies" }
@@ -32,7 +47,7 @@ if ($Name) {
     Write-Host "--- Restore app name ---" -ForegroundColor Yellow
     $Id = ($Name -replace '\s', '').ToLower()
     $count = 0
-    Get-ChildItem -Path $ProjectRoot -Recurse -File -Include *.py,*.js,*.json,*.html,*.md,*.yml,*.sh,*.ps1,*.bat -ErrorAction SilentlyContinue |
+    Get-ChildItem -Path $ProjectRoot -Recurse -File -Include *.py,*.js,*.json,*.html,*.md,*.yml,*.sh,*.ps1,*.bat,*.spec -ErrorAction SilentlyContinue |
         Where-Object { $_.FullName -notmatch '\\node_modules\\|\\\.git\\|\\dist|\\build' } | ForEach-Object {
         $content = Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue
         if ($content -and ($content -match 'CodeReview|codereview')) {
@@ -79,7 +94,7 @@ if ($Venv) {
 Write-Host "Installing Python dependencies..."
 $pipArgs = "-q"
 if (-not $Venv -and -not $env:VIRTUAL_ENV) { $pipArgs = "--user -q" }
-if ($Proxy) { $pipArgs = "$pipArgs --proxy $Proxy" }
+if ($Proxy) { $pipArgs = "$pipArgs --proxy '$Proxy'" }
 Invoke-Expression "& `"$pythonCmd`" -m pip install --upgrade pip $pipArgs"
 Invoke-Expression "& `"$pythonCmd`" -m pip install -r requirements.txt $pipArgs"
 Write-Host "  OK" -ForegroundColor Green

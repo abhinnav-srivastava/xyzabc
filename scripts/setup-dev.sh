@@ -2,23 +2,37 @@
 # CodeReview - Development environment setup (Linux / macOS / WSL)
 # Run from project root: ./scripts/setup-dev.sh
 # Optional: ./scripts/setup-dev.sh --proxy http://proxy:8080 --name "YourApp" --build --venv
-# Env: PIP_PROXY, APP_NAME
+# With auth (no encoding needed): ./scripts/setup-dev.sh --proxy http://proxy:8080 --proxy-user user --proxy-pass 'sr!n@v9914'
+# Env: PIP_PROXY, PIP_PROXY_USER, PIP_PROXY_PASS, APP_NAME
 
 set -e
 
 PIP_PROXY="${PIP_PROXY:-}"
+PIP_PROXY_USER="${PIP_PROXY_USER:-}"
+PIP_PROXY_PASS="${PIP_PROXY_PASS:-}"
 APP_NAME="${APP_NAME:-}"
 BUILD=false
 VENV=false
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --proxy) PIP_PROXY="$2"; shift 2 ;;
-    --name)  APP_NAME="$2"; shift 2 ;;
-    --build) BUILD=true; shift ;;
-    --venv)  VENV=true; shift ;;
+    --proxy)      PIP_PROXY="$2"; shift 2 ;;
+    --proxy-user) PIP_PROXY_USER="$2"; shift 2 ;;
+    --proxy-pass) PIP_PROXY_PASS="$2"; shift 2 ;;
+    --name)       APP_NAME="$2"; shift 2 ;;
+    --build)      BUILD=true; shift ;;
+    --venv)       VENV=true; shift ;;
     *) shift ;;
   esac
 done
+
+# Build proxy URL with auth (auto URL-encodes special chars in user/pass)
+if [[ -n "$PIP_PROXY" && -n "$PIP_PROXY_USER" && -n "$PIP_PROXY_PASS" ]]; then
+  ENC_USER=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$PIP_PROXY_USER")
+  ENC_PASS=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$PIP_PROXY_PASS")
+  if [[ "$PIP_PROXY" =~ ^(https?)://(.+)$ ]]; then
+    PIP_PROXY="${BASH_REMATCH[1]}://${ENC_USER}:${ENC_PASS}@${BASH_REMATCH[2]}"
+  fi
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -26,7 +40,10 @@ cd "$PROJECT_ROOT"
 
 echo "=== CodeReview Dev Setup ==="
 echo "Project root: $PROJECT_ROOT"
-[[ -n "$PIP_PROXY" ]] && echo "Pip proxy: $PIP_PROXY"
+if [[ -n "$PIP_PROXY" ]]; then
+  DISPLAY_PROXY=$(echo "$PIP_PROXY" | sed -E 's|^([^:]+://)[^:]+:[^@]+@|\1***:***@|')
+  echo "Pip proxy: $DISPLAY_PROXY"
+fi
 [[ -n "$APP_NAME" ]] && echo "Restore app name to: $APP_NAME"
 $BUILD && echo "Run Electron build (build:win) after setup"
 $VENV && echo "Create venv (.venv) for dependencies"
@@ -41,7 +58,7 @@ if [[ -n "$APP_NAME" ]]; then
     if grep -q -E 'CodeReview|codereview' "$f" 2>/dev/null; then
       perl -i -pe "s/CodeReview/$APP_NAME/g; s/codereview/$ID/g" "$f" 2>/dev/null && ((count++))
     fi
-  done < <(find "$PROJECT_ROOT" -type f \( -name "*.py" -o -name "*.js" -o -name "*.json" -o -name "*.html" -o -name "*.md" -o -name "*.yml" -o -name "*.sh" \) ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/dist/*" ! -path "*/build/*" 2>/dev/null)
+  done < <(find "$PROJECT_ROOT" -type f \( -name "*.py" -o -name "*.js" -o -name "*.json" -o -name "*.html" -o -name "*.md" -o -name "*.yml" -o -name "*.sh" -o -name "*.ps1" -o -name "*.bat" -o -name "*.spec" \) ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/dist/*" ! -path "*/build/*" 2>/dev/null)
   echo "  Updated $count files"
   echo ""
 fi

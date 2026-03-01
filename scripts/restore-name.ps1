@@ -14,7 +14,7 @@ Write-Host "Restoring app name to: $Name (id: $Id)" -ForegroundColor Cyan
 Write-Host "Project root: $ProjectRoot"
 Write-Host ""
 
-$files = Get-ChildItem -Path $ProjectRoot -Recurse -File -Include *.py,*.js,*.json,*.html,*.md,*.yml,*.sh,*.ps1,*.bat |
+$files = Get-ChildItem -Path $ProjectRoot -Recurse -File -Include *.py,*.js,*.json,*.html,*.md,*.yml,*.sh,*.ps1,*.bat,*.spec |
     Where-Object { $_.FullName -notmatch '\\node_modules\\|\\\.git\\|\\dist|\\build' }
 
 $count = 0
