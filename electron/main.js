@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, Menu, BrowserView } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 
@@ -61,6 +61,8 @@ function startBackend() {
 }
 
 function createWindow() {
+  Menu.setApplicationMenu(null);
+
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -72,6 +74,33 @@ function createWindow() {
     },
     icon: path.join(__dirname, '..', 'static', 'icons', 'icon.ico'),
     show: false,
+  });
+
+  const progressBar = new BrowserView({
+    webPreferences: { nodeIntegration: false },
+  });
+  mainWindow.setBrowserView(progressBar);
+  progressBar.setBounds({ x: 0, y: 0, width: 1280, height: 5 });
+  progressBar.webContents.loadURL(
+    'data:text/html;charset=utf-8,' + encodeURIComponent(`
+      <!DOCTYPE html><html><head><style>
+        *{margin:0}body{height:5px;background:#e9ecef;overflow:hidden}
+        body::after{content:'';display:block;height:100%;width:30%;background:linear-gradient(90deg,#0d6efd,#0a58ca);
+          animation:l 1.2s ease-in-out infinite}
+        @keyframes l{0%{transform:translateX(-100%)}100%{transform:translateX(400%)}}
+      </style></head><body></body></html>`
+    )
+  );
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.setBrowserView(null);
+  });
+
+  mainWindow.on('resize', () => {
+    const [w, h] = mainWindow.getContentSize();
+    if (mainWindow.getBrowserView()) {
+      mainWindow.getBrowserView().setBounds({ x: 0, y: 0, width: w, height: 5 });
+    }
   });
 
   mainWindow.loadURL(APP_URL);

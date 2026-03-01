@@ -52,26 +52,16 @@ function main() {
     console.log('Step 2: npm deps already installed');
   }
 
-  // 3. Clean old unpacked dir (avoid "file in use" if app was running)
-  const winDir = path.join(rootDir, 'dist-electron', 'win-unpacked');
-  if (fs.existsSync(winDir)) {
-    console.log('\nStep 3a: Cleaning previous build...');
-    try {
-      fs.rmSync(winDir, { recursive: true, maxRetries: 3 });
-    } catch (e) {
-      console.warn('  (Could not remove win-unpacked - close CodeCritique if running)');
-    }
-  }
+  // 3. Electron-builder: use timestamped output to avoid "file in use" from previous runs
+  const outDir = `dist-electron-${Date.now()}`;
+  console.log('\nStep 3: Packaging with Electron...');
+  run(`npx electron-builder --win --config.directories.output=${outDir} --config.win.signAndEditExecutable=false`);
 
-  // 4. Electron-builder (portable + unpacked dir)
-  console.log('\nStep 4: Packaging with Electron...');
-  run('npx electron-builder --win');
-
-  // 5. Create portable zip (copy folder, unzip anywhere, run)
-  const distDir = path.join(rootDir, 'dist-electron');
+  // 4. Create portable zip (copy folder, unzip anywhere, run)
+  const distDir = path.join(rootDir, outDir);
   const winDirPath = path.join(distDir, 'win-unpacked');
   if (fs.existsSync(winDirPath)) {
-    console.log('\nStep 5: Creating portable zip...');
+    console.log('\nStep 4: Creating portable zip...');
     const zipPath = path.join(distDir, 'CodeCritique-portable.zip');
     const winContents = path.join(winDirPath, '*');
     try {
@@ -83,11 +73,11 @@ function main() {
     } catch (e) {
       console.warn('  (Zip creation skipped - PowerShell may be unavailable)');
     }
-    console.log('\nDone! Artifacts in dist-electron/:');
+    console.log(`\nDone! Artifacts in ${outDir}/:`);
     console.log('  - CodeCritique X.X.X.exe (portable) - copy & run, no install');
     console.log('  - CodeCritique-portable.zip - unzip anywhere, run CodeCritique.exe');
   } else {
-    console.log('\nDone! Output in dist-electron/');
+    console.log(`\nDone! Output in ${outDir}/`);
   }
 }
 

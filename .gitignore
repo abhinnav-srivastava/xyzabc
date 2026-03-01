@@ -171,6 +171,8 @@ yarn.lock
 
 # Electron build output (recreatable via npm run build)
 dist-electron/
+dist-electron-*/
+dist-electron-build/
 
 # Bundled tools (keep READMEs; binaries are optional and often large)
 tools/git/*
