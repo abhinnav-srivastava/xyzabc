@@ -14,6 +14,16 @@ const fs = require('fs');
 
 const rootDir = path.join(__dirname, '..');
 
+/** Parse exe name from app.spec (e.g. name='CodeReview' or name='CodeCrit') */
+function getExeNameFromSpec() {
+  const specPath = path.join(rootDir, 'app.spec');
+  const content = fs.readFileSync(specPath, 'utf8');
+  const m = content.match(/exe\s*=\s*EXE\s*\([\s\S]*?name\s*=\s*['"]([^'"]+)['"]/);
+  if (m) return m[1];
+  const fallback = content.match(/name\s*=\s*['"]([^'"]+)['"]/);
+  return fallback ? fallback[1] : 'CodeReview';
+}
+
 function run(cmd, opts = {}) {
   console.log('>', cmd);
   return execSync(cmd, { stdio: 'inherit', cwd: rootDir, ...opts });
@@ -46,14 +56,15 @@ function main() {
     console.error('app.spec not found.');
     process.exit(1);
   }
+  const exeName = getExeNameFromSpec();
   runPy(['-m', 'PyInstaller', '--clean', '--noconfirm', 'app.spec']);
 
-  const exePath = path.join(rootDir, 'dist', 'CodeReview.exe');
+  const exePath = path.join(rootDir, 'dist', `${exeName}.exe`);
   if (!fs.existsSync(exePath)) {
-    console.error('PyInstaller did not produce dist/CodeReview.exe');
+    console.error(`PyInstaller did not produce dist/${exeName}.exe`);
     process.exit(1);
   }
-  console.log('  -> dist/CodeReview.exe created\n');
+  console.log(`  -> dist/${exeName}.exe created\n`);
 
   // 2. Install npm deps if needed
   if (!fs.existsSync(path.join(rootDir, 'node_modules'))) {
@@ -71,22 +82,24 @@ function main() {
   // 4. Create portable zip (copy folder, unzip anywhere, run)
   const distDir = path.join(rootDir, outDir);
   const winDirPath = path.join(distDir, 'win-unpacked');
+  const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
+  const productName = pkg.build?.productName || exeName || 'CodeReview';
   if (fs.existsSync(winDirPath)) {
     console.log('\nStep 4: Creating portable zip...');
-    const zipPath = path.join(distDir, 'CodeReview-portable.zip');
+    const zipPath = path.join(distDir, `${productName}-portable.zip`);
     const winContents = path.join(winDirPath, '*');
     try {
       execSync(
         `powershell -NoProfile -Command "Compress-Archive -Path '${winContents}' -DestinationPath '${zipPath}' -Force"`,
         { stdio: 'inherit', cwd: rootDir }
       );
-      console.log('  -> CodeReview-portable.zip created');
+      console.log(`  -> ${productName}-portable.zip created`);
     } catch (e) {
       console.warn('  (Zip creation skipped - PowerShell may be unavailable)');
     }
     console.log(`\nDone! Artifacts in ${outDir}/:`);
-    console.log('  - CodeReview X.X.X.exe (portable) - copy & run, no install');
-    console.log('  - CodeReview-portable.zip - unzip anywhere, run CodeReview.exe');
+    console.log(`  - ${productName} X.X.X.exe (portable) - copy & run, no install`);
+    console.log(`  - ${productName}-portable.zip - unzip anywhere, run ${productName}.exe`);
   } else {
     console.log(`\nDone! Output in ${outDir}/`);
   }
