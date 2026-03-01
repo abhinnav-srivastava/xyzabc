@@ -190,7 +190,7 @@
     "jira_integration": false,
     "slack_integration": false,
     "disable_add_remote_projects": true,
-    "disable_mr_diff_fetch": true
+    "disable_mr_diff_fetch": false
   },
   "limits": {
     "max_file_size": 52428800,
