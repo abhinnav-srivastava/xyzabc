@@ -81,7 +81,7 @@
       "name": "Start Review",
       "short_name": "Review",
       "description": "Start a new code review",
-      "url": "/start-review",
+      "url": "/start",
       "icons": [
         {
           "src": "/static/icons/icon-96x96.png",

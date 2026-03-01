@@ -3,7 +3,7 @@ import io
 import time
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Any, Tuple, Optional
 from pathlib import Path
 
@@ -58,6 +58,16 @@ from services.checklist_loader import (
     load_roles_config,
     build_all_steps,
 )
+from services.user_profile import (
+    get_last_used_name,
+    get_last_used_user_id,
+    get_profile,
+    save_profile,
+    get_all_profiles,
+    delete_profile,
+    set_last_used,
+    update_profile_roles,
+)
 from services.network_security import network_security
 from services.dynamic_categories import dynamic_categories
 from services.patch_parser import (
@@ -65,10 +75,16 @@ from services.patch_parser import (
     file_diffs_to_json_serializable,
     file_diffs_from_session,
 )
+from services.git_operations import (
+    git_pull,
+    git_push,
+    get_credential_helper_info,
+)
 
 def create_app() -> Flask:
     app = Flask(__name__)
     app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=365)
 
     \
     config_path = Path(__file__).parent / "config" / "app_config.json"
@@ -127,6 +143,26 @@ def create_app() -> Flask:
         pass
 
     @app.before_request
+    def require_login():
+        """Redirect to login if not authenticated. Landing (index) and login are public."""
+        if request.endpoint in (None, "static", "manifest", "service_worker", "offline"):
+            return None
+        if request.endpoint in ("index", "login", "logout", "select_roles"):
+            return None
+        if session.get("user_name"):
+            return None
+        return redirect(url_for("login", next=request.url))
+
+    @app.before_request
+    def require_roles_if_logged_in():
+        """If user is logged in but has no roles, redirect to select_roles (first-time flow)."""
+        if request.endpoint in (None, "static", "manifest", "service_worker", "offline", "login", "logout", "index", "select_roles"):
+            return None
+        if session.get("user_name") and not session.get("user_roles"):
+            return redirect(url_for("select_roles", next=request.url))
+        return None
+
+    @app.before_request
     def validate_request():
         """Validate incoming requests for security"""
         client_ip = request.environ.get('REMOTE_ADDR', '127.0.0.1')
@@ -171,9 +207,11 @@ def create_app() -> Flask:
                 except Exception as e:
                     debug_log(f"Auto-refresh error: {str(e)}")
 
-        selected_role = session.get("selected_role")
-        if selected_role:
-            steps = [step for step in all_steps if step["role_id"] == selected_role]
+        selected_roles = session.get("selected_roles") or session.get("selected_role")
+        if isinstance(selected_roles, str):
+            selected_roles = [selected_roles] if selected_roles else []
+        if selected_roles:
+            steps = [step for step in all_steps if step["role_id"] in selected_roles]
         else:
             steps = all_steps
 
@@ -181,15 +219,21 @@ def create_app() -> Flask:
 
     def _process_review_form_data(responses: Dict[str, Dict[str, Any]], form_data: dict) -> Dict[str, Dict[str, Any]]:
         """
-        Common function to process review form data for both individual and all-categories modes.
-        Returns updated responses dictionary.
+        Process review form data. Returns updated responses dictionary.
+        Handles status/comment per item and category skip.
         """
         debug_log("DEBUG: _process_review_form_data called")
-        debug_log("DEBUG: Form data keys: " + str(list(form_data.keys())))
+        skip_enabled = app_config.get('features', {}).get('skip_categories', True)
 
-        \
-        skip_enabled = app_config.get('features', {}).get('skip_categories', False)
-        debug_log("DEBUG: Skip feature enabled: " + str(skip_enabled))
+        # Clear skipped for categories not marked as skipped in form
+        if skip_enabled:
+            for cat in _get_categories():
+                cid = cat["category_id"]
+                if form_data.get(f"category_skip_{cid}") != "on":
+                    if cid in responses:
+                        responses[cid]["skipped"] = False
+                    else:
+                        responses[cid] = {"skipped": False}
 
         for key, value in form_data.items():
             if key.startswith("status_"):
@@ -202,18 +246,14 @@ def create_app() -> Flask:
                 if item_key not in responses:
                     responses[item_key] = {}
                 responses[item_key]["comment"] = value
-            elif skip_enabled and key.startswith("category_skip_"):
-                if key.endswith("_status"):
-                    continue
+            elif skip_enabled and key.startswith("category_skip_") and not key.endswith("_status"):
                 category_id = key[14:]
                 skip_comment = form_data.get(f"category_skip_comment_{category_id}", "")
-
                 if value == "on":
                     if category_id not in responses:
                         responses[category_id] = {}
                     responses[category_id]["skipped"] = True
                     responses[category_id]["skip_comment"] = skip_comment
-                    debug_log(f"DEBUG: Category {category_id} marked as skipped")
 
         debug_log("DEBUG: Final responses after processing: " + str(list(responses.keys())))
         return responses
@@ -360,7 +400,7 @@ def create_app() -> Flask:
         summary: Dict[str, Any] = {}
 
         \
-        skip_enabled = app_config.get('features', {}).get('skip_categories', False)
+        skip_enabled = app_config.get('features', {}).get('skip_categories', True)
         debug_log("DEBUG: Skip feature enabled in summary: " + str(skip_enabled))
 
         if skip_enabled:
@@ -423,19 +463,136 @@ def create_app() -> Flask:
             cat_bucket["item_list"].append(record)
         return summary, counts_overall
 
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        """Login page: name and username. No password. First-time users go to select_roles."""
+        if request.method == "POST":
+            name = request.form.get("name", "").strip()
+            username = request.form.get("username", "").strip()
+            if name and username:
+                session.permanent = True
+                session["user_name"] = name
+                session["user_username"] = username
+                profile = get_profile(username)
+                if profile and profile.get("preferred_roles"):
+                    session["user_roles"] = profile["preferred_roles"]
+                    save_profile(user_id=username, name=name, preferred_roles=profile["preferred_roles"])
+                    next_url = request.args.get("next") or url_for("dashboard")
+                    return redirect(next_url)
+                else:
+                    save_profile(user_id=username, name=name, preferred_roles=[])
+                    next_url = request.args.get("next") or url_for("dashboard")
+                    return redirect(url_for("select_roles", next=next_url))
+        if session.get("user_name") and session.get("user_roles"):
+            next_url = request.args.get("next") or url_for("dashboard")
+            return redirect(next_url)
+        if session.get("user_name") and not session.get("user_roles"):
+            return redirect(url_for("select_roles", next=request.args.get("next") or url_for("dashboard")))
+        config = load_roles_config()
+        profiles = get_all_profiles()
+        last_used_id = get_last_used_user_id()
+        last_profile = get_profile(last_used_id) if last_used_id else None
+        return render_template(
+            "login.html",
+            config=config,
+            profiles=profiles,
+            last_profile=last_profile,
+        )
+
+    @app.route("/select-roles", methods=["GET", "POST"])
+    def select_roles():
+        """First-time role selection: chip-based UI. Requires user_name from login."""
+        if not session.get("user_name") or not session.get("user_username"):
+            return redirect(url_for("login", next=url_for("select_roles")))
+        if request.method == "POST":
+            roles = request.form.getlist("roles")
+            roles = [r.strip() for r in roles if r and r.strip()]
+            if roles:
+                username = session.get("user_username", "")
+                name = session.get("user_name", "")
+                session["user_roles"] = roles
+                save_profile(user_id=username, name=name, preferred_roles=roles)
+                next_url = request.args.get("next") or url_for("dashboard")
+                return redirect(next_url)
+        if session.get("user_roles"):
+            next_url = request.args.get("next") or url_for("dashboard")
+            return redirect(next_url)
+        config = load_roles_config()
+        return render_template("select_roles.html", config=config)
+
+    @app.route("/logout")
+    def logout():
+        """Clear session and redirect to landing page."""
+        session.clear()
+        return redirect(url_for("index"))
+
     @app.route("/")
     def index():
+        if session.get("user_name"):
+            return redirect(url_for("dashboard"))
         config = load_roles_config()
         return render_template("index.html", config=config)
 
-    @app.route("/start-review")
-    def start_review_page():
-        """Display the start review page with form."""
+    def _format_roles_display(role_ids: List[str], role_map: Dict[str, str]) -> str:
+        """Format role IDs as display string (e.g. 'FO, Developer Review')."""
+        if isinstance(role_ids, str):
+            role_ids = [role_ids] if role_ids else []
+        names = [role_map.get(r, r) for r in role_ids if r]
+        return ", ".join(names) if names else "—"
+
+    @app.route("/dashboard")
+    def dashboard():
+        """Simple dashboard for logged-in users."""
+        if not session.get("user_name"):
+            return redirect(url_for("login", next=url_for("dashboard")))
         config = load_roles_config()
-        \
-        import getpass
-        windows_username = getpass.getuser()
-        return render_template("start_review.html", config=config, default_username=windows_username)
+        role_map = {r["id"]: r["name"] for r in config.get("roles", [])}
+        user_roles = session.get("user_roles", []) or ([session.get("user_role")] if session.get("user_role") else [])
+        role_name = _format_roles_display(user_roles, role_map)
+        return render_template(
+            "dashboard.html",
+            role_name=role_name,
+        )
+
+    @app.route("/profile", methods=["GET", "POST"])
+    def profile_page():
+        """Profile management: view, set default, delete, edit roles."""
+        if request.method == "POST":
+            action = request.form.get("action")
+            user_id = request.form.get("user_id", "").strip()
+            name = request.form.get("name", "").strip()
+            if action == "delete" and user_id:
+                p = get_profile(user_id)
+                display_name = p.get("name", user_id) if p else user_id
+                delete_profile(user_id)
+                from flask import flash
+                flash(f"Profile '{display_name}' deleted.", "info")
+            elif action == "set_default" and user_id:
+                if set_last_used(user_id):
+                    from flask import flash
+                    p = get_profile(user_id)
+                    display_name = p.get("name", user_id) if p else user_id
+                    flash(f"'{display_name}' is now your default profile.", "success")
+            elif action == "edit_roles" and user_id:
+                roles = request.form.getlist("roles")
+                roles = [r.strip() for r in roles if r and r.strip()]
+                if roles and update_profile_roles(user_id, roles):
+                    from flask import flash
+                    flash("Roles updated.", "success")
+                    if session.get("user_username") == user_id:
+                        session["user_roles"] = roles
+            return redirect(url_for("profile_page"))
+        profiles = get_all_profiles()
+        last_used_id = get_last_used_user_id()
+        config = load_roles_config()
+        role_map = {r["id"]: r["name"] for r in config.get("roles", [])}
+        return render_template(
+            "profile.html",
+            profiles=profiles,
+            last_used_id=last_used_id,
+            role_map=role_map,
+            config=config,
+        )
 
     @app.route("/guidelines")
     def guidelines():
@@ -750,20 +907,19 @@ def create_app() -> Flask:
 
         return guidelines
 
-    @app.route("/start", methods=["POST"])
+    @app.route("/start", methods=["GET", "POST"])
     def start_review():
-        reviewer_name = request.form.get("reviewer_name", "").strip()
-        selected_role = request.form.get("selected_role", "").strip()
-        single_page_mode = request.form.get("single_page_mode") == "on"
-
-        \
-        mr_link = request.form.get("mr_link", "").strip()
-        branch_name = request.form.get("branch_name", "").strip()
-        commit_hash = request.form.get("commit_hash", "").strip()
-        project_name = request.form.get("project_name", "").strip()
-
-        if not reviewer_name or not selected_role:
-            return redirect(url_for("index"))
+        if request.method == "GET":
+            reviewer_name = session.get("user_name", "").strip()
+            selected_roles = session.get("user_roles", [])
+            if not reviewer_name or not selected_roles:
+                return redirect(url_for("login", next=url_for("start_review")))
+        else:
+            reviewer_name = request.form.get("reviewer_name", "").strip()
+            selected_roles = request.form.getlist("selected_roles") or [request.form.get("selected_role", "").strip()]
+            selected_roles = [r for r in selected_roles if r and r.strip()]
+            if not reviewer_name or not selected_roles:
+                return redirect(url_for("index"))
 
         current_time = datetime.now()
         session["review_start_time"] = current_time.isoformat()
@@ -771,17 +927,15 @@ def create_app() -> Flask:
 
         session["responses"] = {}
         session["current_category"] = 0
+        session.pop("review_completed", None)  # New review
         session["reviewer_name"] = reviewer_name
-        session["selected_role"] = selected_role
-        session["single_page_mode"] = single_page_mode
+        session["reviewer_username"] = session.get("user_username", "")
+        session["selected_roles"] = selected_roles
+        session["selected_role"] = selected_roles[0] if selected_roles else ""  # backward compat
+        session["single_page_mode"] = True  # Single-page mode only
+        session["mr_details"] = {}
 
-        \
-        session["mr_details"] = {
-            "mr_link": mr_link,
-            "branch_name": branch_name,
-            "commit_hash": commit_hash,
-            "project_name": project_name
-        }
+        save_profile(user_id=session.get("user_username", ""), name=reviewer_name, preferred_roles=selected_roles)
 
         # Flow: Start → Patch → Patch summary → Checklist
         return redirect(url_for("review_patch"))
@@ -790,6 +944,18 @@ def create_app() -> Flask:
     def review_patch():
         """Step 2: Upload patch (or skip). Requires session from POST /start."""
         if request.method == "POST":
+            # Update MR details from form (both parse and skip paths)
+            mr_link = request.form.get("mr_link", "").strip()
+            branch_name = request.form.get("branch_name", "").strip()
+            project_name = request.form.get("project_name", "").strip()
+            commit_hash = request.form.get("commit_hash", "").strip()
+            session["mr_details"] = {
+                "mr_link": mr_link,
+                "branch_name": branch_name,
+                "project_name": project_name,
+                "commit_hash": commit_hash,
+            }
+
             skip = request.form.get("skip_patch") == "1"
             if skip:
                 return _redirect_to_checklist()
@@ -821,15 +987,15 @@ def create_app() -> Flask:
                 from flask import flash
                 flash(f"Failed to parse patch: {str(e)}", "danger")
                 return redirect(url_for("review_patch"))
-        # GET: must have started a review (session has reviewer_name, selected_role)
-        if not session.get("reviewer_name") or not session.get("selected_role"):
-            return redirect(url_for("start_review_page"))
-        return render_template("review_patch.html")
+        # GET: must have started a review (session has reviewer_name, selected_roles)
+        selected_roles = session.get("selected_roles") or session.get("selected_role")
+        if not session.get("reviewer_name") or not selected_roles:
+            return redirect(url_for("start_review"))
+        mr_details = session.get("mr_details") or {}
+        return render_template("review_patch.html", mr_details=mr_details)
 
     def _redirect_to_checklist():
-        if session.get("single_page_mode"):
-            return redirect(url_for("review_all_categories"))
-        return redirect(url_for("review_category", idx=0))
+        return redirect(url_for("review_all_categories"))
 
     def _patch_store_dir() -> Path:
         d = get_temp_dir() / "patch_store"
@@ -904,7 +1070,8 @@ def create_app() -> Flask:
     @app.route("/patch-summary")
     def patch_summary():
         """Patch analysis & summary. In review flow: allow no patch (then show Continue to checklist)."""
-        in_review_flow = bool(session.get("reviewer_name") and session.get("selected_role"))
+        selected_roles = session.get("selected_roles") or session.get("selected_role")
+        in_review_flow = bool(session.get("reviewer_name") and selected_roles)
         patch_data = _load_patch_data()
         if not in_review_flow and not patch_data:
             return redirect(url_for("upload_patch"))
@@ -925,7 +1092,8 @@ def create_app() -> Flask:
     def patch_clear():
         """Remove patch from session and storage."""
         _clear_patch_storage()
-        if session.get("reviewer_name") and session.get("selected_role"):
+        selected_roles = session.get("selected_roles") or session.get("selected_role")
+        if session.get("reviewer_name") and selected_roles:
             return redirect(url_for("patch_summary"))
         return redirect(url_for("upload_patch"))
 
@@ -1121,7 +1289,11 @@ def create_app() -> Flask:
         summary_data, counts_overall = _compute_summary(steps, responses)
 
         reviewer_name = session.get("reviewer_name", "Unknown")
-        selected_role = session.get("selected_role", "All Roles")
+        reviewer_username = session.get("reviewer_username", "")
+        config = load_roles_config()
+        role_map = {r["id"]: r["name"] for r in config.get("roles", [])}
+        selected_roles = session.get("selected_roles", []) or ([session.get("selected_role")] if session.get("selected_role") else [])
+        selected_role = _format_roles_display(selected_roles, role_map) or "All Roles"
 
         if "review_completed" not in session:
             debug_log("DEBUG: Marking review as completed")
@@ -1177,6 +1349,7 @@ def create_app() -> Flask:
             summary=summary_data,
             counts_overall=counts_overall,
             reviewer_name=reviewer_name,
+            reviewer_username=reviewer_username,
             selected_role=selected_role,
             review_timing=review_timing,
             mr_details=mr_details,
@@ -1193,7 +1366,11 @@ def create_app() -> Flask:
 
             summary_data, counts_overall = _compute_summary(steps, responses)
             reviewer_name = session.get("reviewer_name", "Unknown")
-            selected_role = session.get("selected_role", "Unknown")
+            reviewer_username = session.get("reviewer_username", "")
+            config = load_roles_config()
+            role_map = {r["id"]: r["name"] for r in config.get("roles", [])}
+            selected_roles = session.get("selected_roles", []) or ([session.get("selected_role")] if session.get("selected_role") else [])
+            selected_role = _format_roles_display(selected_roles, role_map) or "Unknown"
             review_timing = _calculate_review_time()
             mr_details = session.get("mr_details", {})
 
@@ -1201,6 +1378,7 @@ def create_app() -> Flask:
                                  summary=summary_data,
                                  counts_overall=counts_overall,
                                  reviewer_name=reviewer_name,
+                                 reviewer_username=reviewer_username,
                                  selected_role=selected_role,
                                  review_timing=review_timing,
                                  mr_details=mr_details)
@@ -1229,7 +1407,11 @@ def create_app() -> Flask:
         steps = _get_steps()
         responses: Dict[str, Dict[str, Any]] = session.get("responses", {})
         reviewer_name = session.get("reviewer_name", "Unknown")
-        selected_role = session.get("selected_role", "Unknown")
+        reviewer_username = session.get("reviewer_username", "")
+        config = load_roles_config()
+        role_map = {r["id"]: r["name"] for r in config.get("roles", [])}
+        selected_roles = session.get("selected_roles", []) or ([session.get("selected_role")] if session.get("selected_role") else [])
+        selected_role = _format_roles_display(selected_roles, role_map) or "Unknown"
         review_timing = _calculate_review_time()
 
         buffer = io.BytesIO()
@@ -1279,6 +1461,10 @@ def create_app() -> Flask:
         metadata_data = [
             ['Reviewer:', reviewer_name],
             ['Role:', selected_role],
+        ]
+        if reviewer_username:
+            metadata_data.insert(1, ['Username:', reviewer_username])
+        metadata_data += [
             ['Review Started:', review_timing['start_time']],
             ['Review Completed:', review_timing['end_time']],
             ['Duration:', review_timing['duration']]
@@ -1307,7 +1493,7 @@ def create_app() -> Flask:
             ['Unanswered', str(counts_overall['UNANSWERED']), f"{(counts_overall['UNANSWERED'] / len(steps) * 100):.1f}%" if len(steps) > 0 else "0%"]
         ]
 
-        if app_config.get('features', {}).get('skip_categories', False):
+        if app_config.get('features', {}).get('skip_categories', True):
             stats_data.insert(-1, ['Skipped', str(counts_overall.get('SKIPPED', 0)), f"{(counts_overall.get('SKIPPED', 0) / len(steps) * 100):.1f}%" if len(steps) > 0 else "0%"])
 
         stats_table = Table(stats_data, colWidths=[40*mm, 30*mm, 30*mm])
@@ -1394,6 +1580,43 @@ def create_app() -> Flask:
             \
 \
             return {"status": "success", "message": "Offline data synced successfully"}, 200
+        except Exception as e:
+            return {"status": "error", "message": str(e)}, 500
+
+    @app.route("/api/git/pull", methods=["POST"])
+    def api_git_pull():
+        """Pull from remote using system git credentials (credential helper)."""
+        try:
+            data = request.get_json(silent=True) or {}
+            remote = data.get("remote", "origin")
+            branch = data.get("branch")
+            result = git_pull(repo_path=get_project_root(), remote=remote, branch=branch)
+            if result["success"]:
+                return {"status": "success", "message": result["message"], "stdout": result["stdout"]}, 200
+            return {"status": "error", "message": result["message"], "stderr": result["stderr"]}, 400
+        except Exception as e:
+            return {"status": "error", "message": str(e)}, 500
+
+    @app.route("/api/git/push", methods=["POST"])
+    def api_git_push():
+        """Push to remote using system git credentials (credential helper)."""
+        try:
+            data = request.get_json(silent=True) or {}
+            remote = data.get("remote", "origin")
+            branch = data.get("branch")
+            result = git_push(repo_path=get_project_root(), remote=remote, branch=branch)
+            if result["success"]:
+                return {"status": "success", "message": result["message"], "stdout": result["stdout"]}, 200
+            return {"status": "error", "message": result["message"], "stderr": result["stderr"]}, 400
+        except Exception as e:
+            return {"status": "error", "message": str(e)}, 500
+
+    @app.route("/api/git/credentials-info", methods=["GET"])
+    def api_git_credentials_info():
+        """Return detected credential helper info (no credentials exposed)."""
+        try:
+            info = get_credential_helper_info(repo_path=get_project_root())
+            return {"status": "success", "credentials_info": info}, 200
         except Exception as e:
             return {"status": "error", "message": str(e)}, 500
 

@@ -27,6 +27,7 @@
   - **`dynamic_categories.py`** – Scans Excel under `checklists/excel`, reads `MainCategory`/`Category`, updates `roles.json` and category metadata.
   - **`patch_parser.py`** – Parses unified diff / git patch. Uses **git** (bundled in `tools/git/` or PATH) for **git apply --numstat** (exact, GitLab-accurate stats); uses **cloc** (bundled in `tools/cloc/` or PATH) for lines-of-code breakdown by language. Falls back to pure-Python parsing when git is unavailable. Produces Android-focused categories and per-file hunks for the diff viewer.
   - **`network_security.py`** – Validates requests (IP/allowlist); used in `@app.before_request`.
+  - **`git_operations.py`** – Git pull/push using system credential helper (Windows Credential Manager, Git Credential Manager, etc.); `get_credential_helper_info()` for detection.
 - **`checklists/markdown/`** – One consolidated markdown per role (e.g. `self/self_consolidated.md`, `peer/peer_consolidated.md`). Structure: `# Role`, `## Category`, then list items (MUST:/RECOMMENDED:/GOOD:/OPTIONAL: and optional “How to Measure”, “Rule Reference”, etc.).
 - **`checklists/markdown/guidelines/`** – Reference guidelines (e.g. `android_coding_guidelines.md`) used for the “Guidelines” section.
 - **`templates/`** – `base.html` (nav, PWA meta), `index.html`, `start_review.html`, `review_all_categories.html`, `review_category_table.html`, `summary.html`, `guidelines.html`, `individual_guideline.html`, `report_standalone.html`, `offline.html`, `empty.html`.
@@ -39,8 +40,8 @@
 
 ## Main User Flows
 
-1. **Home** (`/`) – Landing with “Start Review” and “Guidelines”.
-2. **Start Review** (`/start-review` → POST `/start`) – User enters reviewer name, selects **role**, optional MR details, and “single page mode”. Session is created; flow continues to **Patch** (step 2).
+1. **Home** (`/`) – Landing with “Start Review”. Login required; name/role from login.
+2. **Start Review** (`/start`) – GET initializes review from session (login data); redirects to **Patch** (step 2).
 3. **Patch** (`/review/patch`) – Step 2: Upload a `.patch` file or paste a unified diff (e.g. from GitLab MR), or **Skip** to go straight to checklist. No system Git required; parsing is in-app. Android-focused (source vs test file classification).
 4. **Patch analysis & summary** (`/patch-summary`) – MR-style summary: lines added/deleted, source vs test files. “View changes” (diff) and **Continue to checklist review**.
 5. **Review code** (`/review/code`) – GitLab-style diff viewer: file list and per-file unified diff (line numbers, added/removed highlighting).
@@ -51,7 +52,7 @@
 8. **Export** – `/download/html`, `/download/pdf` – generate report from session data.
 9. **Guidelines** – `/guidelines` (list/filter), `/guideline/<rule_id>` (single guideline). Data from markdown under `checklists/markdown/guidelines/`.
 
-Additional routes: `/refresh`, `/refresh-categories`, `/refresh-all` (reload checklists/categories); `/offline`, `/api/sync-offline-data`; `/manifest.json`, `/sw.js` for PWA.
+Additional routes: `/refresh`, `/refresh-categories`, `/refresh-all` (reload checklists/categories); `/offline`, `/api/sync-offline-data`; `/manifest.json`, `/sw.js` for PWA. **Git sync:** `POST /api/git/pull`, `POST /api/git/push` (use system credential helper for auth); `GET /api/git/credentials-info` (detect credential helper).
 
 ---
 
@@ -99,7 +100,11 @@ You can **pack git, cloc, and diffstat** in the project so patch metrics work wi
 
 - **Run (dev)** – `python app.py --dev-server` (Flask dev server, debug on).
 - **Run (default)** – `python app.py` uses Waitress if available.
-- **Portable** – `build.py` drives PyInstaller (and related scripts) to produce a standalone executable; path handling in `path_utils` and services supports `sys.frozen` / `_MEIPASS`. Include `tools/git` and `tools/cloc` in the bundle if you want patch stats and CLOC without system installs.
+- **Portable (recommended)** – `npm run build:win` produces fully bundled Windows artifacts in `dist-electron/`:
+  - **CodeCritique 1.0.0.exe** — single file, copy to target and run. No install, no admin.
+  - **CodeCritique-portable.zip** — unzip anywhere, run `CodeCritique.exe`.
+  - **win-unpacked/** — copy folder to target, run `CodeCritique.exe`.
+  Requires: Node.js, Python (build time only). Target machine needs nothing.
 
 ---
 

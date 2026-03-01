@@ -168,7 +168,7 @@
     "position": "top-right"
   },
   "features": {
-    "skip_categories": false,
+    "skip_categories": true,
     "auto_launch_browser": true,
     "pwa": true,
     "offline_mode": true,

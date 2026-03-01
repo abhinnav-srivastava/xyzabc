@@ -137,16 +137,32 @@ def is_portable_mode() -> bool:
     """
     return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
 
+def get_writable_data_dir() -> Path:
+    """
+    Get a writable directory for app data (profiles, temp, patch_store).
+    When frozen (PyInstaller): uses user app data dir so data persists.
+    When dev: uses project root / data.
+    """
+    if is_portable_mode():
+        if sys.platform == "win32":
+            base = Path(os.environ.get("APPDATA", os.path.expanduser("~"))) / "CodeCritique"
+        elif sys.platform == "darwin":
+            base = Path.home() / "Library" / "Application Support" / "CodeCritique"
+        else:
+            base = Path.home() / ".local" / "share" / "CodeCritique"
+        base.mkdir(parents=True, exist_ok=True)
+        return base
+    return get_project_root()
+
 def get_data_dir() -> Path:
     """
     Get the data directory for the application.
-    In portable mode, this is the same as the base directory.
-    In development mode, this is the project root.
+    In portable mode, uses writable user dir. In dev, uses project root.
 
     Returns:
         Path to the data directory
     """
-    return get_project_root()
+    return get_writable_data_dir()
 
 def get_logs_dir() -> Path:
     """
@@ -162,11 +178,12 @@ def get_logs_dir() -> Path:
 def get_temp_dir() -> Path:
     """
     Get the temporary directory for the application.
+    When frozen, uses writable_data_dir/temp so patch_store etc. persist.
 
     Returns:
         Path to the temporary directory
     """
-    temp_dir = get_project_root() / "temp"
+    temp_dir = get_writable_data_dir() / "temp"
     ensure_dir_exists(temp_dir)
     return temp_dir
 

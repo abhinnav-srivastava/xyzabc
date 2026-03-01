@@ -54,6 +54,22 @@ The app already **prefers native executables** over JARs (e.g. `diffstat.exe` is
 
 ---
 
+## Distribution artifacts (no install required)
+
+Run `npm run build:win` to produce:
+
+| Artifact | Use |
+|----------|-----|
+| **CodeCritique 1.0.0.exe** (portable) | Single file — copy to target machine, double-click to run. No installation, no admin. |
+| **CodeCritique-portable.zip** | Unzip anywhere on target machine, run `CodeCritique.exe`. No installation, no admin. |
+| **win-unpacked/** | Unpacked folder — copy the whole folder to target, run `CodeCritique.exe`. No installation, no admin. |
+
+All artifacts are in `dist-electron/`. No NSIS installer is produced; the build is **portable-only**.
+
+**Target machine requirements:** None. No Python, Node, or system installs. Copy the exe/zip/folder and run. Works without admin rights.
+
+---
+
 ## Summary
 
 For **portable Windows / Electron**, ship **Git**, **CLOC**, and **diffstat** as **Windows executables** inside the app. Do not require Python or Java on the user’s machine for core patch metrics. The codebase is structured to prefer these bundled binaries; keep that layout when building the Electron (or other portable) package.

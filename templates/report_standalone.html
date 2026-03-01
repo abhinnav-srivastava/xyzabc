@@ -124,6 +124,9 @@
                                         <i class="bi bi-person me-2"></i>Reviewer Information
                                     </h6>
                                     <p class="mb-1"><strong>Name:</strong> {{ reviewer_name }}</p>
+                                    {% if reviewer_username %}
+                                    <p class="mb-1"><strong>Username:</strong> {{ reviewer_username }}</p>
+                                    {% endif %}
                                     <p class="mb-0"><strong>Role Reviewed:</strong> {{ selected_role }}</p>
                                 </div>
                             </div>

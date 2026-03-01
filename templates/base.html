@@ -41,7 +41,7 @@
   <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark shadow-sm" style="background: var(--primary-gradient);">
       <div class="container">
-        <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
+        <a class="navbar-brand fw-bold" href="{% if session.get('user_name') %}{{ url_for('dashboard') }}{% else %}{{ url_for('index') }}{% endif %}">
           <i class="bi bi-clipboard-check me-2"></i>CodeCritique
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -49,36 +49,34 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
               <ul class="navbar-nav ms-auto">
+                {% if session.get('user_name') %}
                 <li class="nav-item">
-                  <a class="nav-link" href="{{ url_for('index') }}">
-                    <i class="bi bi-house me-1"></i>Home
+                  <a class="nav-link" href="{{ url_for('dashboard') }}">
+                    <i class="bi bi-house me-1"></i>Dashboard
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="{{ url_for('upload_patch') }}">
-                    <i class="bi bi-file-earmark-diff me-1"></i>Upload patch
-                  </a>
+                  <span class="nav-link text-white-50">
+                    <i class="bi bi-person me-1"></i>{{ session.get('user_name', '') }}{% if session.get('user_username') %} ({{ session.get('user_username') }}){% endif %}
+                  </span>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="{{ url_for('guidelines') }}">
-                    <i class="bi bi-book me-1"></i>Guidelines
+                  <a class="nav-link" href="{{ url_for('logout') }}">
+                    <i class="bi bi-box-arrow-right me-1"></i>Logout
                   </a>
                 </li>
+                {% else %}
                 <li class="nav-item">
-                  <a class="nav-link" href="{{ url_for('patch_summary') }}">
-                    <i class="bi bi-git me-1"></i>Patch summary
+                  <a class="nav-link" href="{{ url_for('login', next=url_for('dashboard')) }}">
+                    <i class="bi bi-box-arrow-in-right me-1"></i>Login
                   </a>
                 </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="{{ url_for('summary') }}">
-                    <i class="bi bi-graph-up me-1"></i>Summary
-                  </a>
-                </li>
+                {% endif %}
               </ul>
         </div>
       </div>
     </nav>
-    
+
     <main class="container my-4">
       {% block content %}{% endblock %}
     </main>

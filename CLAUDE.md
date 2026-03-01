@@ -13,7 +13,7 @@ Use this file for project context when editing or reviewing this codebase.
 
 | Area | Location |
 |------|----------|
-| App & routes | `app.py` — `create_app()`, routes for `/`, `/start-review`, `/start`, `/review/patch`, `/patch-summary`, `/review/code`, `/upload-patch`, `/patch-clear`, review/summary/download |
+| App & routes | `app.py` — `create_app()`, routes for `/`, `/login`, `/start`, `/review/patch`, `/patch-summary`, `/review/code`, `/upload-patch`, `/patch-clear`, review/summary/download |
 | Patch parsing & metrics | `services/patch_parser.py` — unified diff parsing, `git apply --numstat`, rename/delete-from handling, CLOC on reconstructed files, `parse_patch()`, Android categories (manifest, gradle, resources, source, test, other), test-case extraction |
 | Code metrics (patch) | `services/code_metrics.py` — diffstat (binary or Python fallback), pygount, radon; `run_patch_metrics()`; project-level stub |
 | Paths & tools | `utils/path_utils.py` — `get_project_root()`, `get_tools_dir()`, `get_git_executable()`, `get_cloc_executable()`, `get_diffstat_executable()` (native exe only; JARs ignored to avoid GUI windows) |

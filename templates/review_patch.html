@@ -26,6 +26,41 @@
           </p>
 
           <form action="{{ url_for('review_patch') }}" method="post" enctype="multipart/form-data" id="patch-form">
+            <!-- MR/GitLab Details (Optional) -->
+            <div class="card border-0 bg-info bg-opacity-10 mb-4">
+              <div class="card-body">
+                <h6 class="card-title fw-semibold">
+                  <i class="bi bi-git me-2"></i>MR/GitLab Details (Optional)
+                </h6>
+                <p class="text-muted small mb-3">Add merge request details to include in your review report</p>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="mr_link" class="form-label">Merge Request Link</label>
+                    <input type="url" class="form-control" id="mr_link" name="mr_link" 
+                           placeholder="https://gitlab.com/.../merge_requests/123"
+                           value="{{ mr_details.mr_link or '' }}">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="branch_name" class="form-label">Branch Name</label>
+                    <input type="text" class="form-control" id="branch_name" name="branch_name" 
+                           placeholder="feature/new-feature"
+                           value="{{ mr_details.branch_name or '' }}">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="project_name" class="form-label">Project Name</label>
+                    <input type="text" class="form-control" id="project_name" name="project_name" 
+                           placeholder="My Awesome Project"
+                           value="{{ mr_details.project_name or '' }}">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="commit_hash" class="form-label">Commit Hash</label>
+                    <input type="text" class="form-control" id="commit_hash" name="commit_hash" 
+                           placeholder="abc123def"
+                           value="{{ mr_details.commit_hash or '' }}">
+                  </div>
+                </div>
+              </div>
+            </div>
             <div class="mb-4">
               <label class="form-label fw-semibold">
                 <i class="bi bi-file-earmark-arrow-up me-1"></i>Upload .patch file

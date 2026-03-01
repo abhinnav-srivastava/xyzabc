@@ -10,7 +10,7 @@ const DYNAMIC_CACHE_NAME = 'codecritique-dynamic-v1.0.0';
 // Files to cache for offline functionality
 const STATIC_FILES = [
   '/',
-  '/start-review',
+  '/start',
   '/guidelines',
   '/summary',
   '/static/css/bootstrap.min.css',

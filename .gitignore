@@ -64,6 +64,9 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# User profiles (local data)
+data/profiles.json
+
 # Flask stuff:
 instance/
 .webassets-cache
@@ -168,6 +171,12 @@ yarn.lock
 *.temp
 *.bak
 *.backup
+
+# Electron build output
+dist-electron/
+
+# Backend data (SQLite, etc.)
+backend/data/
 
 # Bundled tools (keep READMEs; binaries are optional and often large)
 tools/git/*

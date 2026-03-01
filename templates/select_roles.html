@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow border-0 mt-5">
+        <div class="card-body p-4">
+          <div class="text-center mb-4">
+            <i class="bi bi-person-badge-fill text-primary" style="font-size: 2.5rem;"></i>
+            <h4 class="mt-2 fw-bold">Select Applicable Roles</h4>
+            <p class="text-muted small mb-0">Choose one or more roles (checklists will be combined)</p>
+          </div>
+          <form action="{{ url_for('select_roles') }}" method="post" class="needs-validation" novalidate id="rolesForm">
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Applicable roles</label>
+              <div class="d-flex flex-wrap gap-2" id="roles-chips">
+                {% for role in config.roles %}
+                <button type="button" class="btn btn-outline-primary rounded-pill px-3 py-2 role-chip" 
+                        data-role-id="{{ role.id }}" role="button">
+                  {{ role.name }}
+                </button>
+                {% endfor %}
+              </div>
+              <div id="roles-hidden-container"></div>
+              <div class="invalid-feedback d-block mt-1" id="roles-feedback">Select at least one role.</div>
+            </div>
+
+            <div class="mt-4">
+              <button type="submit" class="btn btn-primary w-100 py-2">
+                <i class="bi bi-check-circle me-2"></i>Continue
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.role-chip {
+  transition: all 0.2s ease;
+}
+.role-chip.selected {
+  background: var(--bs-primary);
+  color: #fff;
+  border-color: var(--bs-primary);
+}
+</style>
+
+<script>
+(function() {
+  'use strict';
+  var form = document.getElementById('rolesForm');
+  var chips = document.querySelectorAll('.role-chip');
+  var feedback = document.getElementById('roles-feedback');
+  var selected = new Set();
+
+  var container = document.getElementById('roles-hidden-container');
+
+  function syncHiddenInputs() {
+    container.innerHTML = '';
+    selected.forEach(function(id) {
+      var inp = document.createElement('input');
+      inp.type = 'hidden';
+      inp.name = 'roles';
+      inp.value = id;
+      container.appendChild(inp);
+    });
+  }
+
+  chips.forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      var id = chip.getAttribute('data-role-id');
+      if (selected.has(id)) {
+        selected.delete(id);
+        chip.classList.remove('selected');
+      } else {
+        selected.add(id);
+        chip.classList.add('selected');
+      }
+      syncHiddenInputs();
+      feedback.style.display = 'none';
+    });
+  });
+
+  if (form) {
+    form.addEventListener('submit', function(event) {
+      var valid = selected.size > 0;
+      if (!valid) {
+        event.preventDefault();
+        event.stopPropagation();
+        feedback.style.display = 'block';
+      } else {
+        syncHiddenInputs();
+      }
+      form.classList.add('was-validated');
+    });
+  }
+})();
+</script>
+{% endblock %}

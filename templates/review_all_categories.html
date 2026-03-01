@@ -36,8 +36,6 @@
           <i class="bi bi-info-circle me-2"></i>
           <strong>Note:</strong> You can skip entire categories or proceed without answering all items. 
           Unanswered items will be marked as "Unanswered" in the final report.
-          <br><i class="bi bi-book me-2"></i>
-          <strong>Tip:</strong> Click "View Guidelines" to see all guidelines for the category, or click specific rule IDs (e.g., AND-023) to see individual guidelines.
         </div>
       </div>
     </div>
@@ -55,7 +53,6 @@
                 <small class="text-muted">{{ category.item_list|length }} items</small>
               </div>
               <div class="col-md-4 text-end">
-                {% if app_config.get('features', {}).get('skip_categories', False) %}
                 <div class="form-check form-switch d-flex align-items-center justify-content-end">
                   <input class="form-check-input me-2" type="checkbox" id="category_skip_{{ category.category_id }}" 
                          name="category_skip_{{ category.category_id }}" value="on"
@@ -66,13 +63,11 @@
                   <!-- Hidden input to ensure we always know the skip status -->
                   <input type="hidden" name="category_skip_{{ category.category_id }}_status" value="off" id="hidden_skip_{{ category.category_id }}">
                 </div>
-                {% endif %}
               </div>
             </div>
           </div>
           
           <!-- Category Skip Comment -->
-          {% if app_config.get('features', {}).get('skip_categories', True) %}
           <div id="skip_comment_{{ category.category_id }}" class="card-body border-top" 
                style="display: {% if saved_responses.get(category.category_id, {}).get('skipped') %}block{% else %}none{% endif %};">
             <div class="alert alert-warning border-0">
@@ -85,7 +80,6 @@
                         placeholder="Please explain why this category is not applicable...">{{ saved_responses.get(category.category_id, {}).get('skip_comment', '') }}</textarea>
             </div>
           </div>
-          {% endif %}
 
           <!-- Category Items -->
           <div class="card-body" id="category_items_{{ category.category_id }}">
@@ -125,15 +119,8 @@
                                 <i class="bi bi-info-circle me-1"></i>Show Details
                               </button>
                             {% endif %}
-                            {% if item.rule_reference or (item.item_details and ('Rule Reference' in item.item_details or 'AND-' in item.item_details)) %}
-                            <a href="{{ url_for('guidelines', category=item.guideline_category) }}" 
-                               target="_blank" 
-                               class="btn btn-sm btn-outline-primary">
-                              <i class="bi bi-book me-1"></i>View Guidelines
-                              {% if item.rule_reference %}
-                                <span class="ms-1 badge bg-success">{{ item.rule_reference }}</span>
-                              {% endif %}
-                            </a>
+                            {% if item.rule_reference %}
+                            <span class="badge bg-secondary">{{ item.rule_reference }}</span>
                             {% endif %}
                           </div>
                           {% if item.item_details %}
@@ -142,7 +129,7 @@
                             <div class="item-details-expanded d-none" id="details-expanded-{{ item_key }}">
                               <div class="alert alert-info border-0 mb-2">
                                 <h6 class="alert-heading fw-semibold">
-                                  <i class="bi bi-info-circle me-2"></i>Details & Guidelines
+                                  <i class="bi bi-info-circle me-2"></i>Details
                                 </h6>
                                 <div class="item-details">
                                   {{ item.item_details|safe }}
@@ -388,122 +375,53 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Handle radio button changes for progress tracking
+  // Handle radio button changes - robust OK/NG/NA toggling
   const rows = document.querySelectorAll('.review-item-row');
   rows.forEach(row => {
     const radioButtons = row.querySelectorAll('input[type="radio"]');
     radioButtons.forEach(radio => {
-      // Handle click-to-unselect functionality on labels
-      const label = document.querySelector(`label[for="${radio.id}"]`);
-      if (label) {
-        label.addEventListener('click', function(e) {
-          const name = radio.name;
-          const currentlyChecked = document.querySelector(`input[name="${name}"]:checked`);
-          
-          // If clicking on an already selected radio button's label, unselect it
-          if (currentlyChecked && currentlyChecked === radio) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Unselect by unchecking all radios in this group
-            document.querySelectorAll(`input[name="${name}"]`).forEach(r => r.checked = false);
-            
-            // Remove all status classes and close comment section
-            const itemKey = row.getAttribute('data-item-key');
-            row.classList.remove('table-success', 'table-danger', 'table-secondary', 'table-warning');
-            const commentRow = document.getElementById(`comment-row-${itemKey}`);
-            const commentTextarea = document.getElementById(`comment_${itemKey}`);
-            const commentButton = document.querySelector(`[onclick="toggleComment('${itemKey}')"]`);
-            
-            if (commentTextarea) {
-              commentTextarea.removeAttribute('required');
-              commentTextarea.setAttribute('placeholder', 'Add any additional notes or observations...');
-            }
-            
-            // Close comment section
-            if (commentRow && !commentRow.classList.contains('d-none')) {
-              commentRow.classList.add('d-none');
-              if (commentButton) {
-                commentButton.innerHTML = '<i class="bi bi-chat-text"></i>';
-              }
-            }
-            
-            // Update progress
-            updateProgress();
-          }
-        });
-      }
-      
       radio.addEventListener('change', function() {
+        const itemKey = row.getAttribute('data-item-key');
+        const commentRow = document.getElementById(`comment-row-${itemKey}`);
+        const commentTextarea = document.getElementById(`comment_${itemKey}`);
+        const commentButton = document.querySelector(`[onclick="toggleComment('${itemKey}')"]`);
+
         // Remove existing status classes
         row.classList.remove('table-success', 'table-danger', 'table-secondary', 'table-warning');
-        
-        // Add appropriate class based on selection
+
         if (this.value === 'OK') {
           row.classList.add('table-success');
-        } else if (this.value === 'NG') {
-          row.classList.add('table-danger');
-          // For NG selection, show comment section and make it required
-          const itemKey = row.getAttribute('data-item-key');
-          const commentRow = document.getElementById(`comment-row-${itemKey}`);
-          const commentTextarea = document.getElementById(`comment_${itemKey}`);
-          if (commentRow && commentTextarea) {
-            commentRow.classList.remove('d-none');
-            commentTextarea.setAttribute('required', 'required');
-            commentTextarea.setAttribute('placeholder', 'Comment required for NG selection - please explain what issues were found...');
-            // Update comment button
-            const commentButton = document.querySelector(`[onclick="toggleComment('${itemKey}')"]`);
-            if (commentButton) {
-              commentButton.innerHTML = '<i class="bi bi-chat-text-fill"></i>';
-            }
-          }
-        } else if (this.value === 'NA') {
-          row.classList.add('table-secondary');
-          // For NA selection, show comment section and make it required
-          const itemKey = row.getAttribute('data-item-key');
-          const commentRow = document.getElementById(`comment-row-${itemKey}`);
-          const commentTextarea = document.getElementById(`comment_${itemKey}`);
-          if (commentRow && commentTextarea) {
-            commentRow.classList.remove('d-none');
-            commentTextarea.setAttribute('required', 'required');
-            commentTextarea.setAttribute('placeholder', 'Comment required for N/A selection - please explain why this item is not applicable...');
-            // Update comment button
-            const commentButton = document.querySelector(`[onclick="toggleComment('${itemKey}')"]`);
-            if (commentButton) {
-              commentButton.innerHTML = '<i class="bi bi-chat-text-fill"></i>';
-            }
-          }
-        } else {
-          // For OK selection, remove required attribute from comment and close comment section
-          const itemKey = row.getAttribute('data-item-key');
-          const commentRow = document.getElementById(`comment-row-${itemKey}`);
-          const commentTextarea = document.getElementById(`comment_${itemKey}`);
-          const commentButton = document.querySelector(`[onclick="toggleComment('${itemKey}')"]`);
-          
+          // OK: hide comment section, remove required, clear placeholder
           if (commentTextarea) {
             commentTextarea.removeAttribute('required');
             commentTextarea.setAttribute('placeholder', 'Add any additional notes or observations...');
           }
-          
-          // Close comment section if it was auto-opened for NA
-          if (commentRow && !commentRow.classList.contains('d-none')) {
-            commentRow.classList.add('d-none');
-            if (commentButton) {
-              commentButton.innerHTML = '<i class="bi bi-chat-text"></i>';
-              if (commentButton.querySelector('.badge')) {
-                commentButton.querySelector('.badge').classList.remove('ms-1');
-              }
-            }
+          if (commentRow) commentRow.classList.add('d-none');
+          if (commentButton) commentButton.innerHTML = '<i class="bi bi-chat-text"></i>';
+        } else if (this.value === 'NG') {
+          row.classList.add('table-danger');
+          // NG: show comment section, make required
+          if (commentRow && commentTextarea) {
+            commentRow.classList.remove('d-none');
+            commentTextarea.setAttribute('required', 'required');
+            commentTextarea.setAttribute('placeholder', 'Comment required for NG - please explain what issues were found...');
           }
+          if (commentButton) commentButton.innerHTML = '<i class="bi bi-chat-text-fill"></i>';
+        } else if (this.value === 'NA') {
+          row.classList.add('table-secondary');
+          // NA: show comment section, make required
+          if (commentRow && commentTextarea) {
+            commentRow.classList.remove('d-none');
+            commentTextarea.setAttribute('required', 'required');
+            commentTextarea.setAttribute('placeholder', 'Comment required for N/A - please explain why not applicable...');
+          }
+          if (commentButton) commentButton.innerHTML = '<i class="bi bi-chat-text-fill"></i>';
         }
-        
-        // Update item status
-        
-        // Update progress in real-time
+
         updateProgress();
       });
-      
-      // Apply initial state
+
+      // Apply initial state on page load
       if (radio.checked) {
         radio.dispatchEvent(new Event('change'));
       }

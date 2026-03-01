@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="card shadow-sm border-0">
+      <div class="card-header py-3" style="background: var(--primary-gradient); color: #fff;">
+        <h5 class="mb-0">
+          <i class="bi bi-person-circle me-2"></i>Profiles
+        </h5>
+      </div>
+      <div class="card-body p-4">
+        <p class="text-muted mb-4">
+          Manage your profiles. Username (userId) is the unique identifier. Your default profile is pre-filled at login.
+        </p>
+
+        {% if not profiles %}
+        <div class="alert alert-info border-0">
+          <i class="bi bi-info-circle me-2"></i>
+          No profiles yet. Sign in to create your first profile.
+        </div>
+        <a href="{{ url_for('login', next=url_for('dashboard')) }}" class="btn btn-primary">
+          <i class="bi bi-box-arrow-in-right me-1"></i>Sign in
+        </a>
+        {% else %}
+        <div class="list-group list-group-flush">
+          {% for p in profiles %}
+          {% set profile_idx = loop.index0 %}
+          <div class="list-group-item px-0">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="flex-grow-1">
+                <h6 class="mb-1">
+                  {{ p.name }}
+                  <span class="text-muted fw-normal ms-2">({{ p.user_id or p.username }})</span>
+                  {% if (p.user_id or p.username) == last_used_id %}
+                  <span class="badge bg-success ms-2">Default</span>
+                  {% endif %}
+                </h6>
+                <small class="text-muted">
+                  Roles: 
+                  {% if p.preferred_roles %}
+                    {% for rid in p.preferred_roles %}{{ role_map.get(rid, rid) }}{% if not loop.last %}, {% endif %}{% endfor %}
+                  {% else %}
+                    —
+                  {% endif %}
+                  {% if p.last_used %}
+                  · Last used: {{ p.last_used[:10] }}
+                  {% endif %}
+                </small>
+              </div>
+              <div class="btn-group btn-group-sm ms-2">
+                {% if (p.user_id or p.username) != last_used_id %}
+                <form method="post" class="d-inline">
+                  <input type="hidden" name="action" value="set_default">
+                  <input type="hidden" name="user_id" value="{{ p.user_id or p.username }}">
+                  <button type="submit" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-star me-1"></i>Set default
+                  </button>
+                </form>
+                {% endif %}
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#edit-roles-{{ loop.index }}">
+                  <i class="bi bi-pencil me-1"></i>Edit roles
+                </button>
+                <form method="post" class="d-inline" onsubmit="return confirm('Delete this profile?');">
+                  <input type="hidden" name="action" value="delete">
+                  <input type="hidden" name="user_id" value="{{ p.user_id or p.username }}">
+                  <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+            <div class="collapse mt-3" id="edit-roles-{{ loop.index }}">
+              <form method="post" class="border rounded p-3 bg-light">
+                <input type="hidden" name="action" value="edit_roles">
+                <input type="hidden" name="user_id" value="{{ p.user_id or p.username }}">
+                <label class="form-label small fw-semibold">Select roles</label>
+                <div class="row g-2">
+                  {% for role in config.roles %}
+                  <div class="col-6 col-md-4">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="roles" value="{{ role.id }}" id="edit_role_{{ profile_idx }}_{{ role.id }}"
+                             {% if p.preferred_roles and role.id in p.preferred_roles %}checked{% endif %}>
+                      <label class="form-check-label small" for="edit_role_{{ profile_idx }}_{{ role.id }}">{{ role.name }}</label>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm mt-2">Save roles</button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="mt-4">
+          <a href="{{ url_for('start_review') }}" class="btn btn-primary">
+            <i class="bi bi-play-circle me-1"></i>Start Review
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

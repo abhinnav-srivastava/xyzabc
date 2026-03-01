@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow border-0 mt-5">
+        <div class="card-body p-4">
+          <div class="text-center mb-4">
+            <i class="bi bi-person-badge text-primary" style="font-size: 2.5rem;"></i>
+            <h4 class="mt-2 fw-bold">Sign in</h4>
+            <p class="text-muted small mb-0">Enter your details to continue</p>
+          </div>
+          <form action="{{ url_for('login') }}" method="post" class="needs-validation" novalidate id="loginForm">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="name" class="form-label fw-semibold">Name</label>
+                <input type="text" class="form-control" id="name" name="name" 
+                       required placeholder="Your name" autocomplete="name"
+                       list="name-suggestions" value="{{ last_profile.name if last_profile else '' }}">
+                <datalist id="name-suggestions">
+                  {% for p in profiles %}
+                  <option value="{{ p.name }}">
+                  {% endfor %}
+                </datalist>
+                <div class="invalid-feedback">Please enter your name.</div>
+              </div>
+              <div class="col-md-6">
+                <label for="username" class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="username" name="username" 
+                       required placeholder="Unique user ID" autocomplete="username"
+                       list="username-suggestions" value="{{ (last_profile.user_id or last_profile.username) if last_profile else '' }}">
+                <datalist id="username-suggestions">
+                  {% for p in profiles %}
+                  <option value="{{ p.user_id or p.username or p.name }}">
+                  {% endfor %}
+                </datalist>
+                <div class="invalid-feedback">Username is required.</div>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <button type="submit" class="btn btn-primary w-100 py-2">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Sign in
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+  var form = document.getElementById('loginForm');
+  if (form) {
+    var usernameInput = form.querySelector('#username');
+    var nameInput = form.querySelector('#name');
+    var profiles = {{ (profiles or [])|tojson|safe }};
+    usernameInput.addEventListener('blur', function() {
+      var val = usernameInput.value.trim();
+      if (!val) return;
+      var match = profiles.find(function(p) { return (p.user_id || p.username || p.name) === val; });
+      if (match && !nameInput.value.trim()) {
+        nameInput.value = match.name || '';
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}

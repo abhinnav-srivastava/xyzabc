@@ -25,11 +25,11 @@
       </a>
       {% endif %}
       {% if in_review_flow|default(false) %}
-      <a href="{{ url_for('review_all_categories') if session.get('single_page_mode') else url_for('review_category', idx=0) }}" class="btn btn-success">
+      <a href="{{ url_for('review_all_categories') }}" class="btn btn-success">
         <i class="bi bi-list-check me-1"></i>Continue to checklist review
       </a>
       {% else %}
-      <a href="{{ url_for('start_review_page') }}" class="btn btn-outline-primary">
+      <a href="{{ url_for('start_review') }}" class="btn btn-outline-primary">
         <i class="bi bi-list-check me-1"></i>Start checklist review
       </a>
       {% endif %}
@@ -50,7 +50,7 @@
   <div class="card border-0 shadow-sm mb-4">
     <div class="card-body text-center py-4">
       <p class="text-muted mb-3">No patch uploaded. You skipped the patch step.</p>
-      <a href="{{ url_for('review_all_categories') if session.get('single_page_mode') else url_for('review_category', idx=0) }}" class="btn btn-primary btn-lg">
+      <a href="{{ url_for('review_all_categories') }}" class="btn btn-primary btn-lg">
         <i class="bi bi-list-check me-2"></i>Continue to checklist review
       </a>
     </div>
