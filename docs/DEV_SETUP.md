@@ -3,7 +3,8 @@
 Quick setup for a new development machine.
 
 > **Restore app name:** Pass `-Name "YourApp"` to setup: `.\scripts\setup-dev.ps1 -Name "YourApp"` or `./scripts/setup-dev.sh --name "YourApp"`  
-> **Electron build:** Add `-Build` (PowerShell) or `--build` (bash) to run `npm run build:win` after setup.
+> **Electron build:** Add `-Build` (PowerShell) or `--build` (bash) to run `npm run build:win` after setup.  
+> **Venv:** Add `-Venv` (PowerShell) or `--venv` (bash) to create `.venv` and install deps there.
 
 ## Option 1: Docker (web only)
 
@@ -23,6 +24,7 @@ Open http://localhost:5000
 ./scripts/setup-dev.sh
 # With proxy: ./scripts/setup-dev.sh --proxy http://proxy:8080
 # With build: ./scripts/setup-dev.sh --build
+# With venv:  ./scripts/setup-dev.sh --venv
 ```
 
 ### Windows (PowerShell)
@@ -31,6 +33,7 @@ Open http://localhost:5000
 .\scripts\setup-dev.ps1
 # With proxy: .\scripts\setup-dev.ps1 -Proxy "http://proxy:8080"
 # With build: .\scripts\setup-dev.ps1 -Build
+# With venv:  .\scripts\setup-dev.ps1 -Venv
 ```
 
 ### Prerequisites
@@ -39,6 +42,8 @@ Open http://localhost:5000
 - **Node.js 18+** (optional, for Electron) — [nodejs.org](https://nodejs.org/)
 
 ### After setup
+
+If you used `--venv` / `-Venv`, activate it first: `source .venv/bin/activate` (bash) or `.\.venv\Scripts\Activate.ps1` (PowerShell).
 
 | Command | Description |
 |---------|-------------|

@@ -1,17 +1,19 @@
 # CodeReview - Development environment setup (Windows PowerShell)
 # Run from project root: .\scripts\setup-dev.ps1
-# Optional: .\scripts\setup-dev.ps1 -Proxy "http://proxy:8080" -Name "YourApp" -Build
-# Note: Use -Build (PowerShell style), not --build
+# Optional: .\scripts\setup-dev.ps1 -Proxy "http://proxy:8080" -Name "YourApp" -Build -Venv
+# Note: Use -Build, -Venv (PowerShell style), not --build, --venv
 # Env: $env:PIP_PROXY, $env:APP_NAME
 
 param(
     [string]$Proxy = $env:PIP_PROXY,
     [string]$Name = $env:APP_NAME,
-    [switch]$Build
+    [switch]$Build,
+    [switch]$Venv
 )
 
-# Fix: --build wrongly captured as Proxy (env or typo)
+# Fix: --build/--venv wrongly captured as Proxy (env or typo)
 if ($Proxy -in '--build','-build','build') { $Proxy = $null; $Build = $true }
+if ($Proxy -in '--venv','-venv','venv') { $Proxy = $null; $Venv = $true }
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
@@ -22,6 +24,7 @@ Write-Host "Project root: $ProjectRoot"
 if ($Proxy) { Write-Host "Pip proxy: $Proxy" }
 if ($Name) { Write-Host "Restore app name to: $Name" }
 if ($Build) { Write-Host "Run Electron build (build:win) after setup" }
+if ($Venv) { Write-Host "Create venv (.venv) for dependencies" }
 Write-Host ""
 
 # Restore app name (if -Name passed)
@@ -59,13 +62,30 @@ if (-not $pythonCmd) {
 }
 
 Invoke-Expression "$pythonCmd --version"
+
+# Create venv if -Venv passed
+if ($Venv) {
+    $venvPath = Join-Path $ProjectRoot ".venv"
+    if (-not (Test-Path $venvPath)) {
+        Write-Host "Creating venv at .venv..."
+        Invoke-Expression "$pythonCmd -m venv `"$venvPath`""
+        Write-Host "  Created" -ForegroundColor Green
+    } else {
+        Write-Host "Venv .venv exists"
+    }
+    $pythonCmd = Join-Path $venvPath "Scripts\python.exe"
+}
+
 Write-Host "Installing Python dependencies..."
 $pipArgs = "-q"
-if (-not $env:VIRTUAL_ENV) { $pipArgs = "--user -q" }
+if (-not $Venv -and -not $env:VIRTUAL_ENV) { $pipArgs = "--user -q" }
 if ($Proxy) { $pipArgs = "$pipArgs --proxy $Proxy" }
-Invoke-Expression "$pythonCmd -m pip install --upgrade pip $pipArgs"
-Invoke-Expression "$pythonCmd -m pip install -r requirements.txt $pipArgs"
+Invoke-Expression "& `"$pythonCmd`" -m pip install --upgrade pip $pipArgs"
+Invoke-Expression "& `"$pythonCmd`" -m pip install -r requirements.txt $pipArgs"
 Write-Host "  OK" -ForegroundColor Green
+if ($Venv) {
+    Write-Host "Activate venv: .\.venv\Scripts\Activate.ps1" -ForegroundColor Cyan
+}
 Write-Host ""
 
 # Node (for Electron)
