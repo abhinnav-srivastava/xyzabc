@@ -1,7 +1,7 @@
 {
   "name": "CodeReview - Code Review Tool",
   "short_name": "CodeReview",
-  "description": "Professional code review tool with role-based, category-driven checklists for comprehensive quality assurance",
+  "description": "code review tool with role-based, category-driven checklists for comprehensive quality assurance",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

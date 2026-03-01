@@ -2,7 +2,7 @@
   "application": {
     "name": "CodeReview",
     "version": "1.0.0",
-    "description": "Professional code review tool with role-based, category-driven checklists"
+    "description": "code review tool with role-based, category-driven checklists"
   },
   "roles": {
     "self": {
