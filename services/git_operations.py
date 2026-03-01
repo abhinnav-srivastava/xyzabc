@@ -94,6 +94,7 @@ def get_credential_helper_info(repo_path: Optional[Path] = None) -> Dict[str, An
     """
     Detect which credential helper Git is configured to use.
     Returns info useful for debugging; credentials are never exposed.
+    Checks local (if in repo), then global, then system.
     """
     path = repo_path or get_project_root()
     info: Dict[str, Any] = {
@@ -105,18 +106,19 @@ def get_credential_helper_info(repo_path: Optional[Path] = None) -> Dict[str, An
 
     # Check if it's a git repo
     ok, out, _ = _run_git(path, ["rev-parse", "--is-inside-work-tree"])
-    if not ok or "true" not in out.strip().lower():
-        return info
-    info["is_repo"] = True
+    if ok and "true" in out.strip().lower():
+        info["is_repo"] = True
+        # Local credential helper (repo-specific)
+        ok, out, _ = _run_git(path, ["config", "--local", "credential.helper"])
+        if ok and out.strip():
+            info["credential_helper"] = out.strip()
+            info["credential_helper_scope"] = "local"
+            ok, out, _ = _run_git(path, ["config", "--get", "remote.origin.url"])
+            if ok and out.strip():
+                info["remote_url"] = out.strip()
+            return info
 
-    # Local credential helper
-    ok, out, _ = _run_git(path, ["config", "--local", "credential.helper"])
-    if ok and out.strip():
-        info["credential_helper"] = out.strip()
-        info["credential_helper_scope"] = "local"
-        return info
-
-    # Global credential helper
+    # Global credential helper (works from any directory)
     ok, out, _ = _run_git(path, ["config", "--global", "credential.helper"])
     if ok and out.strip():
         info["credential_helper"] = out.strip()
@@ -129,10 +131,11 @@ def get_credential_helper_info(repo_path: Optional[Path] = None) -> Dict[str, An
         info["credential_helper"] = out.strip()
         info["credential_helper_scope"] = "system"
 
-    # Remote URL (for context)
-    ok, out, _ = _run_git(path, ["config", "--get", "remote.origin.url"])
-    if ok and out.strip():
-        info["remote_url"] = out.strip()
+    # Remote URL (if in repo)
+    if info["is_repo"]:
+        ok, out, _ = _run_git(path, ["config", "--get", "remote.origin.url"])
+        if ok and out.strip():
+            info["remote_url"] = out.strip()
 
     return info
 
@@ -217,6 +220,129 @@ def git_push(
         logger.warning("Git push failed: %s - %s", path, stderr)
 
     return result
+
+
+def get_commits(
+    repo_path: Path,
+    limit: int = 30,
+    branch: Optional[str] = None,
+    timeout: int = 15,
+) -> list:
+    """
+    Get recent commits from a local git repo.
+    Returns list of {"hash": str, "subject": str} (short hash + first line of message).
+    If branch is given, shows commits from that branch; otherwise from HEAD.
+    """
+    path = Path(repo_path)
+    if not path.exists() or not path.is_dir():
+        return []
+    ok, _, _ = _run_git(path, ["rev-parse", "--is-inside-work-tree"], timeout=5)
+    if not ok:
+        return []
+    args = ["log", f"-{limit}", "--format=%h|%s"]
+    if branch and branch.strip():
+        args.append(branch.strip())
+    ok, out, _ = _run_git(
+        path,
+        args,
+        timeout=timeout,
+    )
+    if not ok or not out.strip():
+        return []
+    commits = []
+    for line in out.strip().split("\n"):
+        if "|" in line:
+            h, s = line.split("|", 1)
+            commits.append({"hash": h.strip(), "subject": s.strip()})
+    return commits
+
+
+def get_commit_patch(
+    repo_path: Path,
+    commit_hash: str,
+    timeout: int = 30,
+) -> Optional[str]:
+    """
+    Get the patch/diff for a commit. Returns unified diff string or None.
+    """
+    path = Path(repo_path)
+    h = (commit_hash or "").strip()
+    if not path.exists() or not path.is_dir() or not h:
+        return None
+    ok, _, _ = _run_git(path, ["rev-parse", "--is-inside-work-tree"], timeout=5)
+    if not ok:
+        return None
+    ok, out, _ = _run_git(
+        path,
+        ["show", h, "--no-color", "-p"],
+        timeout=timeout,
+    )
+    return out if ok and out.strip() else None
+
+
+def get_diff_between_branches(
+    repo_path: Path,
+    target_branch: str,
+    source_branch: str,
+    timeout: int = 60,
+) -> Optional[str]:
+    """
+    Get diff between branches (GitLab MR style).
+    Uses target...source (merge base) so the diff shows what would be merged.
+    Returns unified diff string or None.
+    """
+    path = Path(repo_path)
+    target = (target_branch or "").strip()
+    source = (source_branch or "").strip()
+    if not path.exists() or not path.is_dir() or not target or not source:
+        return None
+    ok, _, _ = _run_git(path, ["rev-parse", "--is-inside-work-tree"], timeout=5)
+    if not ok:
+        return None
+    # target...source = merge base diff (like GitLab MR)
+    ok, out, _ = _run_git(
+        path,
+        ["diff", "--no-color", target + "..." + source],
+        timeout=timeout,
+    )
+    return out if ok else None
+
+
+def get_branches(
+    repo_path: Path,
+    include_remote: bool = True,
+    timeout: int = 15,
+) -> list:
+    """
+    Get branches from a local git repo.
+    Returns list of branch names (strings). Local first, then remote if include_remote.
+    """
+    path = Path(repo_path)
+    if not path.exists() or not path.is_dir():
+        return []
+    ok, _, _ = _run_git(path, ["rev-parse", "--is-inside-work-tree"], timeout=5)
+    if not ok:
+        return []
+    branches = []
+    args = ["branch", "-a"] if include_remote else ["branch"]
+    ok, out, _ = _run_git(path, args, timeout=timeout)
+    if not ok or not out.strip():
+        return []
+    for line in out.strip().split("\n"):
+        line = line.strip().lstrip("*").strip()
+        if not line or "HEAD" in line:
+            continue
+        if line.startswith("remotes/"):
+            # remotes/origin/feature-x -> origin/feature-x (needed for git log)
+            parts = line.split("/", 2)
+            if len(parts) >= 3 and parts[2] != "HEAD":
+                name = parts[1] + "/" + parts[2]
+                if name not in branches:
+                    branches.append(name)
+        else:
+            if line not in branches:
+                branches.append(line)
+    return branches
 
 
 def git_fetch(

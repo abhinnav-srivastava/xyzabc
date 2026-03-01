@@ -18,7 +18,7 @@
       <div class="card-body">
         <div class="alert alert-info border-0">
           <i class="bi bi-info-circle me-2"></i>
-          <strong>Note:</strong> You can skip entire categories or proceed without answering all items. 
+          <strong>Note:</strong> Use <strong>Mark all OK</strong> to approve an entire category at once, or <strong>Skip Category</strong> if not applicable. 
           Unanswered items will be marked as "Unanswered" in the final report.
         </div>
       </div>
@@ -37,15 +37,21 @@
                 <small class="text-muted">{{ category.item_list|length }} items</small>
               </div>
               <div class="col-md-4 text-end">
-                <div class="form-check form-switch d-flex align-items-center justify-content-end">
-                  <input class="form-check-input me-2" type="checkbox" id="category_skip_{{ category.category_id }}" 
-                         name="category_skip_{{ category.category_id }}" value="on"
-                         {% if saved_responses.get(category.category_id, {}).get('skipped') %}checked{% endif %}>
-                  <label class="form-check-label fw-semibold mb-0" for="category_skip_{{ category.category_id }}">
-                    <i class="bi bi-skip-forward me-1"></i>Skip Category
-                  </label>
-                  <!-- Hidden input to ensure we always know the skip status -->
-                  <input type="hidden" name="category_skip_{{ category.category_id }}_status" value="off" id="hidden_skip_{{ category.category_id }}">
+                <div class="d-flex align-items-center justify-content-end gap-2">
+                  <button type="button" class="btn btn-outline-success btn-sm mark-all-ok-btn" 
+                          data-category-id="{{ category.category_id }}" title="Mark all items in this category as OK">
+                    <i class="bi bi-check-all me-1"></i>Mark all OK
+                  </button>
+                  <div class="form-check form-switch d-flex align-items-center">
+                    <input class="form-check-input me-2" type="checkbox" id="category_skip_{{ category.category_id }}" 
+                           name="category_skip_{{ category.category_id }}" value="on"
+                           {% if saved_responses.get(category.category_id, {}).get('skipped') %}checked{% endif %}>
+                    <label class="form-check-label fw-semibold mb-0" for="category_skip_{{ category.category_id }}">
+                      <i class="bi bi-skip-forward me-1"></i>Skip Category
+                    </label>
+                    <!-- Hidden input to ensure we always know the skip status -->
+                    <input type="hidden" name="category_skip_{{ category.category_id }}_status" value="off" id="hidden_skip_{{ category.category_id }}">
+                  </div>
                 </div>
               </div>
             </div>
@@ -330,6 +336,25 @@ document.addEventListener('DOMContentLoaded', function() {
   } else {
     console.error('Form with id="reviewForm" not found!');
   }
+  // Mark all OK per category
+  document.querySelectorAll('.mark-all-ok-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const categoryId = this.getAttribute('data-category-id');
+      const itemsDiv = document.getElementById(`category_items_${categoryId}`);
+      if (!itemsDiv) return;
+      const rows = itemsDiv.querySelectorAll('.review-item-row');
+      rows.forEach(row => {
+        const itemKey = row.getAttribute('data-item-key');
+        if (!itemKey) return;
+        const okRadio = document.getElementById(`status_ok_${itemKey}`) || row.querySelector('input[name="status_${itemKey}"][value="OK"]');
+        if (okRadio && !okRadio.checked) {
+          okRadio.checked = true;
+          okRadio.dispatchEvent(new Event('change'));
+        }
+      });
+    });
+  });
+
   // Category skip functionality
   document.querySelectorAll('input[id^="category_skip_"]').forEach(checkbox => {
     checkbox.addEventListener('change', function() {

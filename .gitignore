@@ -149,6 +149,7 @@ ehthumbs.db
 Thumbs.db
 
 # Project specific
+data/access_tokens.json
 *.xlsx
 *.xls
 !sample_checklist.xlsx

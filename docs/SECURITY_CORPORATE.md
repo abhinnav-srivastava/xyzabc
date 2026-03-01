@@ -23,6 +23,10 @@ For dev, set in `config/app_config.json` → `data_egress` (defaults false):
 
 Env overrides (dev only): `NO_EXTERNAL_DOWNLOADS=1`, `BLOCK_GIT_REMOTE=1`.
 
+## Data Operations: Git Only, No APIs
+
+Data upload and download use **git only** (clone, pull, push, fetch). No GitLab, GitHub, or other REST APIs are used for data transfer. Projects support both remote git URLs (https://, git@, ssh://) and local paths. Access tokens stored in the profile are used for git authentication via the credential flow, not for API calls.
+
 ## 1. Secrets
 
 - **Never use default secrets in production.**

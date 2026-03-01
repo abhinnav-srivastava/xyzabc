@@ -34,10 +34,14 @@
         </h4>
       </div>
       <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
           <p class="lead mb-0">Review all items in this category:</p>
-          {% if app_config.get('features', {}).get('skip_categories', False) %}
-          <div class="form-check form-switch">
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-outline-success btn-sm" id="mark-all-ok-btn" title="Mark all items in this category as OK">
+              <i class="bi bi-check-all me-1"></i>Mark all OK
+            </button>
+            {% if app_config.get('features', {}).get('skip_categories', False) %}
+            <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" id="category_skip_{{ category.category_id }}" 
                    name="category_skip_{{ category.category_id }}" value="on"
                    {% if saved_responses.get(category.category_id, {}).get('skipped') %}checked{% endif %}>
@@ -48,6 +52,7 @@
             <input type="hidden" name="category_skip_{{ category.category_id }}_status" value="off">
           </div>
           {% endif %}
+          </div>
         </div>
         
         <!-- Category Skip Comment -->
@@ -500,6 +505,26 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize progress on page load
   updateProgress();
   
+  // Mark all OK
+  const markAllOkBtn = document.getElementById('mark-all-ok-btn');
+  if (markAllOkBtn) {
+    markAllOkBtn.addEventListener('click', function() {
+      const itemsDiv = document.getElementById('category_items_{{ category.category_id }}');
+      if (!itemsDiv) return;
+      const rows = itemsDiv.querySelectorAll('.review-item-row');
+      rows.forEach(row => {
+        const itemKey = row.getAttribute('data-item-key');
+        if (!itemKey) return;
+        const okRadio = document.getElementById('status_ok_' + itemKey) || row.querySelector('input[value="OK"]');
+        if (okRadio && !okRadio.checked) {
+          okRadio.checked = true;
+          okRadio.dispatchEvent(new Event('change'));
+        }
+      });
+      updateProgress();
+    });
+  }
+
   // Handle category skip toggle
   const skipCheckbox = document.getElementById('category_skip_{{ category.category_id }}');
   if (skipCheckbox) {

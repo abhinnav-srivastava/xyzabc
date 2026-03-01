@@ -9,3 +9,10 @@
 {"event": "login", "user_id": "Abhj", "user_name": "Abhi", "roles": ["architect"], "ip": "127.0.0.1", "timestamp": "2026-03-01T11:11:39.813979Z"}
 {"event": "logout", "user_id": "Abhj", "user_name": "Abhi", "roles": null, "ip": "127.0.0.1", "timestamp": "2026-03-01T11:15:02.436264Z"}
 {"event": "login", "user_id": "Abhj", "user_name": "Abhi", "roles": ["architect", "fo", "self"], "ip": "127.0.0.1", "timestamp": "2026-03-01T11:16:04.553159Z"}
+{"event": "logout", "user_id": "Abhj", "user_name": "Abhi", "roles": null, "ip": "127.0.0.1", "timestamp": "2026-03-01T11:18:21.068998Z"}
+{"event": "login", "user_id": "Abhj", "user_name": "Abhi", "roles": ["architect", "fo", "self"], "ip": "127.0.0.1", "timestamp": "2026-03-01T11:18:24.938940Z"}
+{"event": "logout", "user_id": "Abhj", "user_name": "Abhi", "roles": null, "ip": "127.0.0.1", "timestamp": "2026-03-01T11:37:32.895729Z"}
+{"event": "login", "user_id": "Abhj", "user_name": "Abhi", "roles": ["architect", "fo", "self"], "ip": "127.0.0.1", "timestamp": "2026-03-01T11:37:36.276281Z"}
+{"event": "patch_upload", "user_id": "Abhj", "user_name": "Abhi", "roles": null, "ip": "127.0.0.1", "timestamp": "2026-03-01T11:49:15.886910Z", "details": {"files_count": 4}}
+{"event": "patch_upload", "user_id": "Abhj", "user_name": "Abhi", "roles": null, "ip": "127.0.0.1", "timestamp": "2026-03-01T11:50:00.747089Z", "details": {"files_count": 4}}
+{"event": "patch_upload", "user_id": "Abhj", "user_name": "Abhi", "roles": null, "ip": "127.0.0.1", "timestamp": "2026-03-01T11:51:34.105618Z", "details": {"files_count": 4}}

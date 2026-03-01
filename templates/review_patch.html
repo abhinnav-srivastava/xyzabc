@@ -2,92 +2,133 @@
 
 {% block content %}
 <div class="container">
-  <div class="row justify-content-center">
-    <div class="col-lg-9">
-      <!-- Step indicator -->
-      <nav aria-label="Review steps" class="mb-3">
-        <ol class="breadcrumb mb-0">
-          <li class="breadcrumb-item text-muted">Start</li>
-          <li class="breadcrumb-item active" aria-current="page">Patch</li>
-          <li class="breadcrumb-item text-muted">Patch analysis &amp; summary</li>
-          <li class="breadcrumb-item text-muted">Checklist review</li>
-        </ol>
-      </nav>
+  <!-- Step indicator -->
+  <nav aria-label="Review steps" class="mb-2">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item text-muted">Start</li>
+      <li class="breadcrumb-item active" aria-current="page">Patch</li>
+      <li class="breadcrumb-item text-muted">Patch analysis &amp; summary</li>
+      <li class="breadcrumb-item text-muted">Checklist review</li>
+    </ol>
+  </nav>
 
-      <div class="card shadow border-0">
-        <div class="card-header py-3 d-flex align-items-center justify-content-between" style="background: var(--primary-gradient); color: #fff;">
-          <h5 class="mb-0">
-            <i class="bi bi-file-earmark-diff me-2"></i>Step 2: Patch
-          </h5>
-        </div>
-        <div class="card-body p-4">
-          <p class="text-muted mb-4">
-            Upload a git patch file (e.g. from GitLab MR). Drag and drop or click to browse. No Git installation required — parsing is in-app (Android-focused). You can also skip and go straight to the checklist.
-          </p>
-
-          <form action="{{ url_for('review_patch') }}" method="post" enctype="multipart/form-data" id="patch-form">
-            <!-- MR/GitLab Details (Optional) -->
-            <div class="card border-0 bg-info bg-opacity-10 mb-4">
-              <div class="card-body">
-                <h6 class="card-title fw-semibold">
-                  <i class="bi bi-git me-2"></i>MR/GitLab Details (Optional)
+  <div class="card shadow border-0">
+    <div class="card-header py-2 d-flex align-items-center" style="background: var(--primary-gradient); color: #fff;">
+      <h5 class="mb-0">
+        <i class="bi bi-file-earmark-diff me-2"></i>Step 2: Patch
+      </h5>
+    </div>
+    <div class="card-body p-3">
+      <form action="{{ url_for('review_patch') }}" method="post" enctype="multipart/form-data" id="patch-form">
+        <input type="hidden" name="patch_content" id="patch_content" value="">
+        <div class="row g-3 align-items-stretch">
+          <!-- Left: Project + MR/Commit (Project first, then MR details) - wider -->
+          <div class="col-md-6 col-lg-5">
+            <div class="card border-0 bg-info bg-opacity-10 h-100">
+              <div class="card-body p-3">
+                <h6 class="card-title fw-semibold mb-2">
+                  <i class="bi bi-folder2-open me-2"></i>Project
                 </h6>
-                <p class="text-muted small mb-3">Add merge request details to include in your review report</p>
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="mr_link" class="form-label">Merge Request Link</label>
-                    <input type="url" class="form-control" id="mr_link" name="mr_link" 
+                <div class="mb-3">
+                  <label for="project_id" class="form-label small">Select project</label>
+                  <select class="form-select form-select-sm" id="project_id" name="project_id" aria-describedby="project_id_help">
+                    <option value="">— None —</option>
+                    {% for proj in projects %}
+                    <option value="{{ proj.id }}" data-type="{{ proj.type }}"
+                            {% if mr_details.project_id == proj.id %}selected{% endif %}>
+                      {{ proj.name or proj.url_or_path }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                  <div id="project_id_help" class="form-text small">
+                    {% if projects %}From your <a href="{{ url_for('profile_page') }}#section-projects">Profile → Projects</a>{% else %}Add projects in <a href="{{ url_for('profile_page') }}#section-projects">Profile → Projects</a>{% endif %}
+                  </div>
+                </div>
+                <h6 class="card-title fw-semibold mb-2 mt-3">
+                  <i class="bi bi-git me-2"></i>Patch source
+                </h6>
+                <p class="text-muted small mb-2">Choose MR (branch diff) or a single commit — not both</p>
+                <div class="mb-2">
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="patch_mode" id="patch_mode_mr" value="mr"
+                           {% if mr_details.patch_mode == 'mr' %}checked{% endif %}>
+                    <label class="form-check-label" for="patch_mode_mr">Merge Request</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="patch_mode" id="patch_mode_commit" value="commit"
+                           {% if mr_details.patch_mode != 'mr' %}checked{% endif %}>
+                    <label class="form-check-label" for="patch_mode_commit">Commit</label>
+                  </div>
+                </div>
+                <!-- MR mode: source + target branches -->
+                <div id="mr-fields" class="mb-2" style="display: none;">
+                  <div class="mb-2">
+                    <label for="target_branch" class="form-label small">Target branch <span class="text-muted">(into)</span></label>
+                    <select class="form-select form-select-sm" id="target_branch" name="target_branch">
+                      <option value="">— None —</option>
+                    </select>
+                  </div>
+                  <div class="mb-2">
+                    <label for="source_branch" class="form-label small">Source branch <span class="text-muted">(from)</span></label>
+                    <select class="form-select form-select-sm" id="source_branch" name="source_branch">
+                      <option value="">— None —</option>
+                    </select>
+                  </div>
+                  <div class="mb-2">
+                    <label for="mr_link" class="form-label small">MR Link <span class="text-muted">(optional)</span></label>
+                    <input type="url" class="form-control form-control-sm" id="mr_link" name="mr_link" 
                            placeholder="https://gitlab.com/.../merge_requests/123"
                            value="{{ mr_details.mr_link or '' }}">
                   </div>
-                  <div class="col-md-6 mb-3">
-                    <label for="branch_name" class="form-label">Branch Name</label>
-                    <input type="text" class="form-control" id="branch_name" name="branch_name" 
-                           placeholder="feature/new-feature"
-                           value="{{ mr_details.branch_name or '' }}">
+                </div>
+                <!-- Commit mode: branch + commit -->
+                <div id="commit-fields" class="mb-0" style="display: none;">
+                  <div class="mb-2">
+                    <label for="branch_name" class="form-label small">Branch</label>
+                    <select class="form-select form-select-sm" id="branch_name" name="branch_name" aria-describedby="branch_help">
+                      <option value="">— None —</option>
+                    </select>
+                    <div id="branch_help" class="form-text small">Select a project first (local projects only)</div>
                   </div>
-                  <div class="col-md-6 mb-3">
-                    <label for="project_name" class="form-label">Project Name</label>
-                    <input type="text" class="form-control" id="project_name" name="project_name" 
-                           placeholder="My Awesome Project"
-                           value="{{ mr_details.project_name or '' }}">
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label for="commit_hash" class="form-label">Commit Hash</label>
-                    <input type="text" class="form-control" id="commit_hash" name="commit_hash" 
-                           placeholder="abc123def"
-                           value="{{ mr_details.commit_hash or '' }}">
+                  <div class="mb-0">
+                    <label for="commit_hash" class="form-label small">Commit</label>
+                    <select class="form-select form-select-sm" id="commit_hash" name="commit_hash" aria-describedby="commit_help">
+                      <option value="">— None —</option>
+                    </select>
+                    <div id="commit_help" class="form-text small">Select branch to fetch commits</div>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="mb-4">
-              <label class="form-label fw-semibold">
-                <i class="bi bi-file-earmark-arrow-up me-1"></i>Upload .patch file
-              </label>
-              <div id="patch-drop-zone" class="patch-drop-zone border border-2 border-dashed rounded-3 p-4 text-center position-relative">
-                <input type="file" class="form-control position-absolute top-0 start-0 w-100 h-100 opacity-0" name="patch_file" id="patch_file" accept=".patch,.diff,.txt,text/plain">
-                <div id="patch-drop-text">
-                  <i class="bi bi-cloud-arrow-up display-4 text-muted"></i>
-                  <p class="mb-0 mt-2 fw-semibold">Drag and drop a .patch file here</p>
-                  <p class="mb-0 small text-muted">or click to browse</p>
-                </div>
-                <div id="patch-file-name" class="mt-2 text-success small fw-semibold" style="display: none;"></div>
+          </div>
+          <!-- Right: Upload + Actions - narrower -->
+          <div class="col-md-6 col-lg-7">
+            <p class="text-muted small mb-2">
+              Upload a git patch (e.g. from GitLab MR). Drag &amp; drop or click. No Git required. Or skip to checklist.
+            </p>
+            <label class="form-label fw-semibold small">
+              <i class="bi bi-file-earmark-arrow-up me-1"></i>Upload .patch file
+            </label>
+            <div id="patch-drop-zone" class="patch-drop-zone border border-2 border-dashed rounded-3 p-3 text-center position-relative mb-2" style="min-height: 100px;">
+              <input type="file" class="form-control position-absolute top-0 start-0 w-100 h-100 opacity-0" name="patch_file" id="patch_file" accept=".patch,.diff,.txt,text/plain">
+              <div id="patch-drop-text">
+                <i class="bi bi-cloud-arrow-up fs-1 text-muted"></i>
+                <p class="mb-0 mt-1 fw-semibold small">Drag and drop or click to browse</p>
+                <p class="mb-0 small text-muted">.patch, .diff, or unified diff</p>
               </div>
-              <div class="form-text mt-1">Accepted: .patch, .diff, or any text file containing unified diff</div>
+              <div id="patch-file-name" class="mt-1 text-success small fw-semibold" style="display: none;"></div>
             </div>
-
             <div class="d-flex flex-wrap gap-2 align-items-center">
-              <button type="submit" class="btn btn-primary" name="submit_parse" id="patch-submit-btn" disabled>
+              <button type="submit" class="btn btn-primary btn-sm" name="submit_parse" id="patch-submit-btn" disabled>
                 <i class="bi bi-upload me-1"></i>Parse &amp; view summary
               </button>
-              <button type="submit" class="btn btn-outline-secondary" name="skip_patch" value="1">
+              <button type="submit" class="btn btn-outline-secondary btn-sm" name="skip_patch" value="1">
                 <i class="bi bi-skip-forward me-1"></i>Skip and go to checklist
               </button>
             </div>
-          </form>
+          </div>
         </div>
-      </div>
+      </form>
     </div>
   </div>
 </div>
@@ -103,11 +144,27 @@
 
   function setFile(files) {
     if (files && files.length) {
+      document.getElementById('patch_content').value = '';
       input.files = files;
       fileNameEl.textContent = files[0].name;
       fileNameEl.style.display = 'block';
       submitBtn.disabled = false;
       input.removeAttribute('required');
+    }
+  }
+
+  function setPatchFromCommit(patch, hash, subject) {
+    document.getElementById('patch_content').value = patch || '';
+    input.value = '';
+    input.files = null;
+    if (patch) {
+      fileNameEl.textContent = (subject ? hash + ' — ' + subject : hash);
+      fileNameEl.style.display = 'block';
+      submitBtn.disabled = false;
+      input.removeAttribute('required');
+    } else {
+      fileNameEl.style.display = 'none';
+      if (!input.files || !input.files.length) submitBtn.disabled = true;
     }
   }
 
@@ -140,6 +197,224 @@
       submitBtn.disabled = false;
     }
   });
+
+  var projectSelect = document.getElementById('project_id');
+  var branchSelect = document.getElementById('branch_name');
+  var commitSelect = document.getElementById('commit_hash');
+  var sourceBranchSelect = document.getElementById('source_branch');
+  var targetBranchSelect = document.getElementById('target_branch');
+  var mrFields = document.getElementById('mr-fields');
+  var commitFields = document.getElementById('commit-fields');
+  var savedSource = '{{ mr_details.source_branch or '' }}';
+  var savedTarget = '{{ mr_details.target_branch or '' }}';
+  var savedBranch = '{{ mr_details.branch_name or '' }}';
+  var savedCommit = '{{ mr_details.commit_hash or '' }}';
+
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function toggleMode() {
+    var isMr = document.getElementById('patch_mode_mr').checked;
+    if (mrFields) mrFields.style.display = isMr ? 'block' : 'none';
+    if (commitFields) commitFields.style.display = isMr ? 'none' : 'block';
+    setPatchFromCommit('', '', '');
+    if (isMr) {
+      if (sourceBranchSelect && targetBranchSelect && sourceBranchSelect.value && targetBranchSelect.value && sourceBranchSelect.value !== targetBranchSelect.value) {
+        loadDiffForMr(projectSelect.value, sourceBranchSelect.value, targetBranchSelect.value);
+      }
+    } else {
+      if (projectSelect.value && branchSelect) loadCommits(projectSelect.value, branchSelect.value);
+    }
+  }
+
+  function buildBranchOpts(branches, savedVal) {
+    var opts = '<option value="">— None —</option>';
+    if (branches && branches.length) {
+      branches.forEach(function(b) {
+        opts += '<option value="' + esc(b) + '"' + (savedVal === b ? ' selected' : '') + '>' + esc(b) + '</option>';
+      });
+      if (savedVal && branches.indexOf(savedVal) === -1) {
+        opts += '<option value="' + esc(savedVal) + '" selected>' + esc(savedVal) + ' (saved)</option>';
+      }
+    } else {
+      opts += '<option value="" disabled>No branches (local projects only)</option>';
+    }
+    return opts;
+  }
+
+  function loadBranches(projectId) {
+    setPatchFromCommit('', '', '');
+    if (!projectId) {
+      [branchSelect, sourceBranchSelect, targetBranchSelect].forEach(function(el) {
+        if (el) el.innerHTML = '<option value="">— None —</option>';
+      });
+      return;
+    }
+    [branchSelect, sourceBranchSelect, targetBranchSelect].forEach(function(el) {
+      if (el) { el.innerHTML = '<option value="">Loading…</option>'; el.disabled = true; }
+    });
+    fetch('/api/project/' + encodeURIComponent(projectId) + '/branches')
+      .then(function(r) {
+        return r.json().then(function(data) {
+          if (!r.ok && data.status === 'error') throw new Error(data.message || 'Failed to fetch');
+          return data;
+        });
+      })
+      .then(function(data) {
+        var branches = (data.status === 'success' && data.branches) ? data.branches : [];
+        var optsBranch = buildBranchOpts(branches, savedBranch);
+        var optsSource = buildBranchOpts(branches, savedSource);
+        var optsTarget = buildBranchOpts(branches, savedTarget);
+        if (branchSelect) { branchSelect.innerHTML = optsBranch; branchSelect.disabled = false; }
+        if (sourceBranchSelect) { sourceBranchSelect.innerHTML = optsSource; sourceBranchSelect.disabled = false; }
+        if (targetBranchSelect) { targetBranchSelect.innerHTML = optsTarget; targetBranchSelect.disabled = false; }
+        loadCommits(projectId, branchSelect.value);
+      })
+      .catch(function(err) {
+        var msg = (err && err.message && err.message.indexOf('JSON') === -1) ? err.message : 'Failed to fetch';
+        [branchSelect, sourceBranchSelect, targetBranchSelect].forEach(function(el) {
+          if (el) { el.innerHTML = '<option value="">— None —</option><option value="" disabled>' + esc(msg) + '</option>'; el.disabled = false; }
+        });
+      });
+  }
+
+  function loadCommits(projectId, branch) {
+    setPatchFromCommit('', '', '');
+    if (!commitSelect || !projectId) {
+      commitSelect.innerHTML = '<option value="">— None —</option>';
+      return;
+    }
+    commitSelect.innerHTML = '<option value="">Loading…</option>';
+    commitSelect.disabled = true;
+    var url = '/api/project/' + encodeURIComponent(projectId) + '/commits';
+    if (branch) url += '?branch=' + encodeURIComponent(branch);
+    fetch(url)
+      .then(function(r) {
+        return r.json().then(function(data) {
+          if (!r.ok && data.status === 'error') throw new Error(data.message || 'Failed to fetch');
+          return data;
+        });
+      })
+      .then(function(data) {
+        commitSelect.disabled = false;
+        var opts = '<option value="">— None —</option>';
+        var found = false;
+        if (data.status === 'success' && data.commits && data.commits.length) {
+          data.commits.forEach(function(c) {
+            var match = savedCommit && (c.hash === savedCommit || String(savedCommit).indexOf(c.hash) === 0 || String(c.hash).indexOf(savedCommit) === 0);
+            if (match) found = true;
+            opts += '<option value="' + esc(c.hash) + '"' + (match ? ' selected' : '') + '>' + (c.subject ? (c.hash + ' — ' + c.subject) : c.hash) + '</option>';
+          });
+          if (savedCommit && !found) {
+            opts += '<option value="' + esc(savedCommit) + '" selected>' + esc(savedCommit) + ' (saved)</option>';
+          }
+        } else {
+          if (savedCommit) opts += '<option value="' + esc(savedCommit) + '" selected>' + esc(savedCommit) + '</option>';
+          opts += '<option value="" disabled>' + (data.message || 'No commits') + '</option>';
+        }
+        commitSelect.innerHTML = opts;
+        if (document.getElementById('patch_mode_commit').checked && commitSelect.value) {
+          loadPatchForCommit(projectId, commitSelect.value);
+        }
+      })
+      .catch(function(err) {
+        commitSelect.disabled = false;
+        var msg = (err && err.message && err.message.indexOf('JSON') === -1) ? err.message : 'Failed to fetch';
+        commitSelect.innerHTML = '<option value="">— None —</option><option value="" disabled>' + esc(msg) + '</option>';
+      });
+  }
+
+  function loadDiffForMr(projectId, source, target) {
+    if (!projectId || !source || !target || source === target || !submitBtn) return;
+    submitBtn.disabled = true;
+    fileNameEl.textContent = 'Loading diff…';
+    fileNameEl.style.display = 'block';
+    fetch('/api/project/' + encodeURIComponent(projectId) + '/diff?source=' + encodeURIComponent(source) + '&target=' + encodeURIComponent(target))
+      .then(function(r) {
+        return r.json().then(function(data) {
+          if (!r.ok && data.status === 'error') throw new Error(data.message || 'Failed to fetch');
+          return data;
+        });
+      })
+      .then(function(data) {
+        if (data.status === 'success' && data.patch) {
+          setPatchFromCommit(data.patch, source + ' → ' + target, '');
+        } else {
+          setPatchFromCommit('', '', '');
+          fileNameEl.style.display = 'none';
+        }
+      })
+      .catch(function() {
+        setPatchFromCommit('', '', '');
+        fileNameEl.style.display = 'none';
+      });
+  }
+
+  function loadPatchForCommit(projectId, commitHash) {
+    if (!projectId || !commitHash || !submitBtn) return;
+    var opt = commitSelect && commitSelect.options[commitSelect.selectedIndex];
+    var subject = (opt && opt.text) ? opt.text.replace(/^[^\s—]+\s*[—]\s*/, '') : '';
+    submitBtn.disabled = true;
+    fileNameEl.textContent = 'Loading patch…';
+    fileNameEl.style.display = 'block';
+    fetch('/api/project/' + encodeURIComponent(projectId) + '/commit/' + encodeURIComponent(commitHash) + '/patch')
+      .then(function(r) {
+        return r.json().then(function(data) {
+          if (!r.ok && data.status === 'error') throw new Error(data.message || 'Failed to fetch');
+          return data;
+        });
+      })
+      .then(function(data) {
+        if (data.status === 'success' && data.patch) {
+          setPatchFromCommit(data.patch, commitHash, subject);
+        } else {
+          setPatchFromCommit('', '', '');
+          fileNameEl.style.display = 'none';
+        }
+      })
+      .catch(function() {
+        setPatchFromCommit('', '', '');
+        fileNameEl.style.display = 'none';
+      });
+  }
+
+  if (projectSelect) {
+    projectSelect.addEventListener('change', function() {
+      loadBranches(this.value);
+    });
+    document.querySelectorAll('input[name="patch_mode"]').forEach(function(radio) {
+      radio.addEventListener('change', toggleMode);
+    });
+    if (branchSelect) {
+      branchSelect.addEventListener('change', function() {
+        if (projectSelect.value) loadCommits(projectSelect.value, this.value);
+      });
+    }
+    if (commitSelect) {
+      commitSelect.addEventListener('change', function() {
+        var projectId = projectSelect.value;
+        var hash = this.value;
+        if (projectId && hash) loadPatchForCommit(projectId, hash);
+        else setPatchFromCommit('', '', '');
+      });
+    }
+    if (sourceBranchSelect && targetBranchSelect) {
+      function onMrBranchChange() {
+        var src = sourceBranchSelect.value;
+        var tgt = targetBranchSelect.value;
+        if (projectSelect.value && src && tgt && src !== tgt) {
+          loadDiffForMr(projectSelect.value, src, tgt);
+        } else {
+          setPatchFromCommit('', '', '');
+        }
+      }
+      sourceBranchSelect.addEventListener('change', onMrBranchChange);
+      targetBranchSelect.addEventListener('change', onMrBranchChange);
+    }
+    toggleMode();
+    if (projectSelect.value) loadBranches(projectSelect.value);
+  }
 
 })();
 </script>

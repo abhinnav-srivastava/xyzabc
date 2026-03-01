@@ -1,73 +1,96 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-lg-9">
-    <div class="card shadow-sm border-0">
-      <div class="card-header py-3" style="background: var(--primary-gradient); color: #fff;">
-        <h5 class="mb-0">
-          <i class="bi bi-person-circle me-2"></i>Profile
-        </h5>
-      </div>
-      <div class="card-body p-4">
-        <p class="text-muted mb-4">
-          Manage your profile. Username (userId) is the unique identifier. Your preferred roles are pre-filled at login.
-        </p>
+<div class="profile-page">
+  <header class="mb-4" aria-labelledby="profile-title">
+    <nav aria-label="Breadcrumb" class="mb-2">
+      <ol class="breadcrumb mb-0" style="--bs-breadcrumb-divider: '›';">
+        <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Profile</li>
+      </ol>
+    </nav>
+    <h1 id="profile-title" class="h4 fw-bold mb-1">
+      <i class="bi bi-person-circle me-2" aria-hidden="true"></i>Profile
+    </h1>
+    <p class="text-muted mb-0 small">Manage your identity, roles, credentials, and projects.</p>
+  </header>
 
-        {% if not profiles %}
-        <div class="alert alert-info border-0">
-          <i class="bi bi-info-circle me-2"></i>
-          No profiles yet. Sign in to create your first profile.
+  {% if not profiles %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5">
+      <i class="bi bi-person-plus display-4 text-muted mb-3" aria-hidden="true"></i>
+      <h2 class="h5 fw-semibold mb-2">No profile yet</h2>
+      <p class="text-muted mb-4">Sign in to create your profile and start reviewing code.</p>
+      <a href="{{ url_for('login', next=url_for('dashboard')) }}" class="btn btn-primary">
+        <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i>Sign in
+      </a>
+    </div>
+  </div>
+  {% else %}
+  <div class="profile-layout d-flex flex-column flex-lg-row gap-4">
+    <nav class="profile-sidebar flex-shrink-0" aria-labelledby="sidebar-title">
+      <div class="profile-sidebar-header">
+        <h2 id="sidebar-title" class="profile-sidebar-title">
+          <i class="bi bi-sliders" aria-hidden="true"></i>Settings
+        </h2>
+      </div>
+      <ul class="profile-sidebar-nav" role="list">
+        <li><a href="#section-account" class="profile-sidebar-link"><i class="bi bi-person-vcard" aria-hidden="true"></i>Account</a></li>
+        <li><a href="#section-git" class="profile-sidebar-link"><i class="bi bi-key-fill" aria-hidden="true"></i>Git credentials</a></li>
+        <li><a href="#section-tokens" class="profile-sidebar-link"><i class="bi bi-shield-lock-fill" aria-hidden="true"></i>Access tokens</a></li>
+        <li><a href="#section-projects" class="profile-sidebar-link"><i class="bi bi-folder2-open" aria-hidden="true"></i>Projects</a></li>
+      </ul>
+    </nav>
+
+    <div class="profile-content flex-grow-1 min-w-0">
+      <section id="section-account" class="profile-section profile-panel" aria-labelledby="section-account-heading">
+        <div class="profile-panel-header">
+          <h2 id="section-account-heading" class="profile-panel-title"><i class="bi bi-person-vcard" aria-hidden="true"></i>Account</h2>
         </div>
-        <a href="{{ url_for('login', next=url_for('dashboard')) }}" class="btn btn-primary">
-          <i class="bi bi-box-arrow-in-right me-1"></i>Sign in
-        </a>
-        {% else %}
-        <div class="list-group list-group-flush">
+        <div class="profile-panel-body">
           {% for p in profiles %}
           {% set profile_idx = loop.index0 %}
-          <div class="list-group-item px-0">
-            <div class="d-flex justify-content-between align-items-start">
+          <article class="py-3 {% if not loop.last %}border-bottom{% endif %}" aria-labelledby="profile-name-{{ loop.index }}">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
               <div class="flex-grow-1">
-                <h6 class="mb-1">
+                <h3 id="profile-name-{{ loop.index }}" class="h6 mb-1 fw-semibold">
                   {{ p.name }}
-                  <span class="text-muted fw-normal ms-2">({{ p.user_id or p.username }})</span>
+                  <span class="text-muted fw-normal">({{ p.user_id or p.username }})</span>
                   {% if (p.user_id or p.username) == last_used_id %}
-                  <span class="badge bg-success ms-2">Default</span>
+                  <span class="badge bg-success ms-2" aria-label="Default profile">Default</span>
                   {% endif %}
-                </h6>
-                <small class="text-muted">
-                  Roles: 
+                </h3>
+                <p class="mb-0 small text-muted">
+                  <span class="visually-hidden">Roles: </span>
                   {% if p.preferred_roles %}
                     {% for rid in p.preferred_roles %}{{ role_map.get(rid, rid) }}{% if not loop.last %}, {% endif %}{% endfor %}
                   {% else %}
                     —
                   {% endif %}
                   {% if p.last_used %}
-                  · Last used: {{ p.last_used[:10] }}
+                  <span class="ms-1">· Last used {{ p.last_used[:10] }}</span>
                   {% endif %}
-                </small>
+                </p>
               </div>
-              <div class="btn-group btn-group-sm ms-2">
+              <div class="d-flex flex-wrap gap-1">
                 {% if (p.user_id or p.username) != last_used_id %}
                 <form method="post" class="d-inline">
                   <input type="hidden" name="action" value="set_default">
                   <input type="hidden" name="user_id" value="{{ p.user_id or p.username }}">
-                  <button type="submit" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-star me-1"></i>Set default
-                  </button>
+                  <button type="submit" class="btn btn-outline-primary btn-sm">Set default</button>
                 </form>
                 {% endif %}
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#edit-roles-{{ loop.index }}">
-                  <i class="bi bi-pencil me-1"></i>Edit roles
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#edit-roles-{{ loop.index }}"
+                        aria-expanded="false" aria-controls="edit-roles-{{ loop.index }}" aria-label="Edit roles for {{ p.name }}">
+                  <i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit roles
                 </button>
               </div>
             </div>
-            <div class="collapse mt-3" id="edit-roles-{{ loop.index }}">
-              <form method="post" class="border rounded p-3 bg-light">
+            <div class="collapse mt-3" id="edit-roles-{{ loop.index }}" role="region" aria-labelledby="edit-roles-heading-{{ loop.index }}">
+              <form method="post" class="profile-edit-form">
                 <input type="hidden" name="action" value="edit_roles">
                 <input type="hidden" name="user_id" value="{{ p.user_id or p.username }}">
-                <label class="form-label small fw-semibold">Select roles</label>
+                <h4 id="edit-roles-heading-{{ loop.index }}" class="form-label small fw-semibold mb-2">Select roles</h4>
                 <div class="row g-2">
                   {% for role in config.roles %}
                   <div class="col-6 col-md-4">
@@ -79,20 +102,195 @@
                   </div>
                   {% endfor %}
                 </div>
-                <button type="submit" class="btn btn-primary btn-sm mt-2">Save roles</button>
+                <button type="submit" class="btn btn-primary btn-sm mt-3">Save roles</button>
               </form>
             </div>
-          </div>
+          </article>
           {% endfor %}
         </div>
-        <div class="mt-4">
-          <a href="{{ url_for('start_review') }}" class="btn btn-primary">
-            <i class="bi bi-play-circle me-1"></i>Start Review
-          </a>
+      </section>
+
+      <section id="section-git" class="profile-section profile-panel" aria-labelledby="section-git-heading">
+        <div class="profile-panel-header profile-panel-header--muted">
+          <h2 id="section-git-heading" class="profile-panel-title"><i class="bi bi-key-fill" aria-hidden="true"></i>Git credentials</h2>
         </div>
-        {% endif %}
-      </div>
+        <div class="profile-panel-body">
+          {% if credentials_info and credentials_info.get('credential_helper') %}
+          <p class="small text-muted mb-3">Uses your system credential helper. No credentials stored in this app.</p>
+          <dl class="mb-0 small">
+            <dt class="text-muted fw-normal">Helper</dt>
+            <dd class="mb-2"><code class="small">{{ credentials_info.get('credential_helper') }}</code></dd>
+            <dt class="text-muted fw-normal">Scope</dt>
+            <dd class="mb-2">{{ credentials_info.get('credential_helper_scope') or '—' }}</dd>
+            {% if credentials_info.get('remote_url') %}
+            <dt class="text-muted fw-normal">Remote</dt>
+            <dd class="mb-2"><code class="small text-break">{{ credentials_info.get('remote_url') }}</code></dd>
+            {% endif %}
+          </dl>
+          {% if credentials_info.get('is_repo') %}
+          <span class="badge bg-success">Git repo detected</span>
+          {% endif %}
+          {% else %}
+          <p class="profile-empty">No credential helper detected. Configure <code>credential.helper</code> in <code>~/.gitconfig</code> or use Git Credential Manager.</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <section id="section-tokens" class="profile-section card border-0 shadow-sm" aria-labelledby="section-tokens-heading">
+        <div class="card-header py-2 px-3 bg-light">
+          <h2 id="section-tokens-heading" class="h6 mb-0 fw-semibold">
+            <i class="bi bi-shield-lock me-2" aria-hidden="true"></i>Access tokens
+          </h2>
+        </div>
+        <div class="card-body p-3">
+          <p class="profile-panel-desc">Store Git access tokens (e.g. GitLab PAT, GitHub PAT) for authentication. Used for git operations only — no API calls.</p>
+          <form method="post" class="profile-form mb-4" aria-label="Add access token">
+            <input type="hidden" name="action" value="add_token">
+            <div class="profile-form-group">
+              <label for="token_host" class="profile-form-label">Host <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm" id="token_host" name="token_host" placeholder="gitlab.com" required>
+            </div>
+            <div class="profile-form-group">
+              <label for="token_value" class="profile-form-label">Token <span class="text-danger">*</span></label>
+              <input type="password" class="form-control form-control-sm" id="token_value" name="token_value" placeholder="glpat-xxxx or ghp_xxxx" required autocomplete="off">
+            </div>
+            <div class="profile-form-group">
+              <label for="token_name" class="profile-form-label">Label <span class="text-muted">(optional)</span></label>
+              <input type="text" class="form-control form-control-sm" id="token_name" name="token_name" placeholder="GitLab PAT">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">
+              <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Add token
+            </button>
+          </form>
+          {% if access_tokens %}
+          <ul class="profile-list" role="list">
+            {% for t in access_tokens %}
+            <li class="profile-list-item d-flex justify-content-between align-items-start gap-3">
+              <div class="profile-list-item-content min-w-0 flex-grow-1">
+                <span class="profile-list-item-title">{{ t.name or t.host }}</span>
+                <span class="profile-list-item-meta"><code>{{ t.host }}</code> · {{ t.token_masked }}</span>
+              </div>
+              <form method="post" class="profile-list-item-action">
+                <input type="hidden" name="action" value="remove_token">
+                <input type="hidden" name="token_id" value="{{ t.id }}">
+                <button type="submit" class="btn btn-link btn-sm text-danger p-0" aria-label="Remove token {{ t.name or t.host }}">
+                  <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+              </form>
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <p class="profile-empty">No access tokens yet. Add a token above to authenticate with GitLab, GitHub, or other hosts.</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <section id="section-projects" class="profile-section profile-panel" aria-labelledby="section-projects-heading">
+        <div class="profile-panel-header profile-panel-header--muted">
+          <h2 id="section-projects-heading" class="profile-panel-title"><i class="bi bi-folder2-open" aria-hidden="true"></i>Projects</h2>
+        </div>
+        <div class="profile-panel-body">
+          <p class="profile-panel-desc">Remote git URLs or local paths. Data via git (clone, pull, push, fetch) — no APIs.</p>
+          <form method="post" class="profile-form mb-4" aria-label="Add project">
+            <input type="hidden" name="action" value="add_project">
+            <div class="profile-form-row">
+              <div class="profile-form-group">
+                <label for="project_type" class="profile-form-label">Type</label>
+                <select class="form-select form-select-sm" id="project_type" name="project_type">
+                  <option value="remote">Remote (git URL)</option>
+                  <option value="local">Local path</option>
+                </select>
+              </div>
+              <div class="profile-form-group flex-grow-1">
+                <label for="project_url_or_path" class="profile-form-label">URL or path <span class="text-danger">*</span></label>
+                <div class="d-flex gap-1">
+                  <input type="text" class="form-control form-control-sm flex-grow-1" id="project_url_or_path" name="project_url_or_path"
+                         placeholder="https://gitlab.com/... or C:\repos\my-project" required
+                         aria-describedby="project_url_help">
+                  <input type="file" id="project_folder_picker" class="d-none" webkitdirectory multiple
+                         aria-label="Browse for folder">
+                  <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0" id="project_browse_btn"
+                          title="Browse for folder" aria-label="Browse for folder" style="display: none;">
+                    <i class="bi bi-folder2-open" aria-hidden="true"></i>
+                  </button>
+                </div>
+                <div id="project_url_help" class="profile-form-hint">Remote: https://, git@, ssh:// — or local path. Use Browse for local folders.</div>
+              </div>
+            </div>
+            <div class="profile-form-group">
+              <label for="project_name" class="profile-form-label">Name <span class="text-muted">(optional)</span></label>
+              <input type="text" class="form-control form-control-sm" id="project_name" name="project_name" placeholder="My Project">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">
+              <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Add project
+            </button>
+          </form>
+          {% if projects %}
+          <ul class="profile-list" role="list">
+            {% for proj in projects %}
+            <li class="profile-list-item d-flex justify-content-between align-items-start gap-3">
+              <div class="profile-list-item-content min-w-0 flex-grow-1">
+                <span class="profile-list-item-title">{{ proj.name or proj.url_or_path }}</span>
+                <span class="profile-list-item-meta">
+                  <span class="badge bg-{{ 'primary' if proj.type == 'remote' else 'secondary' }}">{{ proj.type }}</span>
+                  <code class="ms-1">{{ proj.url_or_path }}</code>
+                </span>
+              </div>
+              <form method="post" class="profile-list-item-action">
+                <input type="hidden" name="action" value="remove_project">
+                <input type="hidden" name="project_id" value="{{ proj.id }}">
+                <button type="submit" class="btn btn-link btn-sm text-danger p-0" aria-label="Remove project {{ proj.name or proj.url_or_path }}">
+                  <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+              </form>
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <p class="profile-empty">No projects yet. Add a remote git URL or local path above.</p>
+          {% endif %}
+        </div>
+      </section>
     </div>
   </div>
+  {% endif %}
 </div>
+<script>
+(function() {
+  const defaultSection = 'section-account';
+  const validHashes = ['section-account', 'section-git', 'section-tokens', 'section-projects'];
+  document.addEventListener('DOMContentLoaded', function() {
+    const hash = (window.location.hash || '').slice(1);
+    if (!validHashes.includes(hash)) {
+      history.replaceState(null, '', '#' + defaultSection);
+    }
+    // Folder picker for local projects
+    var projectType = document.getElementById('project_type');
+    var pathInput = document.getElementById('project_url_or_path');
+    var browseBtn = document.getElementById('project_browse_btn');
+    var folderPicker = document.getElementById('project_folder_picker');
+    function toggleBrowse() {
+      browseBtn.style.display = (projectType && projectType.value === 'local') ? '' : 'none';
+    }
+    if (projectType) {
+      projectType.addEventListener('change', toggleBrowse);
+      toggleBrowse();
+    }
+    if (browseBtn && folderPicker && pathInput) {
+      browseBtn.addEventListener('click', function() { folderPicker.click(); });
+      folderPicker.addEventListener('change', function() {
+        var files = this.files;
+        if (files && files.length) {
+          var f = files[0];
+          if (f.path && f.path.indexOf('fakepath') < 0) {
+            pathInput.value = f.path.replace(/[/\\][^/\\]*$/, '');
+          }
+        }
+        this.value = '';
+      });
+    }
+  });
+})();
+</script>
 {% endblock %}

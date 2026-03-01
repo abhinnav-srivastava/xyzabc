@@ -156,16 +156,15 @@
                                     {% if mr_details.mr_link %}
                                         <p class="mb-1"><strong>MR Link:</strong> <a href="{{ mr_details.mr_link }}" target="_blank" class="text-decoration-none">{{ mr_details.mr_link }}</a></p>
                                     {% endif %}
-                                    {% if mr_details.branch_name %}
-                                        <p class="mb-1"><strong>Branch:</strong> {{ mr_details.branch_name }}</p>
-                                    {% endif %}
-                                    {% if mr_details.commit_hash %}
-                                        <p class="mb-1"><strong>Commit:</strong> <code>{{ mr_details.commit_hash }}</code></p>
+                                    {% if mr_details.patch_mode == 'mr' and mr_details.source_branch and mr_details.target_branch %}
+                                        <p class="mb-1"><strong>MR:</strong> {{ mr_details.source_branch }} → {{ mr_details.target_branch }}</p>
+                                    {% elif mr_details.commit_hash %}
+                                        <p class="mb-1"><strong>Commit:</strong> <code>{{ mr_details.commit_hash }}</code>{% if mr_details.branch_name %} ({{ mr_details.branch_name }}){% endif %}</p>
                                     {% endif %}
                                     {% if mr_details.project_name %}
                                         <p class="mb-0"><strong>Project:</strong> {{ mr_details.project_name }}</p>
                                     {% endif %}
-                                    {% if not mr_details.mr_link and not mr_details.branch_name and not mr_details.commit_hash and not mr_details.project_name %}
+                                    {% if not mr_details.mr_link and not mr_details.source_branch and not mr_details.target_branch and not mr_details.commit_hash and not mr_details.project_name %}
                                         <p class="mb-0 text-muted">No MR/GitLab details provided</p>
                                     {% endif %}
                                 </div>

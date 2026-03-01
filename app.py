@@ -79,7 +79,22 @@ from services.patch_parser import (
 from services.git_operations import (
     git_pull,
     git_push,
+    get_commits,
+    get_branches,
+    get_commit_patch,
+    get_diff_between_branches,
     get_credential_helper_info,
+)
+from services.projects_service import (
+    get_projects,
+    get_project as get_user_project,
+    add_project as add_user_project,
+    remove_project as remove_user_project,
+)
+from services.access_tokens_service import (
+    get_tokens as get_user_tokens,
+    add_token as add_user_token,
+    remove_token as remove_user_token,
 )
 
 def create_app() -> Flask:
@@ -622,14 +637,14 @@ def create_app() -> Flask:
 
     @app.route("/profile", methods=["GET", "POST"])
     def profile_page():
-        """Profile management: view, set default, edit roles. Shows only current user's profile."""
+        """Profile management: view, set default, edit roles, credentials, projects."""
         if not session.get("user_name") or not session.get("user_username"):
             return redirect(url_for("login", next=url_for("profile_page")))
         current_user_id = session.get("user_username")
         if request.method == "POST":
             action = request.form.get("action")
             user_id = request.form.get("user_id", "").strip()
-            if user_id != current_user_id:
+            if user_id and user_id != current_user_id and action not in ("add_project", "add_token", "remove_token"):
                 from flask import flash
                 flash("You can only modify your own profile.", "warning")
                 return redirect(url_for("profile_page"))
@@ -646,6 +661,46 @@ def create_app() -> Flask:
                     from flask import flash
                     flash("Roles updated.", "success")
                     session["user_roles"] = roles
+            elif action == "add_project":
+                name = request.form.get("project_name", "").strip()
+                url_or_path = request.form.get("project_url_or_path", "").strip()
+                project_type = request.form.get("project_type", "remote").strip()
+                if url_or_path:
+                    proj = add_user_project(current_user_id, name, url_or_path, project_type)
+                    if proj:
+                        from flask import flash
+                        flash(f"Project '{proj.get('name', '')}' added.", "success")
+                    else:
+                        from flask import flash
+                        flash("Invalid project. Provide a remote git URL or local path.", "warning")
+                else:
+                    from flask import flash
+                    flash("Please enter a remote git URL or local path.", "warning")
+            elif action == "remove_project":
+                project_id = request.form.get("project_id", "").strip()
+                if project_id and remove_user_project(current_user_id, project_id):
+                    from flask import flash
+                    flash("Project removed.", "info")
+            elif action == "add_token":
+                token_name = request.form.get("token_name", "").strip()
+                token_host = request.form.get("token_host", "").strip()
+                token_value = request.form.get("token_value", "").strip()
+                if token_host and token_value:
+                    tok = add_user_token(current_user_id, token_name, token_host, token_value)
+                    if tok:
+                        from flask import flash
+                        flash(f"Access token for {tok.get('host', '')} added.", "success")
+                    else:
+                        from flask import flash
+                        flash("Invalid token. Provide host (e.g. gitlab.com) and token.", "warning")
+                else:
+                    from flask import flash
+                    flash("Please enter host and token.", "warning")
+            elif action == "remove_token":
+                token_id = request.form.get("token_id", "").strip()
+                if token_id and remove_user_token(current_user_id, token_id):
+                    from flask import flash
+                    flash("Access token removed.", "info")
             return redirect(url_for("profile_page"))
         profile = get_profile(current_user_id)
         if not profile:
@@ -660,12 +715,18 @@ def create_app() -> Flask:
         last_used_id = get_last_used_user_id()
         config = load_roles_config()
         role_map = {r["id"]: r["name"] for r in config.get("roles", [])}
+        credentials_info = get_credential_helper_info()
+        projects = get_projects(current_user_id)
+        access_tokens = get_user_tokens(current_user_id)
         return render_template(
             "profile.html",
             profiles=profiles,
             last_used_id=last_used_id,
             role_map=role_map,
             config=config,
+            credentials_info=credentials_info,
+            projects=projects,
+            access_tokens=access_tokens,
         )
 
     @app.route("/guidelines")
@@ -1018,29 +1079,48 @@ def create_app() -> Flask:
     def review_patch():
         """Step 2: Upload patch (or skip). Requires session from POST /start."""
         if request.method == "POST":
-            # Update MR details from form (both parse and skip paths)
+            # Update MR/Commit details from form (both parse and skip paths)
+            patch_mode = request.form.get("patch_mode", "commit").strip() or "commit"
             mr_link = request.form.get("mr_link", "").strip()
+            source_branch = request.form.get("source_branch", "").strip()
+            target_branch = request.form.get("target_branch", "").strip()
             branch_name = request.form.get("branch_name", "").strip()
-            project_name = request.form.get("project_name", "").strip()
             commit_hash = request.form.get("commit_hash", "").strip()
+            project_id = request.form.get("project_id", "").strip()
+            user_id = session.get("user_username") or session.get("reviewer_username") or ""
+            if not user_id:
+                from services.user_profile import get_profile_by_name
+                profile = get_profile_by_name(session.get("reviewer_name", "")) if session.get("reviewer_name") else None
+                if profile:
+                    user_id = profile.get("user_id") or profile.get("username") or ""
+            project_name = ""
+            if project_id and user_id:
+                proj = get_user_project(user_id, project_id)
+                if proj:
+                    project_name = proj.get("name") or proj.get("url_or_path") or ""
             session["mr_details"] = {
-                "mr_link": mr_link,
-                "branch_name": branch_name,
+                "project_id": project_id,
                 "project_name": project_name,
+                "patch_mode": patch_mode,
+                "mr_link": mr_link,
+                "source_branch": source_branch,
+                "target_branch": target_branch,
+                "branch_name": branch_name,
                 "commit_hash": commit_hash,
             }
 
             skip = request.form.get("skip_patch") == "1"
             if skip:
                 return _redirect_to_checklist()
-            content = None
-            f = request.files.get("patch_file") if request.files else None
-            if f and f.filename:
-                try:
-                    raw = f.read()
-                    content = raw.decode("utf-8", errors="replace") if isinstance(raw, bytes) else raw
-                except Exception:
-                    content = raw.decode("latin-1", errors="replace") if isinstance(raw, bytes) else None
+            content = request.form.get("patch_content", "").strip()
+            if not content:
+                f = request.files.get("patch_file") if request.files else None
+                if f and f.filename:
+                    try:
+                        raw = f.read()
+                        content = raw.decode("utf-8", errors="replace") if isinstance(raw, bytes) else raw
+                    except Exception:
+                        content = raw.decode("latin-1", errors="replace") if isinstance(raw, bytes) else ""
             if not content or not content.strip():
                 from flask import flash
                 flash("Please upload a .patch file (or drag and drop), or click Skip.", "warning")
@@ -1071,7 +1151,15 @@ def create_app() -> Flask:
         if not session.get("reviewer_name") or not selected_roles:
             return redirect(url_for("start_review"))
         mr_details = session.get("mr_details") or {}
-        return render_template("review_patch.html", mr_details=mr_details)
+        user_id = session.get("user_username") or session.get("reviewer_username") or ""
+        if not user_id:
+            from services.user_profile import get_profile_by_name
+            reviewer_name = session.get("reviewer_name", "")
+            profile = get_profile_by_name(reviewer_name) if reviewer_name else None
+            if profile:
+                user_id = profile.get("user_id") or profile.get("username") or ""
+        projects = get_projects(user_id) if user_id else []
+        return render_template("review_patch.html", mr_details=mr_details, projects=projects or [])
 
     def _redirect_to_checklist():
         return redirect(url_for("review_all_categories"))
@@ -1719,6 +1807,121 @@ def create_app() -> Flask:
         try:
             info = get_credential_helper_info(repo_path=get_project_root())
             return {"status": "success", "credentials_info": info}, 200
+        except Exception as e:
+            return {"status": "error", "message": str(e)}, 500
+
+    @app.route("/api/project/<project_id>/commits", methods=["GET"])
+    def api_project_commits(project_id: str):
+        """Fetch recent commits for a project (local repos only)."""
+        try:
+            user_id = session.get("user_username") or session.get("reviewer_username") or ""
+            if not user_id:
+                from services.user_profile import get_profile_by_name
+                reviewer_name = session.get("reviewer_name", "")
+                profile = get_profile_by_name(reviewer_name) if reviewer_name else None
+                if profile:
+                    user_id = profile.get("user_id") or profile.get("username") or ""
+            if not user_id or not project_id:
+                return {"status": "error", "message": "Not authenticated"}, 401
+            project = get_user_project(user_id, project_id)
+            if not project:
+                return {"status": "error", "message": "Project not found"}, 404
+            url_or_path = project.get("url_or_path", "")
+            proj_type = project.get("type", "remote")
+            if proj_type != "local":
+                return {"status": "success", "commits": [], "message": "Commit fetch only for local projects"}, 200
+            path = Path(url_or_path)
+            branch = request.args.get("branch", "").strip() or None
+            commits = get_commits(path, limit=30, branch=branch)
+            return {"status": "success", "commits": commits}, 200
+        except Exception as e:
+            return {"status": "error", "message": str(e)}, 500
+
+    @app.route("/api/project/<project_id>/branches", methods=["GET"])
+    def api_project_branches(project_id: str):
+        """Fetch branches for a project (local repos only)."""
+        try:
+            user_id = session.get("user_username") or session.get("reviewer_username") or ""
+            if not user_id:
+                from services.user_profile import get_profile_by_name
+                reviewer_name = session.get("reviewer_name", "")
+                profile = get_profile_by_name(reviewer_name) if reviewer_name else None
+                if profile:
+                    user_id = profile.get("user_id") or profile.get("username") or ""
+            if not user_id or not project_id:
+                return {"status": "error", "message": "Not authenticated"}, 401
+            project = get_user_project(user_id, project_id)
+            if not project:
+                return {"status": "error", "message": "Project not found"}, 404
+            url_or_path = project.get("url_or_path", "")
+            proj_type = project.get("type", "remote")
+            if proj_type != "local":
+                return {"status": "success", "branches": [], "message": "Branch fetch only for local projects"}, 200
+            path = Path(url_or_path)
+            branches = get_branches(path, include_remote=True)
+            return {"status": "success", "branches": branches}, 200
+        except Exception as e:
+            return {"status": "error", "message": str(e)}, 500
+
+    @app.route("/api/project/<project_id>/commit/<commit_hash>/patch", methods=["GET"])
+    def api_project_commit_patch(project_id: str, commit_hash: str):
+        """Fetch patch content for a commit (local repos only)."""
+        try:
+            user_id = session.get("user_username") or session.get("reviewer_username") or ""
+            if not user_id:
+                from services.user_profile import get_profile_by_name
+                reviewer_name = session.get("reviewer_name", "")
+                profile = get_profile_by_name(reviewer_name) if reviewer_name else None
+                if profile:
+                    user_id = profile.get("user_id") or profile.get("username") or ""
+            if not user_id or not project_id or not commit_hash:
+                return {"status": "error", "message": "Not authenticated"}, 401
+            project = get_user_project(user_id, project_id)
+            if not project:
+                return {"status": "error", "message": "Project not found"}, 404
+            url_or_path = project.get("url_or_path", "")
+            proj_type = project.get("type", "remote")
+            if proj_type != "local":
+                return {"status": "error", "message": "Patch fetch only for local projects"}, 400
+            path = Path(url_or_path)
+            patch = get_commit_patch(path, commit_hash)
+            if patch is None:
+                return {"status": "error", "message": "Commit not found or has no changes"}, 404
+            return {"status": "success", "patch": patch}, 200
+        except Exception as e:
+            return {"status": "error", "message": str(e)}, 500
+
+    @app.route("/api/project/<project_id>/diff", methods=["GET"])
+    def api_project_diff(project_id: str):
+        """Fetch diff between source and target branches (GitLab MR style, local repos only)."""
+        try:
+            user_id = session.get("user_username") or session.get("reviewer_username") or ""
+            if not user_id:
+                from services.user_profile import get_profile_by_name
+                reviewer_name = session.get("reviewer_name", "")
+                profile = get_profile_by_name(reviewer_name) if reviewer_name else None
+                if profile:
+                    user_id = profile.get("user_id") or profile.get("username") or ""
+            if not user_id or not project_id:
+                return {"status": "error", "message": "Not authenticated"}, 401
+            project = get_user_project(user_id, project_id)
+            if not project:
+                return {"status": "error", "message": "Project not found"}, 404
+            url_or_path = project.get("url_or_path", "")
+            proj_type = project.get("type", "remote")
+            if proj_type != "local":
+                return {"status": "error", "message": "Diff fetch only for local projects"}, 400
+            source = request.args.get("source", "").strip()
+            target = request.args.get("target", "").strip()
+            if not source or not target:
+                return {"status": "error", "message": "Source and target branches required"}, 400
+            path = Path(url_or_path)
+            diff = get_diff_between_branches(path, target, source)
+            if diff is None:
+                return {"status": "error", "message": "Diff failed or branches not found"}, 404
+            if not diff.strip():
+                return {"status": "error", "message": "No changes between branches"}, 404
+            return {"status": "success", "patch": diff}, 200
         except Exception as e:
             return {"status": "error", "message": str(e)}, 500
 
