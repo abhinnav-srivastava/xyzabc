@@ -28,6 +28,17 @@ function runPy(args) {
 function main() {
   console.log('Building CodeReview for Windows (fully bundled)...\n');
 
+  // 0. Generate app icon if missing
+  const icoPath = path.join(rootDir, 'static', 'icons', 'icon.ico');
+  if (!fs.existsSync(icoPath)) {
+    console.log('Step 0: Generating app icon...');
+    try {
+      execSync('node scripts/generate-icon.js', { stdio: 'inherit', cwd: rootDir });
+    } catch (e) {
+      console.warn('  (Icon generation skipped - run "npm run generate-icon" manually)');
+    }
+  }
+
   // 1. PyInstaller: bundle Flask app
   console.log('Step 1: Bundling Flask backend with PyInstaller...');
   const specPath = path.join(rootDir, 'app.spec');

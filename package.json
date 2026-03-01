@@ -5,6 +5,7 @@
   "main": "electron/main.js",
   "scripts": {
     "start": "npx electron .",
+    "generate-icon": "node scripts/generate-icon.js",
     "build:win": "node scripts/build-electron-win.js",
     "pack:win": "electron-builder --win --dir",
     "dist:win": "electron-builder --win"
@@ -13,7 +14,9 @@
   "license": "MIT",
   "devDependencies": {
     "electron": "^28.0.0",
-    "electron-builder": "^24.9.1"
+    "electron-builder": "^24.9.1",
+    "sharp": "^0.34.5",
+    "sharp-ico": "^0.1.5"
   },
   "build": {
     "appId": "com.codereview.app",
@@ -41,8 +44,18 @@
     ],
     "win": {
       "target": [
-        { "target": "portable", "arch": ["x64"] },
-        { "target": "dir", "arch": ["x64"] }
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "dir",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "static/icons/icon.ico"
     }
