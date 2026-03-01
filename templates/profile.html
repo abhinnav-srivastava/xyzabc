@@ -12,7 +12,7 @@
     <h1 id="profile-title" class="h4 fw-bold mb-1">
       <i class="bi bi-person-circle me-2" aria-hidden="true"></i>Profile
     </h1>
-    <p class="text-muted mb-0 small">Manage your identity, roles, credentials, and projects.</p>
+    <p class="text-muted mb-0 small">Manage your identity, roles, and projects.</p>
   </header>
 
   {% if not profiles %}
@@ -36,8 +36,6 @@
       </div>
       <ul class="profile-sidebar-nav" role="list">
         <li><a href="#section-account" class="profile-sidebar-link"><i class="bi bi-person-vcard" aria-hidden="true"></i>Account</a></li>
-        <li><a href="#section-git" class="profile-sidebar-link"><i class="bi bi-key-fill" aria-hidden="true"></i>Git credentials</a></li>
-        <li><a href="#section-tokens" class="profile-sidebar-link"><i class="bi bi-shield-lock-fill" aria-hidden="true"></i>Access tokens</a></li>
         <li><a href="#section-projects" class="profile-sidebar-link"><i class="bi bi-folder2-open" aria-hidden="true"></i>Projects</a></li>
       </ul>
     </nav>
@@ -110,114 +108,22 @@
         </div>
       </section>
 
-      <section id="section-git" class="profile-section profile-panel" aria-labelledby="section-git-heading">
-        <div class="profile-panel-header profile-panel-header--muted">
-          <h2 id="section-git-heading" class="profile-panel-title"><i class="bi bi-key-fill" aria-hidden="true"></i>Git credentials</h2>
-        </div>
-        <div class="profile-panel-body">
-          {% if credentials_info and credentials_info.get('credential_helper') %}
-          <p class="small text-muted mb-3">Uses your system credential helper. No credentials stored in this app.</p>
-          <dl class="mb-0 small">
-            <dt class="text-muted fw-normal">Helper</dt>
-            <dd class="mb-2"><code class="small">{{ credentials_info.get('credential_helper') }}</code></dd>
-            <dt class="text-muted fw-normal">Scope</dt>
-            <dd class="mb-2">{{ credentials_info.get('credential_helper_scope') or '—' }}</dd>
-            {% if credentials_info.get('remote_url') %}
-            <dt class="text-muted fw-normal">Remote</dt>
-            <dd class="mb-2"><code class="small text-break">{{ credentials_info.get('remote_url') }}</code></dd>
-            {% endif %}
-          </dl>
-          {% if credentials_info.get('is_repo') %}
-          <span class="badge bg-success">Git repo detected</span>
-          {% endif %}
-          {% else %}
-          <p class="profile-empty">No credential helper detected. Configure <code>credential.helper</code> in <code>~/.gitconfig</code> or use Git Credential Manager.</p>
-          {% endif %}
-        </div>
-      </section>
-
-      <section id="section-tokens" class="profile-section card border-0 shadow-sm" aria-labelledby="section-tokens-heading">
-        <div class="card-header py-2 px-3 bg-light">
-          <h2 id="section-tokens-heading" class="h6 mb-0 fw-semibold">
-            <i class="bi bi-shield-lock me-2" aria-hidden="true"></i>Access tokens
-          </h2>
-        </div>
-        <div class="card-body p-3">
-          <p class="profile-panel-desc">Store Git access tokens (e.g. GitLab PAT, GitHub PAT) for authentication. Used for git operations only — no API calls.</p>
-          <form method="post" class="profile-form mb-4" aria-label="Add access token">
-            <input type="hidden" name="action" value="add_token">
-            <div class="profile-form-group">
-              <label for="token_host" class="profile-form-label">Host <span class="text-danger">*</span></label>
-              <input type="text" class="form-control form-control-sm" id="token_host" name="token_host" placeholder="gitlab.com" required>
-            </div>
-            <div class="profile-form-group">
-              <label for="token_value" class="profile-form-label">Token <span class="text-danger">*</span></label>
-              <input type="password" class="form-control form-control-sm" id="token_value" name="token_value" placeholder="glpat-xxxx or ghp_xxxx" required autocomplete="off">
-            </div>
-            <div class="profile-form-group">
-              <label for="token_name" class="profile-form-label">Label <span class="text-muted">(optional)</span></label>
-              <input type="text" class="form-control form-control-sm" id="token_name" name="token_name" placeholder="GitLab PAT">
-            </div>
-            <button type="submit" class="btn btn-primary btn-sm">
-              <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Add token
-            </button>
-          </form>
-          {% if access_tokens %}
-          <ul class="profile-list" role="list">
-            {% for t in access_tokens %}
-            <li class="profile-list-item d-flex justify-content-between align-items-start gap-3">
-              <div class="profile-list-item-content min-w-0 flex-grow-1">
-                <span class="profile-list-item-title">{{ t.name or t.host }}</span>
-                <span class="profile-list-item-meta"><code>{{ t.host }}</code> · {{ t.token_masked }}</span>
-              </div>
-              <form method="post" class="profile-list-item-action">
-                <input type="hidden" name="action" value="remove_token">
-                <input type="hidden" name="token_id" value="{{ t.id }}">
-                <button type="submit" class="btn btn-link btn-sm text-danger p-0" aria-label="Remove token {{ t.name or t.host }}">
-                  <i class="bi bi-x-lg" aria-hidden="true"></i>
-                </button>
-              </form>
-            </li>
-            {% endfor %}
-          </ul>
-          {% else %}
-          <p class="profile-empty">No access tokens yet. Add a token above to authenticate with GitLab, GitHub, or other hosts.</p>
-          {% endif %}
-        </div>
-      </section>
-
       <section id="section-projects" class="profile-section profile-panel" aria-labelledby="section-projects-heading">
         <div class="profile-panel-header profile-panel-header--muted">
           <h2 id="section-projects-heading" class="profile-panel-title"><i class="bi bi-folder2-open" aria-hidden="true"></i>Projects</h2>
         </div>
         <div class="profile-panel-body">
-          <p class="profile-panel-desc">Remote git URLs or local paths. Data via git (clone, pull, push, fetch) — no APIs.</p>
+          <p class="profile-panel-desc">Add local project paths only. Enter or paste the folder path.</p>
           <form method="post" class="profile-form mb-4" aria-label="Add project">
             <input type="hidden" name="action" value="add_project">
+            <input type="hidden" name="project_type" value="local">
             <div class="profile-form-row">
-              <div class="profile-form-group">
-                <label for="project_type" class="profile-form-label">Type</label>
-                <select class="form-select form-select-sm" id="project_type" name="project_type">
-                  {% if not app_config.get('features', {}).get('disable_add_remote_projects') %}
-                  <option value="remote">Remote (git URL)</option>
-                  {% endif %}
-                  <option value="local">Local path</option>
-                </select>
-              </div>
               <div class="profile-form-group flex-grow-1">
-                <label for="project_url_or_path" class="profile-form-label">URL or path <span class="text-danger">*</span></label>
-                <div class="d-flex gap-1">
-                  <input type="text" class="form-control form-control-sm flex-grow-1" id="project_url_or_path" name="project_url_or_path"
-                         placeholder="https://gitlab.com/... or C:\repos\my-project" required
-                         aria-describedby="project_url_help">
-                  <input type="file" id="project_folder_picker" class="d-none" webkitdirectory multiple
-                         aria-label="Browse for folder">
-                  <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0" id="project_browse_btn"
-                          title="Browse for folder" aria-label="Browse for folder" style="display: none;">
-                    <i class="bi bi-folder2-open" aria-hidden="true"></i>
-                  </button>
-                </div>
-                <div id="project_url_help" class="profile-form-hint">Remote: https://, git@, ssh:// — or local path. Use Browse for local folders.</div>
+                <label for="project_url_or_path" class="profile-form-label">Local path <span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-sm" id="project_url_or_path" name="project_url_or_path"
+                       placeholder="C:\repos\my-project or /home/user/project" required
+                       aria-describedby="project_url_help">
+                <div id="project_url_help" class="profile-form-hint">Enter or paste the folder path (e.g. from File Explorer address bar). Browsers cannot select folders without an upload prompt, so typing the path is required.</div>
               </div>
             </div>
             <div class="profile-form-group">
@@ -250,7 +156,7 @@
             {% endfor %}
           </ul>
           {% else %}
-          <p class="profile-empty">No projects yet. Add a remote git URL or local path above.</p>
+          <p class="profile-empty">No projects yet. Add a local path above.</p>
           {% endif %}
         </div>
       </section>
@@ -261,36 +167,11 @@
 <script>
 (function() {
   const defaultSection = 'section-account';
-  const validHashes = ['section-account', 'section-git', 'section-tokens', 'section-projects'];
+  const validHashes = ['section-account', 'section-projects'];
   document.addEventListener('DOMContentLoaded', function() {
     const hash = (window.location.hash || '').slice(1);
     if (!validHashes.includes(hash)) {
       history.replaceState(null, '', '#' + defaultSection);
-    }
-    // Folder picker for local projects
-    var projectType = document.getElementById('project_type');
-    var pathInput = document.getElementById('project_url_or_path');
-    var browseBtn = document.getElementById('project_browse_btn');
-    var folderPicker = document.getElementById('project_folder_picker');
-    function toggleBrowse() {
-      browseBtn.style.display = (projectType && projectType.value === 'local') ? '' : 'none';
-    }
-    if (projectType) {
-      projectType.addEventListener('change', toggleBrowse);
-      toggleBrowse();
-    }
-    if (browseBtn && folderPicker && pathInput) {
-      browseBtn.addEventListener('click', function() { folderPicker.click(); });
-      folderPicker.addEventListener('change', function() {
-        var files = this.files;
-        if (files && files.length) {
-          var f = files[0];
-          if (f.path && f.path.indexOf('fakepath') < 0) {
-            pathInput.value = f.path.replace(/[/\\][^/\\]*$/, '');
-          }
-        }
-        this.value = '';
-      });
     }
   });
 })();

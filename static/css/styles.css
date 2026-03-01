@@ -726,7 +726,7 @@ main.container {
 }
 
 /* Code-first review: patch upload & GitLab-style diff */
-.diff-viewer { font-family: ui-monospace, monospace; font-size: 0.875rem; }
+.diff-viewer { font-family: Consolas, 'Monaco', 'Menlo', 'Ubuntu Mono', 'Liberation Mono', ui-monospace, monospace; font-size: 0.875rem; }
 .diff-viewer .file-header { background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 6px 6px 0 0; padding: 0.5rem 1rem; }
 .diff-viewer .file-body { border: 1px solid var(--gray-200); border-top: none; border-radius: 0 0 6px 6px; overflow-x: auto; }
 .diff-viewer .diff-line { display: flex; min-height: 1.25em; line-height: 1.25; }
@@ -766,10 +766,10 @@ main.container {
 .bg-gray-50 { background-color: var(--gray-50); }
 .diff-file-block { scroll-margin-top: 1rem; }
 .diff-file-header { font-size: 0.875rem; }
-.diff-file-path code { font-size: 0.8rem; word-break: break-all; background: none; padding: 0; }
-.diff-file-body { font-family: ui-monospace, monospace; font-size: 0.8125rem; line-height: 1.4; }
+.diff-file-path code { font-family: Consolas, 'Monaco', 'Menlo', 'Ubuntu Mono', ui-monospace, monospace; font-size: 0.8125rem; word-break: break-all; background: none; padding: 0; }
+.diff-file-body { font-family: Consolas, 'Monaco', 'Menlo', 'Ubuntu Mono', 'Liberation Mono', ui-monospace, monospace; font-size: 0.875rem; line-height: 1.5; }
 .diff-hunk { border-bottom: 1px solid var(--gray-200); }
-.diff-hunk-header { background: var(--gray-100); color: var(--gray-600); }
+.diff-hunk-header { font-family: Consolas, 'Monaco', 'Menlo', 'Ubuntu Mono', ui-monospace, monospace; background: var(--gray-100); color: var(--gray-600); }
 .diff-line { display: flex; min-height: 1.4em; }
 .diff-line .diff-num { flex-shrink: 0; width: 4ch; text-align: right; padding: 0 0.5rem; color: var(--gray-500); user-select: none; }
 .diff-line .diff-content { flex: 1; padding-left: 0.5rem; white-space: pre; overflow-x: auto; }
@@ -800,12 +800,127 @@ main.container {
 .diff-tree-children { border-left: 1px solid var(--gray-200); margin-left: 0.5rem; padding-left: 0.5rem; }
 .diff-tree-file { font-size: 0.8125rem; }
 .diff-tree-file:hover { background: var(--gray-100); }
-.diff-tree-file-name { font-family: ui-monospace, monospace; }
+.diff-tree-file-name { font-family: Consolas, 'Monaco', 'Menlo', 'Ubuntu Mono', 'Liberation Mono', ui-monospace, monospace; }
 
-/* Patch upload drag-and-drop zone */
-.patch-drop-zone { min-height: 160px; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
-.patch-drop-zone:hover { background: var(--gray-50); }
-.patch-drop-zone.patch-drop-zone--over { background: var(--primary-light); border-color: var(--primary-color) !important; }
+/* Patch page */
+.patch-page .patch-breadcrumb .breadcrumb-item + .breadcrumb-item::before { opacity: 0.5; }
+.patch-header {
+  background: var(--primary-gradient);
+  color: #fff;
+  border: none;
+}
+.patch-source-card {
+  background: var(--gray-50);
+  border-radius: 10px;
+  padding: 1.25rem;
+  border: 1px solid var(--gray-200);
+}
+.patch-step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.patch-step-num {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.patch-step-content { flex: 1; min-width: 0; }
+.patch-mode-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.patch-mode-card {
+  cursor: pointer;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 2px solid var(--gray-200);
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.patch-mode-card:hover { border-color: var(--gray-300); }
+.patch-mode-card.active {
+  border-color: var(--primary-color);
+  background: var(--primary-light);
+  box-shadow: 0 0 0 1px var(--primary-color);
+}
+.patch-mode-card input { position: absolute; opacity: 0; pointer-events: none; }
+.patch-mode-icon {
+  font-size: 1.5rem;
+  color: var(--primary-color);
+  margin-bottom: 0.25rem;
+}
+.patch-mode-card.active .patch-mode-icon { color: var(--primary-color); }
+.patch-mode-label { font-weight: 600; font-size: 0.9rem; }
+.patch-mode-desc { font-size: 0.75rem; color: var(--gray-600); margin-top: 0.125rem; }
+.patch-mode-fields { transition: opacity 0.2s; }
+.patch-result-panel {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.25rem;
+  border: 1px solid var(--gray-200);
+}
+.patch-status {
+  min-height: 2.5rem;
+}
+.patch-status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+.patch-status-ready { color: var(--gray-800); }
+.patch-status-error { color: var(--danger-color); }
+.patch-upload-section .form-text { margin-bottom: 0.5rem; }
+.patch-drop-zone {
+  min-height: 120px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  border: 2px dashed var(--gray-300);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  position: relative;
+}
+.patch-drop-zone:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-400);
+}
+.patch-drop-zone.patch-drop-zone--over {
+  background: var(--primary-light);
+  border-color: var(--primary-color);
+}
+.patch-drop-zone #patch-drop-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--gray-600);
+}
+.patch-drop-zone #patch-drop-text i { font-size: 2rem; }
+.patch-file-name { font-weight: 600; font-size: 0.875rem; }
+.patch-actions .btn { font-size: 0.875rem; }
+@media (max-width: 575px) {
+  .patch-mode-cards { grid-template-columns: 1fr; }
+}
 
 /* Profile page */
 .profile-page .breadcrumb { font-size: 0.8125rem; color: var(--gray-500); }
@@ -824,8 +939,6 @@ main.container {
 .profile-sidebar-link:hover { color: var(--primary-color); background: var(--gray-50); }
 .profile-sidebar-link:focus { color: var(--primary-color); }
 .profile-page:has(#section-account:target) a[href="#section-account"],
-.profile-page:has(#section-git:target) a[href="#section-git"],
-.profile-page:has(#section-tokens:target) a[href="#section-tokens"],
 .profile-page:has(#section-projects:target) a[href="#section-projects"] { color: var(--primary-color); background: var(--primary-light); font-weight: 500; }
 @media (min-width: 992px) {
   .profile-sidebar { position: sticky; top: 1rem; }

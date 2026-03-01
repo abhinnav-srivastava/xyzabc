@@ -664,22 +664,21 @@ def create_app() -> Flask:
             elif action == "add_project":
                 name = request.form.get("project_name", "").strip()
                 url_or_path = request.form.get("project_url_or_path", "").strip()
-                project_type = request.form.get("project_type", "remote").strip()
                 is_remote_url = url_or_path.startswith(("https://", "http://", "git@", "ssh://"))
-                if app_config.get("features", {}).get("disable_add_remote_projects") and (project_type == "remote" or is_remote_url):
+                if is_remote_url:
                     from flask import flash
-                    flash("Adding remote projects is temporarily disabled.", "warning")
+                    flash("Only local paths are supported. Remote git URLs are not allowed.", "warning")
                 elif url_or_path:
-                    proj = add_user_project(current_user_id, name, url_or_path, project_type)
+                    proj = add_user_project(current_user_id, name, url_or_path, "local")
                     if proj:
                         from flask import flash
                         flash(f"Project '{proj.get('name', '')}' added.", "success")
                     else:
                         from flask import flash
-                        flash("Invalid project. Provide a remote git URL or local path.", "warning")
+                        flash("Invalid project. Provide a valid local path.", "warning")
                 else:
                     from flask import flash
-                    flash("Please enter a remote git URL or local path.", "warning")
+                    flash("Please enter a local path.", "warning")
             elif action == "remove_project":
                 project_id = request.form.get("project_id", "").strip()
                 if project_id and remove_user_project(current_user_id, project_id):
@@ -1084,7 +1083,7 @@ def create_app() -> Flask:
         """Step 2: Upload patch (or skip). Requires session from POST /start."""
         if request.method == "POST":
             # Update MR/Commit details from form (both parse and skip paths)
-            patch_mode = request.form.get("patch_mode", "commit").strip() or "commit"
+            patch_mode = request.form.get("patch_mode", "mr").strip() or "mr"
             mr_link = request.form.get("mr_link", "").strip()
             source_branch = request.form.get("source_branch", "").strip()
             target_branch = request.form.get("target_branch", "").strip()
@@ -1862,7 +1861,7 @@ def create_app() -> Flask:
             if proj_type != "local":
                 return {"status": "success", "branches": [], "message": "Branch fetch only for local projects"}, 200
             path = Path(url_or_path)
-            branches = get_branches(path, include_remote=True)
+            branches = get_branches(path, include_remote=False)
             return {"status": "success", "branches": branches}, 200
         except Exception as e:
             return {"status": "error", "message": str(e)}, 500
