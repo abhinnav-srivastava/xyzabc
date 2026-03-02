@@ -5,7 +5,8 @@ Quick setup for a new development machine.
 > **Restore app name:** Pass `-Name "YourApp"` to setup: `.\scripts\setup-dev.ps1 -Name "YourApp"` or `./scripts/setup-dev.sh --name "YourApp"`  
 > **Electron build:** Add `-Build` (PowerShell) or `--build` (bash) to run `npm run build:win` after setup.  
 > **Venv:** Add `-Venv` (PowerShell) or `--venv` (bash) to create `.venv` and install deps there.  
-> **Interactive mode:** Run without args — script prompts for proxy, app name, venv, and build. Pass args/env to skip prompts.
+> **Interactive mode:** Run without args — script prompts for proxy, app name, venv, and build. Pass args/env to skip prompts.  
+> **Resilience:** Each step continues even if the previous one fails; setup completes with warnings for failed steps.
 
 ## Option 1: Docker (web only)
 
@@ -56,12 +57,15 @@ REM Prompts for proxy, app name, venv, build (or use env vars)
 
 If you used `--venv` / `-Venv`, activate it first: `source .venv/bin/activate` (bash) or `.\.venv\Scripts\Activate.ps1` (PowerShell).
 
+The setup script runs **checklist migration** (Excel → Markdown) automatically. If it fails, run `python scripts/py/auto_update_checklists.py` manually.
+
 | Command | Description |
 |---------|-------------|
 | `python app.py --dev-server` | Web dev (Flask debug) |
 | `python app.py` | Web prod (Waitress) |
 | `npm start` | Electron desktop app |
 | `npm run build:win` | Build portable Windows exe |
+| `npm run build:win:pyonly` | Build PyInstaller exe only (skip Electron) |
 
 ## Optional: metrics tools
 

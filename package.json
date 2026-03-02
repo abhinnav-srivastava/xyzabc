@@ -7,6 +7,7 @@
     "start": "npx electron .",
     "generate-icon": "node scripts/generate-icon.js",
     "build:win": "node scripts/build-electron-win.js",
+    "build:win:pyonly": "node scripts/build-electron-win.js --skip-electron",
     "pack:win": "electron-builder --win --dir",
     "dist:win": "electron-builder --win"
   },

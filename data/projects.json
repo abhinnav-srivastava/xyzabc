@@ -1,29 +1,19 @@
 {
   "Abhj": [
     {
-      "id": "46db5098-cf3b-43b3-8290-5e0d48947bf4",
-      "name": "Context",
-      "type": "local",
-      "url_or_path": "C:\\workspace\\sources\\context"
-    },
-    {
-      "id": "84ec1294-bced-45ce-930b-ad1803c7c440",
-      "name": "codelens",
-      "type": "local",
-      "url_or_path": "C:\\workspace\\sources\\codelens"
-    },
-    {
-      "id": "07b87512-25a5-4264-be30-555280ab6114",
-      "name": "xyz",
-      "type": "remote",
-      "url_or_path": "https://github.com/abhinnav-srivastava/xyzabc"
-    },
-    {
-      "id": "7ba4574e-184d-4828-af4c-5c0ba2195668",
+      "id": "15cd3e2e-363d-4399-a91f-f19fdddf2571",
       "name": "critique_backup",
       "type": "local",
       "url_or_path": "C:\\workspace\\sources\\critique_backup"
     }
   ],
-  "test_u": []
+  "test_u": [],
+  "abhinnav.srivastava@gmail.com": [
+    {
+      "id": "63c9570b-09f4-4b7f-8db3-fbb3b07c4673",
+      "name": "critique_backup",
+      "type": "local",
+      "url_or_path": "C:\\workspace\\sources\\critique_backup"
+    }
+  ]
 }

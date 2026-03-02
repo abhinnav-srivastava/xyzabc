@@ -5,7 +5,8 @@
 # With auth (no encoding needed): ./scripts/setup-dev.sh --proxy http://proxy:8080 --proxy-user user --proxy-pass 'sr!n@v9914'
 # Env: PIP_PROXY, PIP_PROXY_USER, PIP_PROXY_PASS, APP_NAME
 
-set -e
+# Do not exit on failure; each step continues even if previous failed
+set +e
 
 PIP_PROXY="${PIP_PROXY:-}"
 PIP_PROXY_USER="${PIP_PROXY_USER:-}"
@@ -88,7 +89,7 @@ if [[ -n "$APP_NAME" ]]; then
   echo ""
 fi
 
-# Python
+# Python (hard requirement - exit if missing)
 echo "--- Python ---"
 if command -v python3 &>/dev/null; then
   PYTHON_CMD="python3"
@@ -122,10 +123,22 @@ echo "Installing Python dependencies..."
 PIP_EXTRA="-q"
 [[ "$VENV" != "true" ]] && [[ -z "${VIRTUAL_ENV:-}" ]] && PIP_EXTRA="--user -q"
 [[ -n "$PIP_PROXY" ]] && PIP_EXTRA="$PIP_EXTRA --proxy $PIP_PROXY"
-$PYTHON_CMD -m pip install --upgrade pip $PIP_EXTRA
-$PYTHON_CMD -m pip install -r requirements.txt $PIP_EXTRA
-echo "  OK"
+$PYTHON_CMD -m pip install --upgrade pip $PIP_EXTRA || echo "  pip upgrade failed (continuing)"
+$PYTHON_CMD -m pip install -r requirements.txt $PIP_EXTRA && echo "  OK" || echo "  pip install failed (continuing)"
 [[ "$VENV" == "true" ]] && echo "Activate venv: source .venv/bin/activate"
+echo ""
+
+# Checklist migration (Excel -> Markdown)
+echo "--- Checklist migration (Excel -> Markdown) ---"
+if [[ -f "scripts/py/auto_update_checklists.py" ]]; then
+  if $PYTHON_CMD scripts/py/auto_update_checklists.py; then
+    echo "  OK"
+  else
+    echo "  Checklist migration failed (continuing). Run: python scripts/py/auto_update_checklists.py"
+  fi
+else
+  echo "  auto_update_checklists.py not found, skipping"
+fi
 echo ""
 
 # Node (for Electron)
@@ -135,8 +148,7 @@ if command -v node &>/dev/null; then
   if [ "$NODE_VER" -ge 18 ] 2>/dev/null; then
     echo "Node $(node -v) found"
     echo "Installing npm dependencies..."
-    npm install --silent
-    echo "  OK"
+    npm install --silent && echo "  OK" || echo "  npm install failed (continuing)"
   else
     echo "Node 18+ recommended for Electron. Current: $(node -v)"
     echo "Skipping npm install. Run 'npm install' when ready."
@@ -152,12 +164,17 @@ mkdir -p data
 echo "Data dir: $PROJECT_ROOT/data"
 echo ""
 
-# Electron build (if --build passed)
+# Electron build (if --build passed) - resilient: setup completes even if build fails
 if $BUILD; then
   echo "--- Electron build (build:win) ---"
   if command -v node &>/dev/null; then
-    npm run build:win
-    echo "  OK"
+    if npm run build:win; then
+      echo "  OK"
+    else
+      echo "  Electron build failed (setup continues)"
+      echo "  Run 'npm run build:win' manually later. Or 'npm run build:win:pyonly' for PyInstaller-only."
+      echo "  Common causes: Python 3.9+, npm install, proxy/network, disk space."
+    fi
   else
     echo "Node.js required for build. Skipping."
   fi

@@ -8,7 +8,7 @@
         "architect",
         "fo"
       ],
-      "last_used": "2026-03-01T20:10:58.149255"
+      "last_used": "2026-03-02T23:53:57.226557"
     },
     "Abhj": {
       "user_id": "Abhj",
@@ -17,11 +17,13 @@
       "preferred_roles": [
         "architect",
         "fo",
-        "self"
+        "peer",
+        "self",
+        "techlead"
       ],
-      "last_used": "2026-03-01T20:51:40.024737"
+      "last_used": "2026-03-01T21:40:01.164201"
     }
   },
   "last_used_name": "Abhinav Srivastava",
-  "last_used_user_id": "Abhj"
+  "last_used_user_id": "abhinnav.srivastava@gmail.com"
 }

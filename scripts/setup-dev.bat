@@ -47,6 +47,7 @@ REM Restore app name (call PowerShell script)
 if not "%APP_NAME%"=="" (
   echo --- Restore app name ---
   powershell -ExecutionPolicy Bypass -File "%~dp0restore-name.ps1" -Name "%APP_NAME%"
+  if errorlevel 1 echo   Restore app name failed (continuing)
   echo.
 )
 
@@ -72,7 +73,7 @@ if defined VENV (
   if not exist ".venv" (
     echo Creating venv at .venv...
     %PYTHON_CMD% -m venv .venv
-    echo   Created
+    if errorlevel 1 (echo   Venv creation failed - continuing) else (echo   Created)
   ) else (
     echo Venv .venv exists
   )
@@ -85,9 +86,24 @@ set "PIP_EXTRA=-q"
 if not defined VENV if "%VIRTUAL_ENV%"=="" set "PIP_EXTRA=--user -q"
 if defined PIP_PROXY set "PIP_EXTRA=!PIP_EXTRA! --proxy %PIP_PROXY%"
 "%PYTHON_CMD%" -m pip install --upgrade pip %PIP_EXTRA%
+if errorlevel 1 echo   pip upgrade failed (continuing)
 "%PYTHON_CMD%" -m pip install -r requirements.txt %PIP_EXTRA%
-echo   OK
+if errorlevel 1 (echo   pip install failed - continuing) else (echo   OK)
 if defined VENV echo Activate venv: .venv\Scripts\activate.bat
+echo.
+
+REM Checklist migration (Excel -> Markdown)
+echo --- Checklist migration (Excel -^> Markdown) ---
+if exist "scripts\py\auto_update_checklists.py" (
+  "%PYTHON_CMD%" scripts\py\auto_update_checklists.py
+  if errorlevel 1 (
+    echo   Checklist migration failed (continuing). Run: python scripts/py/auto_update_checklists.py
+  ) else (
+    echo   OK
+  )
+) else (
+  echo   auto_update_checklists.py not found, skipping
+)
 echo.
 
 REM Node
@@ -99,7 +115,7 @@ if %errorlevel% equ 0 (
     echo Node found
     echo Installing npm dependencies...
     call npm install --silent
-    echo   OK
+    if errorlevel 1 (echo   npm install failed - continuing) else (echo   OK)
   ) else (
     echo Node 18+ recommended. Current: node -v
     echo Skipping npm install. Run 'npm install' when ready.
@@ -115,13 +131,19 @@ if not exist "data" mkdir data
 echo Data dir: %PROJECT_ROOT%\data
 echo.
 
-REM Electron build
+REM Electron build (resilient: setup completes even if build fails)
 if defined BUILD (
   echo --- Electron build (build:win) ---
   where node >nul 2>&1
   if %errorlevel% equ 0 (
     call npm run build:win
-    echo   OK
+    if errorlevel 1 (
+      echo   Electron build failed - setup continues
+      echo   Run "npm run build:win" manually later. Or "npm run build:win:pyonly" for PyInstaller-only.
+      echo   Common causes: Python 3.9+, npm install, proxy/network, disk space.
+    ) else (
+      echo   OK
+    )
   ) else (
     echo Node.js required for build. Skipping.
   )

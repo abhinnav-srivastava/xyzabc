@@ -44,6 +44,17 @@ $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $ProjectRoot
 
+# Helper: run a block; on failure log and continue (do not exit)
+function Invoke-Step {
+    param([string]$Name, [scriptblock]$Block)
+    try {
+        & $Block
+    } catch {
+        Write-Host "  $Name failed (continuing)" -ForegroundColor Yellow
+        Write-Host "  $_" -ForegroundColor Gray
+    }
+}
+
 Write-Host "=== CodeReview Dev Setup ===" -ForegroundColor Cyan
 Write-Host "Project root: $ProjectRoot"
 if ($Proxy) {
@@ -58,20 +69,22 @@ Write-Host ""
 # Restore app name (if -Name passed)
 if ($Name) {
     Write-Host "--- Restore app name ---" -ForegroundColor Yellow
-    $Id = ($Name -replace '\s', '').ToLower()
-    $count = 0
-    Get-ChildItem -Path $ProjectRoot -Recurse -File -Include *.py,*.js,*.json,*.html,*.md,*.yml,*.sh,*.ps1,*.bat,*.spec -ErrorAction SilentlyContinue |
-        Where-Object { $_.FullName -notmatch '\\node_modules\\|\\\.git\\|\\dist|\\build' } | ForEach-Object {
-        $content = Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue
-        if ($content -and ($content -match 'CodeReview|codereview')) {
-            $newContent = $content -replace 'CodeReview', $Name -replace 'codereview', $Id
-            if ($newContent -ne $content) {
-                Set-Content $_.FullName -Value $newContent -NoNewline
-                $count++
+    Invoke-Step "Restore app name" {
+        $Id = ($Name -replace '\s', '').ToLower()
+        $count = 0
+        Get-ChildItem -Path $ProjectRoot -Recurse -File -Include *.py,*.js,*.json,*.html,*.md,*.yml,*.sh,*.ps1,*.bat,*.spec -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '\\node_modules\\|\\\.git\\|\\dist|\\build' } | ForEach-Object {
+            $content = Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue
+            if ($content -and ($content -match 'CodeReview|codereview')) {
+                $newContent = $content -replace 'CodeReview', $Name -replace 'codereview', $Id
+                if ($newContent -ne $content) {
+                    Set-Content $_.FullName -Value $newContent -NoNewline
+                    $count++
+                }
             }
         }
-    }
-    Write-Host "  Updated $count files" -ForegroundColor Green
+        Write-Host "  Updated $count files" -ForegroundColor Green
+    } | Out-Null
     Write-Host ""
 }
 
@@ -89,15 +102,19 @@ if (-not $pythonCmd) {
     exit 1
 }
 
-Invoke-Expression "$pythonCmd --version"
+Invoke-Expression "$pythonCmd --version" 2>&1 | Out-Null
 
 # Create venv if -Venv passed
 if ($Venv) {
     $venvPath = Join-Path $ProjectRoot ".venv"
     if (-not (Test-Path $venvPath)) {
         Write-Host "Creating venv at .venv..."
-        Invoke-Expression "$pythonCmd -m venv `"$venvPath`""
-        Write-Host "  Created" -ForegroundColor Green
+        try {
+            Invoke-Expression "$pythonCmd -m venv `"$venvPath`""
+            Write-Host "  Created" -ForegroundColor Green
+        } catch {
+            Write-Host "  Venv creation failed (continuing)" -ForegroundColor Yellow
+        }
     } else {
         Write-Host "Venv .venv exists"
     }
@@ -108,11 +125,34 @@ Write-Host "Installing Python dependencies..."
 $pipArgs = "-q"
 if (-not $Venv -and -not $env:VIRTUAL_ENV) { $pipArgs = "--user -q" }
 if ($Proxy) { $pipArgs = "$pipArgs --proxy '$Proxy'" }
-Invoke-Expression "& `"$pythonCmd`" -m pip install --upgrade pip $pipArgs"
-Invoke-Expression "& `"$pythonCmd`" -m pip install -r requirements.txt $pipArgs"
-Write-Host "  OK" -ForegroundColor Green
+try {
+    Invoke-Expression "$pythonCmd -m pip install --upgrade pip $pipArgs"
+    Invoke-Expression "$pythonCmd -m pip install -r requirements.txt $pipArgs"
+    if ($LASTEXITCODE -eq 0) { Write-Host "  OK" -ForegroundColor Green } else { Write-Host "  pip install failed (continuing)" -ForegroundColor Yellow }
+} catch {
+    Write-Host "  pip install failed (continuing). Run: pip install -r requirements.txt" -ForegroundColor Yellow
+}
 if ($Venv) {
     Write-Host "Activate venv: .\.venv\Scripts\Activate.ps1" -ForegroundColor Cyan
+}
+Write-Host ""
+
+# Checklist migration (Excel -> Markdown)
+Write-Host "--- Checklist migration (Excel -> Markdown) ---" -ForegroundColor Yellow
+$migrateScript = Join-Path $ProjectRoot "scripts\py\auto_update_checklists.py"
+if (Test-Path $migrateScript) {
+    try {
+        Invoke-Expression "$pythonCmd `"$migrateScript`""
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  OK" -ForegroundColor Green
+        } else {
+            Write-Host "  Checklist migration failed (continuing). Run: python scripts/py/auto_update_checklists.py" -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "  Checklist migration failed (continuing)" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "  auto_update_checklists.py not found, skipping" -ForegroundColor Gray
 }
 Write-Host ""
 
@@ -123,8 +163,8 @@ if (Get-Command node -ErrorAction SilentlyContinue) {
     if ([int]$nodeVer -ge 18) {
         Write-Host "Node $(node -v) found"
         Write-Host "Installing npm dependencies..."
-        npm install --silent
-        Write-Host "  OK" -ForegroundColor Green
+        npm install --silent 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) { Write-Host "  OK" -ForegroundColor Green } else { Write-Host "  npm install failed (continuing)" -ForegroundColor Yellow }
     } else {
         Write-Host "Node 18+ recommended for Electron. Current: $(node -v)"
         Write-Host "Skipping npm install. Run 'npm install' when ready."
@@ -136,18 +176,26 @@ if (Get-Command node -ErrorAction SilentlyContinue) {
 Write-Host ""
 
 # Data dir
-if (-not (Test-Path data)) { New-Item -ItemType Directory -Path data | Out-Null }
+if (-not (Test-Path data)) { New-Item -ItemType Directory -Path data -ErrorAction SilentlyContinue | Out-Null }
 Write-Host "Data dir: $ProjectRoot\data"
 Write-Host ""
 
-# Electron build (if -Build passed)
+# Electron build (if -Build passed) - resilient: setup completes even if build fails
 if ($Build) {
     Write-Host "--- Electron build (build:win) ---" -ForegroundColor Yellow
     if (Get-Command node -ErrorAction SilentlyContinue) {
+        # npm does not throw; check $LASTEXITCODE explicitly
         npm run build:win
-        Write-Host "  OK" -ForegroundColor Green
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "  Electron build failed (setup continues)" -ForegroundColor Yellow
+            Write-Host "  Run 'npm run build:win' manually later." -ForegroundColor Gray
+            Write-Host "  Or 'npm run build:win:pyonly' to build just the PyInstaller exe (skip Electron)." -ForegroundColor Gray
+            Write-Host "  Common causes: Python 3.9+, npm install, proxy/network, disk space." -ForegroundColor Gray
+        } else {
+            Write-Host "  OK" -ForegroundColor Green
+        }
     } else {
-        Write-Host "Node.js required for build. Skipping." -ForegroundColor Red
+        Write-Host "Node.js required for build. Skipping." -ForegroundColor Yellow
     }
     Write-Host ""
 }

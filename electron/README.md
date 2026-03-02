@@ -35,3 +35,9 @@ This will:
 2. Run **electron-builder** to package it as a Windows app
 
 Output: `dist-electron/` — installer (NSIS) and portable exe. **No Python required** on the target machine.
+
+### If Electron build fails (network, proxy, etc.)
+
+- **Retries:** The script retries electron-builder up to 3 times.
+- **PyInstaller-only:** `npm run build:win:pyonly` — builds `dist/CodeReview.exe` only (skip Electron).
+- **Proxy:** Set `HTTPS_PROXY` and `HTTP_PROXY` if behind a firewall.
