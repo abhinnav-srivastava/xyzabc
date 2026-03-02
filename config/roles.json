@@ -5,22 +5,34 @@
       "name": "Architect",
       "categories": [
         {
-          "id": "architect_consolidated",
-          "name": "Architect Review",
+          "id": "architecture",
+          "name": "Architecture",
           "type": "markdown",
-          "path": "checklists\\markdown\\architect\\architect_consolidated.md"
+          "path": "checklists/markdown/architect/architecture.md"
         }
       ]
     },
     {
       "id": "fo",
-      "name": "FeatureOwner",
+      "name": "Fo",
       "categories": [
         {
-          "id": "fo_consolidated",
-          "name": "Fo Review",
+          "id": "ops",
+          "name": "Ops",
           "type": "markdown",
-          "path": "checklists\\markdown\\fo\\fo_consolidated.md"
+          "path": "checklists/markdown/fo/ops.md"
+        }
+      ]
+    },
+    {
+      "id": "guidelines",
+      "name": "Guidelines",
+      "categories": [
+        {
+          "id": "android_coding_guidelines",
+          "name": "Android Coding Guidelines",
+          "type": "markdown",
+          "path": "checklists/markdown/guidelines/android_coding_guidelines.md"
         }
       ]
     },
@@ -29,22 +41,52 @@
       "name": "Peer",
       "categories": [
         {
-          "id": "peer_consolidated",
-          "name": "Peer Review",
+          "id": "code_review",
+          "name": "Code Review",
           "type": "markdown",
-          "path": "checklists\\markdown\\peer\\peer_consolidated.md"
+          "path": "checklists/markdown/peer/code_review.md"
+        },
+        {
+          "id": "functionality",
+          "name": "Functionality",
+          "type": "markdown",
+          "path": "checklists/markdown/peer/functionality.md"
+        },
+        {
+          "id": "style",
+          "name": "Style",
+          "type": "markdown",
+          "path": "checklists/markdown/peer/style.md"
         }
       ]
     },
     {
       "id": "self",
-      "name": "Developer Review",
+      "name": "Self",
       "categories": [
         {
-          "id": "self_consolidated",
-          "name": "Self Review",
+          "id": "code_correctness",
+          "name": "Code Correctness",
           "type": "markdown",
-          "path": "checklists\\markdown\\self\\self_consolidated.md"
+          "path": "checklists/markdown/self/code_correctness.md"
+        },
+        {
+          "id": "correctness",
+          "name": "Correctness",
+          "type": "markdown",
+          "path": "checklists/markdown/self/correctness.md"
+        },
+        {
+          "id": "readability",
+          "name": "Readability",
+          "type": "markdown",
+          "path": "checklists/markdown/self/readability.md"
+        },
+        {
+          "id": "tests",
+          "name": "Tests",
+          "type": "markdown",
+          "path": "checklists/markdown/self/tests.md"
         }
       ]
     },
@@ -53,10 +95,16 @@
       "name": "Techlead",
       "categories": [
         {
-          "id": "techlead_consolidated",
-          "name": "Techlead Review",
+          "id": "architecture",
+          "name": "Architecture",
           "type": "markdown",
-          "path": "checklists\\markdown\\techlead\\techlead_consolidated.md"
+          "path": "checklists/markdown/techlead/architecture.md"
+        },
+        {
+          "id": "design",
+          "name": "Design",
+          "type": "markdown",
+          "path": "checklists/markdown/techlead/design.md"
         }
       ]
     }

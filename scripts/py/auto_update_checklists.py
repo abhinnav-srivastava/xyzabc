@@ -1,4 +1,3 @@
-\
 """
 Auto-update script for checklists
 Converts Excel files to markdown and updates roles.json automatically
@@ -7,13 +6,17 @@ Converts Excel files to markdown and updates roles.json automatically
 import os
 import sys
 import json
-import pandas as pd
 from pathlib import Path
 from typing import Dict, List, Any
-import shutil
 
-\
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+# Add project root for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+try:
+    import pandas as pd
+    import openpyxl  # noqa: F401
+except ImportError:
+    pd = None
 
 def get_project_root():
     """Get the project root directory"""
@@ -22,23 +25,17 @@ def get_project_root():
 def convert_excel_to_markdown_dynamic(excel_file: str, markdown_file: str) -> bool:
     """Convert Excel file to markdown format with dynamic column detection"""
     try:
-        \
         df = pd.read_excel(excel_file)
 
-        \
         markdown_content = f"# {Path(markdown_file).stem.replace('_', ' ').title()}\n\n"
 
-        \
         available_columns = df.columns.tolist()
 
-        \
         if 'Guidelines Description' in available_columns:
-            \
             current_category = None
             current_subcategory = None
 
             for _, row in df.iterrows():
-                \
                 if pd.notna(row.get('Main Category', '')) and row['Main Category'] != current_category:
                     current_category = row['Main Category']
                     current_subcategory = None
@@ -53,7 +50,6 @@ def convert_excel_to_markdown_dynamic(excel_file: str, markdown_file: str) -> bo
                     description = row['Guidelines Description']
                     severity = row.get('Severity (MUST/GOOD/MAY)', '')
 
-                    \
                     if rule_id:
                         markdown_content += f"**{rule_id}**"
                         if severity:
@@ -79,12 +75,10 @@ def convert_excel_to_markdown_dynamic(excel_file: str, markdown_file: str) -> bo
                     markdown_content += "\n"
 
         elif 'Category' in available_columns and 'SubCategory' in available_columns:
-            \
             current_category = None
             current_subcategory = None
 
             for _, row in df.iterrows():
-                \
                 if pd.notna(row.get('Category', '')) and row['Category'] != current_category:
                     current_category = row['Category']
                     current_subcategory = None
@@ -98,7 +92,6 @@ def convert_excel_to_markdown_dynamic(excel_file: str, markdown_file: str) -> bo
                     item_text = row['Description']
                     severity = row.get('Severity', 'good').lower()
 
-                    \
                     if severity == 'must':
                         bullet = "- **MUST:** "
                     elif severity == 'good':
@@ -123,7 +116,6 @@ def convert_excel_to_markdown_dynamic(excel_file: str, markdown_file: str) -> bo
                     markdown_content += "\n"
 
         elif 'Category' in available_columns:
-            \
             categories = df['Category'].dropna().unique()
 
             for category in categories:
@@ -148,7 +140,6 @@ def convert_excel_to_markdown_dynamic(excel_file: str, markdown_file: str) -> bo
 
                             markdown_content += f"{bullet}{item_text}\n"
 
-                            \
                             if pd.notna(row.get('How to Measure', '')):
                                 markdown_content += f"  - **How to Measure:** {row['How to Measure']}\n"
 
@@ -160,13 +151,11 @@ def convert_excel_to_markdown_dynamic(excel_file: str, markdown_file: str) -> bo
 
                             markdown_content += "\n"
         else:
-            \
             for _, row in df.iterrows():
                 if pd.notna(row.get('Description', '')):
                     item_text = row['Description']
                     severity = row.get('Severity', 'good').lower()
 
-                    \
                     if severity == 'must':
                         bullet = "- **MUST:** "
                     elif severity == 'good':
@@ -192,7 +181,6 @@ def convert_excel_to_markdown_dynamic(excel_file: str, markdown_file: str) -> bo
 
         os.makedirs(os.path.dirname(markdown_file), exist_ok=True)
 
-        \
         with open(markdown_file, 'w', encoding='utf-8') as f:
             f.write(markdown_content)
 
@@ -205,7 +193,6 @@ def convert_excel_to_markdown_dynamic(excel_file: str, markdown_file: str) -> bo
 
 def convert_excel_to_markdown(excel_file: str, markdown_file: str) -> bool:
     """Convert Excel file to markdown format (legacy function for compatibility)"""
-    \
     return convert_excel_to_markdown_dynamic(excel_file, markdown_file)
 
 def convert_all_excel_files() -> bool:
@@ -214,10 +201,13 @@ def convert_all_excel_files() -> bool:
     excel_dir = os.path.join(project_root, "checklists", "excel")
     markdown_dir = os.path.join(project_root, "checklists", "markdown")
 
+    if not os.path.isdir(excel_dir):
+        print(f"No checklists/excel directory - nothing to migrate (OK)")
+        return True
+
     success_count = 0
     total_count = 0
 
-    \
     for root, dirs, files in os.walk(excel_dir):
         for file in files:
             if file.endswith('.xlsx'):
@@ -236,6 +226,9 @@ def convert_all_excel_files() -> bool:
                 if convert_excel_to_markdown(excel_path, markdown_path):
                     success_count += 1
 
+    if total_count == 0:
+        print("No Excel files in checklists/excel - nothing to migrate (OK)")
+        return True
     print(f"Conversion Summary: {success_count}/{total_count} files converted successfully")
     return success_count == total_count
 
@@ -244,12 +237,15 @@ def update_roles_json() -> bool:
     try:
         project_root = get_project_root()
         roles_path = os.path.join(project_root, "config", "roles.json")
+        excel_dir = os.path.join(project_root, "checklists", "excel")
 
-        \
+        if not os.path.isdir(excel_dir):
+            print("No checklists/excel - skipping roles.json update (OK)")
+            return True
+
         with open(roles_path, 'r', encoding='utf-8') as f:
             roles_config = json.load(f)
 
-        excel_dir = os.path.join(project_root, "checklists", "excel")
         roles = []
 
         for role_dir in os.listdir(excel_dir):
@@ -257,10 +253,8 @@ def update_roles_json() -> bool:
             if os.path.isdir(role_path):
                 categories = []
 
-                \
                 for file in os.listdir(role_path):
                     if file.endswith('.xlsx'):
-                        \
                         category_name = file.replace('.xlsx', '').replace('_', ' ').title()
                         category_id = file.replace('.xlsx', '').lower().replace(' ', '_')
 
@@ -280,7 +274,6 @@ def update_roles_json() -> bool:
 
         roles_config['roles'] = roles
 
-        \
         with open(roles_path, 'w', encoding='utf-8') as f:
             json.dump(roles_config, f, indent=2, ensure_ascii=False)
 
@@ -294,13 +287,16 @@ def update_roles_json() -> bool:
 def main():
     """Main function"""
     try:
+        if pd is None:
+            print("ERROR: pandas and openpyxl required for checklist migration.")
+            print("  Run: pip install pandas openpyxl")
+            return False
+
         print("Starting auto-update process...")
 
-        \
         print("\nStep 1: Converting Excel files to markdown...")
         convert_success = convert_all_excel_files()
 
-        \
         print("\nStep 2: Updating roles.json...")
         roles_success = update_roles_json()
 
