@@ -550,6 +550,16 @@ def parse_patch(content: str) -> Tuple[List[FileDiff], Dict[str, Any]]:
     test_file_list = summary["test_files"]
     summary["test_cases_added_count"] = sum(len(t.get("test_cases_added") or []) for t in test_file_list)
     summary["test_cases_removed_count"] = sum(len(t.get("test_cases_removed") or []) for t in test_file_list)
+    # Top changed files (by total lines changed) for at-a-glance summary
+    path_to_index = {f.new_path: i for i, f in enumerate(files)}
+    all_with_changes = [
+        {"path": f.new_path, "added": f.lines_added, "deleted": f.lines_deleted, "total": f.lines_added + f.lines_deleted}
+        for f in files
+    ]
+    top_sorted = sorted(all_with_changes, key=lambda x: x["total"], reverse=True)[:10]
+    for item in top_sorted:
+        item["file_index"] = path_to_index.get(item["path"], 0)
+    summary["top_changed_files"] = top_sorted
     cloc_result = _run_cloc_on_files(files)
     if cloc_result:
         summary["cloc"] = cloc_result

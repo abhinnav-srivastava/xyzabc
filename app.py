@@ -1242,6 +1242,24 @@ def create_app() -> Flask:
                 return redirect(url_for("upload_patch"))
         return render_template("upload_patch.html")
 
+    def _ensure_top_changed_files(patch_data: dict, summary: dict) -> dict:
+        """Add top_changed_files to summary when missing (backward compat for older stored patches)."""
+        if "top_changed_files" in summary or not patch_data:
+            return summary
+        files = patch_data.get("files", [])
+        if not files:
+            return summary
+        with_changes = []
+        for i, f in enumerate(files):
+            add = f.get("lines_added", 0) or 0
+            del_ = f.get("lines_deleted", 0) or 0
+            path = f.get("new_path", "") or f.get("old_path", "")
+            with_changes.append({"path": path, "added": add, "deleted": del_, "total": add + del_, "file_index": i})
+        top = sorted(with_changes, key=lambda x: x["total"], reverse=True)[:10]
+        summary = dict(summary)
+        summary["top_changed_files"] = top
+        return summary
+
     @app.route("/patch-summary")
     def patch_summary():
         """Patch analysis & summary. In review flow: allow no patch (then show Continue to checklist)."""
@@ -1251,10 +1269,11 @@ def create_app() -> Flask:
         if not in_review_flow and not patch_data:
             return redirect(url_for("upload_patch"))
         if not in_review_flow and patch_data:
-            summary = patch_data.get("summary", {})
+            summary = _ensure_top_changed_files(patch_data, patch_data.get("summary", {}))
             return render_template("patch_summary.html", summary=summary, in_review_flow=False, has_patch=True)
         if in_review_flow:
             summary = (patch_data or {}).get("summary", {}) if patch_data else {}
+            summary = _ensure_top_changed_files(patch_data or {}, summary)
             return render_template(
                 "patch_summary.html",
                 summary=summary,

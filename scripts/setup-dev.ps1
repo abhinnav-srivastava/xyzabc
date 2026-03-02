@@ -102,21 +102,24 @@ if ($Name) {
     Write-Host ""
 }
 
-# Python
+# Python - resolve to executable path for reliable invocation (paths with spaces/parentheses)
 Write-Host "--- Python ---" -ForegroundColor Yellow
 $pythonCmd = $null
 if (Get-Command python -ErrorAction SilentlyContinue) {
-    $pythonCmd = "python"
+    $pythonCmd = (Get-Command python).Source
 } elseif (Get-Command py -ErrorAction SilentlyContinue) {
-    $pythonCmd = "py -3"
+    $pyExe = (py -3 -c "import sys; print(sys.executable)" 2>$null)
+    if ($pyExe) { $pythonCmd = $pyExe.Trim() }
+    else { $pythonCmd = (Get-Command py).Source; $script:pythonLauncher = @("-3") }
 }
+$pythonLauncher = if (Get-Variable -Name pythonLauncher -Scope Script -ErrorAction SilentlyContinue) { $script:pythonLauncher } else { @() }
 
 if (-not $pythonCmd) {
     Write-Host "ERROR: Python 3.8+ required. Install from https://www.python.org/" -ForegroundColor Red
     exit 1
 }
 
-Invoke-Expression "$pythonCmd --version" 2>&1 | Out-Null
+& $pythonCmd @pythonLauncher --version 2>&1 | Out-Null
 
 # Create venv if -Venv passed
 if ($Venv) {
@@ -124,7 +127,7 @@ if ($Venv) {
     if (-not (Test-Path $venvPath)) {
         Write-Host "Creating venv at .venv..."
         try {
-            Invoke-Expression "$pythonCmd -m venv `"$venvPath`""
+            & $pythonCmd @pythonLauncher -m venv $venvPath 2>&1 | Out-Null
             Write-Host "  Created" -ForegroundColor Green
         } catch {
             Write-Host "  Venv creation failed (continuing)" -ForegroundColor Yellow
@@ -133,16 +136,20 @@ if ($Venv) {
         Write-Host "Venv .venv exists"
     }
     $pythonCmd = Join-Path $venvPath "Scripts\python.exe"
+    $pythonLauncher = @()
 }
 
 Write-Host "Installing Python dependencies..."
-$pipArgs = "-q"
-if (-not $Venv -and -not $env:VIRTUAL_ENV) { $pipArgs = "--user -q" }
-if ($Proxy) { $pipArgs = "$pipArgs --proxy '$Proxy'" }
+$pipArgs = @("-q")
+if (-not $Venv -and -not $env:VIRTUAL_ENV) { $pipArgs = @("--user", "-q") }
+if ($Proxy) { $pipArgs += "--proxy"; $pipArgs += $Proxy }
 try {
-    Invoke-Expression "$pythonCmd -m pip install --upgrade pip $pipArgs"
-    Invoke-Expression "$pythonCmd -m pip install -r requirements.txt $pipArgs"
-    if ($LASTEXITCODE -eq 0) { Write-Host "  OK" -ForegroundColor Green } else { Write-Host "  pip install failed (continuing)" -ForegroundColor Yellow }
+    & $pythonCmd @pythonLauncher -m pip install --upgrade pip @pipArgs 2>&1 | Out-Null
+    & $pythonCmd @pythonLauncher -m pip install -r requirements.txt @pipArgs 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) { Write-Host "  OK" -ForegroundColor Green } else {
+        Write-Host "  pip install failed (continuing)" -ForegroundColor Yellow
+        Write-Host "  If pip failed, checklist migration will also fail. Run: pip install -r requirements.txt" -ForegroundColor Gray
+    }
 } catch {
     Write-Host "  pip install failed (continuing). Run: pip install -r requirements.txt" -ForegroundColor Yellow
 }
@@ -156,11 +163,13 @@ Write-Host "--- Checklist migration (Excel -> Markdown) ---" -ForegroundColor Ye
 $migrateScript = Join-Path $ProjectRoot "scripts\py\auto_update_checklists.py"
 if (Test-Path $migrateScript) {
     try {
-        Invoke-Expression "$pythonCmd `"$migrateScript`""
+        & $pythonCmd @pythonLauncher $migrateScript 2>&1
         if ($LASTEXITCODE -eq 0) {
             Write-Host "  OK" -ForegroundColor Green
         } else {
-            Write-Host "  Checklist migration failed (continuing). Run: python scripts/py/auto_update_checklists.py" -ForegroundColor Yellow
+            Write-Host "  Checklist migration failed (continuing)" -ForegroundColor Yellow
+            Write-Host "  If pip install failed above, run: pip install pandas openpyxl" -ForegroundColor Gray
+            Write-Host "  Then: python scripts/py/auto_update_checklists.py" -ForegroundColor Gray
         }
     } catch {
         Write-Host "  Checklist migration failed (continuing)" -ForegroundColor Yellow

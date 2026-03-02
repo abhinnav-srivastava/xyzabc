@@ -5,7 +5,6 @@
 ### Naming
 
 **AND-001** (MUST): Use PascalCase for class names
-
   - **Good Example:**
 ```kotlin
 public class UserProfileActivity
@@ -20,7 +19,6 @@ public class userProfileActivity
 ### Formatting
 
 **AND-002** (MUST): Use 4 spaces for indentation
-
   - **Good Example:**
 ```kotlin
 if (condition) {
@@ -39,7 +37,6 @@ if (condition) {
 ### Documentation
 
 **AND-003** (GOOD): Add KDoc for public APIs
-
   - **Good Example:**
 ```kotlin
 /**
@@ -56,7 +53,6 @@ if (condition) {
 ### Variables
 
 **AND-004** (GOOD): Use val for immutable variables
-
   - **Good Example:**
 ```kotlin
 val userName = "John"
@@ -73,7 +69,6 @@ var userName = "John"
 ### Exceptions
 
 **AND-005** (MUST): Use specific exception types
-
   - **Good Example:**
 ```kotlin
 throw IllegalArgumentException("Invalid ID")
@@ -88,7 +83,6 @@ throw Exception("Error occurred")
 ### Try-Catch
 
 **AND-006** (MUST): Handle exceptions at appropriate levels
-
   - **Good Example:**
 ```kotlin
 try { riskyOperation() } catch (e: IOException) { handleError(e) }
@@ -103,7 +97,6 @@ val result = riskyOperation() // No error handling
 ### User Feedback
 
 **AND-007** (MUST): Show user-friendly error messages
-
   - **Good Example:**
 ```kotlin
 showError("Unable to connect to server")
@@ -118,7 +111,6 @@ showError("IOException: Connection refused")
 ### Monitoring
 
 **AND-008** (MUST): Report errors to crash reporting service
-
   - **Good Example:**
 ```kotlin
 FirebaseCrashlytics.getInstance().recordException(exception)
@@ -135,7 +127,6 @@ Log.e(TAG, "Error occurred", exception)
 ### Hilt Setup
 
 **AND-009** (GOOD): Use Hilt for dependency injection
-
   - **Good Example:**
 ```kotlin
 @HiltAndroidApp
@@ -151,7 +142,6 @@ Manual dependency creation in activities
 ### Modules
 
 **AND-010** (GOOD): Organize dependencies in modules
-
   - **Good Example:**
 ```kotlin
 @Module
@@ -168,7 +158,6 @@ All dependencies in Application class
 ### Scopes
 
 **AND-011** (GOOD): Use appropriate scopes for dependencies
-
   - **Good Example:**
 ```kotlin
 @Singleton
@@ -184,7 +173,6 @@ No scope annotations
 ### Testing
 
 **AND-012** (GOOD): Use test modules for unit testing
-
   - **Good Example:**
 ```kotlin
 @TestInstallIn
@@ -203,7 +191,6 @@ Using production dependencies in tests
 ### Memory
 
 **AND-013** (MUST): Avoid memory leaks by managing listeners
-
   - **Good Example:**
 ```kotlin
 removeListener() in onDestroy()
@@ -218,7 +205,6 @@ Forgetting to remove listeners
 ### Images
 
 **AND-014** (MUST): Use appropriate image loading library
-
   - **Good Example:**
 ```kotlin
 Glide.with(context).load(url).into(imageView)
@@ -233,7 +219,6 @@ Loading images on main thread
 ### Lists
 
 **AND-015** (MUST): Use ViewHolder pattern for RecyclerView
-
   - **Good Example:**
 ```kotlin
 class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
@@ -248,7 +233,6 @@ findViewById in onBindViewHolder
 ### Background
 
 **AND-016** (MUST): Use background threads for heavy operations
-
   - **Good Example:**
 ```kotlin
 lifecycleScope.launch(Dispatchers.IO) { heavyOperation() }
@@ -265,7 +249,6 @@ heavyOperation() on main thread
 ### Levels
 
 **AND-017** (MUST): Use appropriate log levels
-
   - **Good Example:**
 ```kotlin
 Log.d(TAG, "Debug info"), Log.e(TAG, "Error", exception)
@@ -280,7 +263,6 @@ Log.d(TAG, "Error occurred")
 ### Tags
 
 **AND-018** (GOOD): Use consistent TAG naming
-
   - **Good Example:**
 ```kotlin
 companion object { private const val TAG = "UserProfileActivity" }
@@ -295,7 +277,6 @@ Log.d("TAG", "message")
 ### Production
 
 **AND-019** (MUST): Remove debug logs in production
-
   - **Good Example:**
 ```kotlin
 if (BuildConfig.DEBUG) Log.d(TAG, message)
@@ -312,7 +293,6 @@ Log.d(TAG, "Sensitive data: $password")
 ### Main Thread
 
 **AND-020** (MUST): Keep main thread free for UI operations
-
   - **Good Example:**
 ```kotlin
 lifecycleScope.launch { updateUI() }
@@ -327,7 +307,6 @@ Thread.sleep(1000) on main thread
 ### Coroutines
 
 **AND-021** (GOOD): Use coroutines instead of threads
-
   - **Good Example:**
 ```kotlin
 lifecycleScope.launch(Dispatchers.IO) { apiCall() }
@@ -342,7 +321,6 @@ Thread { apiCall() }.start()
 ### Scope
 
 **AND-022** (GOOD): Use appropriate coroutine scope
-
   - **Good Example:**
 ```kotlin
 viewModelScope.launch { fetchData() }
@@ -359,7 +337,6 @@ GlobalScope.launch { fetchData() }
 ### Retrofit
 
 **AND-023** (GOOD): Use Retrofit for network calls
-
   - **Good Example:**
 ```kotlin
 @GET("users/{id}") suspend fun getUser(@Path("id") id: Int): User
@@ -374,7 +351,6 @@ Manual HTTP requests with HttpURLConnection
 ### Error Handling
 
 **AND-024** (MUST): Handle API errors properly
-
   - **Good Example:**
 ```kotlin
 try { response = api.getData() } catch (e: HttpException) { handleError(e) }
@@ -389,7 +365,6 @@ val data = api.getData() // No error handling
 ### Caching
 
 **AND-025** (GOOD): Implement proper caching strategy
-
   - **Good Example:**
 ```kotlin
 @Headers("Cache-Control: max-age=300")
@@ -404,7 +379,6 @@ No caching headers or strategy
 ### Pagination
 
 **AND-026** (GOOD): Handle paginated API responses
-
   - **Good Example:**
 ```kotlin
 data class ApiResponse<T>(val data: List<T>, val nextPage: String?)
@@ -421,7 +395,6 @@ Loading all data at once
 ### Data Storage
 
 **AND-027** (MUST): Use Android Keystore for sensitive data
-
   - **Good Example:**
 ```kotlin
 EncryptedSharedPreferences.create("secret_prefs")
@@ -436,7 +409,6 @@ Storing passwords in plain SharedPreferences
 ### Network
 
 **AND-028** (MUST): Use HTTPS for all network communications
-
   - **Good Example:**
 ```kotlin
 https://api.example.com/users
@@ -451,7 +423,6 @@ http://api.example.com/users
 ### Input Validation
 
 **AND-029** (MUST): Validate all user inputs
-
   - **Good Example:**
 ```kotlin
 if (email.isValidEmail()) processEmail(email)
@@ -466,7 +437,6 @@ processEmail(email) // No validation
 ### Logging
 
 **AND-030** (MUST): Never log sensitive information
-
   - **Good Example:**
 ```kotlin
 Log.d(TAG, "User login successful")
@@ -483,7 +453,6 @@ Log.d(TAG, "Password: $password")
 ### Commits
 
 **AND-031** (GOOD): Write clear commit messages
-
   - **Good Example:**
 ```kotlin
 feat: add user profile validation
@@ -498,7 +467,6 @@ fix stuff
 ### Branching
 
 **AND-032** (GOOD): Use feature branches for development
-
   - **Good Example:**
 ```kotlin
 feature/user-authentication
@@ -513,7 +481,6 @@ Committing directly to main branch
 ### Pull Requests
 
 **AND-033** (GOOD): Create pull requests for code review
-
   - **Good Example:**
 ```kotlin
 PR with clear description and tests
@@ -530,7 +497,6 @@ Direct merge without review
 ### Material Design
 
 **AND-034** (GOOD): Follow Material Design guidelines
-
   - **Good Example:**
 ```kotlin
 Using Material Design components and themes
@@ -545,7 +511,6 @@ Custom UI that doesn't follow guidelines
 ### Accessibility
 
 **AND-035** (MUST): Add accessibility labels and content descriptions
-
   - **Good Example:**
 ```kotlin
 android:contentDescription="Save button"
@@ -560,7 +525,6 @@ No accessibility labels
 ### Responsive
 
 **AND-036** (GOOD): Design for different screen sizes
-
   - **Good Example:**
 ```kotlin
 Using ConstraintLayout with proper constraints
@@ -575,7 +539,6 @@ Fixed pixel values for all dimensions
 ### Loading States
 
 **AND-037** (GOOD): Show loading states for async operations
-
   - **Good Example:**
 ```kotlin
 ProgressBar while loading data
@@ -592,7 +555,6 @@ Blank screen during loading
 ### MVVM
 
 **AND-038** (GOOD): Follow MVVM architecture pattern
-
   - **Good Example:**
 ```kotlin
 ViewModel handles business logic, View observes LiveData
@@ -607,7 +569,6 @@ Business logic mixed in Activity
 ### Repository
 
 **AND-039** (GOOD): Use Repository pattern for data access
-
   - **Good Example:**
 ```kotlin
 class UserRepository(private val api: UserApi, private val db: UserDao)
@@ -622,7 +583,6 @@ Direct API calls from ViewModels
 ### Separation
 
 **AND-040** (MUST): Separate concerns properly
-
   - **Good Example:**
 ```kotlin
 UI logic in View, business logic in ViewModel
@@ -637,7 +597,6 @@ All logic in Activity
 ### Data Flow
 
 **AND-041** (GOOD): Use unidirectional data flow
-
   - **Good Example:**
 ```kotlin
 View -> ViewModel -> Repository -> API
@@ -654,7 +613,6 @@ Circular dependencies between components
 ### Runtime
 
 **AND-042** (MUST): Request permissions at runtime
-
   - **Good Example:**
 ```kotlin
 requestPermissions(arrayOf(CAMERA), REQUEST_CODE)
@@ -669,7 +627,6 @@ Assuming permissions are granted
 ### Rationale
 
 **AND-043** (GOOD): Show rationale for permission requests
-
   - **Good Example:**
 ```kotlin
 Explaining why camera access is needed
@@ -684,7 +641,6 @@ Requesting permission without explanation
 ### Minimal
 
 **AND-044** (MUST): Request only necessary permissions
-
   - **Good Example:**
 ```kotlin
 Only CAMERA permission for camera feature
@@ -701,7 +657,6 @@ Requesting all permissions upfront
 ### Dependencies
 
 **AND-045** (MUST): Include license information for dependencies
-
   - **Good Example:**
 ```kotlin
 License report in build output
@@ -716,7 +671,6 @@ No license tracking
 ### Attribution
 
 **AND-046** (MUST): Provide proper attribution for open source libraries
-
   - **Good Example:**
 ```kotlin
 About screen with library credits
@@ -731,7 +685,6 @@ No attribution for used libraries
 ### Compatibility
 
 **AND-047** (MUST): Ensure license compatibility
-
   - **Good Example:**
 ```kotlin
 Using MIT/Apache licensed libraries
@@ -748,7 +701,6 @@ Mixing incompatible licenses
 ### Database
 
 **AND-048** (GOOD): Use Room for local database operations
-
   - **Good Example:**
 ```kotlin
 @Entity
@@ -765,7 +717,6 @@ Raw SQL queries in code
 ### Preferences
 
 **AND-049** (GOOD): Use DataStore for preferences
-
   - **Good Example:**
 ```kotlin
 val userPreferences = DataStore(PreferencesDataStoreFactory.create())
@@ -780,7 +731,6 @@ SharedPreferences for complex data
 ### Files
 
 **AND-050** (MUST): Store files in appropriate directories
-
   - **Good Example:**
 ```kotlin
 context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
@@ -795,7 +745,6 @@ Storing files in root directory
 ### Cache
 
 **AND-051** (GOOD): Implement proper cache management
-
   - **Good Example:**
 ```kotlin
 Cache with TTL and size limits
@@ -812,7 +761,6 @@ Unlimited cache growth
 ### Business Rules
 
 **AND-052** (GOOD): Centralize business logic in appropriate layers
-
   - **Good Example:**
 ```kotlin
 Business logic in UseCase classes
@@ -827,7 +775,6 @@ Business logic scattered in UI
 ### Validation
 
 **AND-053** (MUST): Validate data at multiple layers
-
   - **Good Example:**
 ```kotlin
 Input validation in UI, business validation in UseCase
@@ -842,7 +789,6 @@ No validation or validation in one place only
 ### State
 
 **AND-054** (GOOD): Manage state consistently
-
   - **Good Example:**
 ```kotlin
 Single source of truth for state
@@ -859,7 +805,6 @@ State scattered across multiple variables
 ### Functions
 
 **AND-055** (GOOD): Keep functions small and focused
-
   - **Good Example:**
 ```kotlin
 fun validateEmail(email: String): Boolean
@@ -874,7 +819,6 @@ fun processUserDataAndSendEmailAndUpdateDatabase()
 ### Classes
 
 **AND-056** (GOOD): Follow Single Responsibility Principle
-
   - **Good Example:**
 ```kotlin
 class EmailValidator, class UserRepository
@@ -889,7 +833,6 @@ class UserManager (handles validation, storage, networking)
 ### Constants
 
 **AND-057** (GOOD): Use constants for magic numbers and strings
-
   - **Good Example:**
 ```kotlin
 companion object { private const val MAX_RETRY_COUNT = 3 }
@@ -904,7 +847,6 @@ if (retryCount < 3) // Magic number
 ### Readability
 
 **AND-058** (GOOD): Write self-documenting code
-
   - **Good Example:**
 ```kotlin
 val isValidUser = user.isActive && user.hasPermission
@@ -921,7 +863,6 @@ val flag = user.flag1 && user.flag2
 ### Unit Tests
 
 **AND-059** (GOOD): Write unit tests for business logic
-
   - **Good Example:**
 ```kotlin
 @Test fun validateEmail_returnsTrue_forValidEmail()
@@ -936,7 +877,6 @@ No unit tests for critical logic
 ### Integration
 
 **AND-060** (GOOD): Write integration tests for data layer
-
   - **Good Example:**
 ```kotlin
 @RunWith(AndroidJUnit4::class)
@@ -952,7 +892,6 @@ Only unit tests, no integration tests
 ### UI Tests
 
 **AND-061** (GOOD): Write UI tests for critical user flows
-
   - **Good Example:**
 ```kotlin
 @Test fun login_withValidCredentials_opensHomeScreen()
@@ -967,7 +906,6 @@ No UI tests for user flows
 ### Mocking
 
 **AND-062** (GOOD): Use proper mocking for dependencies
-
   - **Good Example:**
 ```kotlin
 @Mock lateinit var userRepository: UserRepository
@@ -978,4 +916,3 @@ Using real dependencies in tests
 ```
   - **Measurement:** Test isolation analysis
   - **Reference:** https://developer.android.com/training/testing/unit-testing
-

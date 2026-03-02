@@ -746,6 +746,9 @@ main.container {
 
 /* Collapsible category headers on patch summary */
 .patch-summary-card .card-header.cursor-pointer { cursor: pointer; }
+.patch-summary-executive .badge { font-size: 0.8rem; }
+details summary { cursor: pointer; }
+.diffstat-bars .progress { flex: 1; min-width: 0; }
 .card-header[data-bs-toggle="collapse"] { cursor: pointer; }
 .card-header[data-bs-toggle="collapse"]:hover { background-color: rgba(0, 0, 0, 0.04); }
 .collapse-chevron { display: inline-block; transition: transform 0.2s ease; }
