@@ -8,6 +8,7 @@
     "generate-icon": "node scripts/generate-icon.js",
     "build:win": "node scripts/build-electron-win.js",
     "build:win:pyonly": "node scripts/build-electron-win.js --skip-electron",
+    "fix:name": "node -e \"const p=require('./package.json'); const v=(p.name||'codereview').replace(/[^a-z0-9-]/g,'').toLowerCase()||'codereview'; p.name=v; require('fs').writeFileSync('package.json', JSON.stringify(p,null,2)); console.log('package.json name fixed to:', v);\"",
     "pack:win": "electron-builder --win --dir",
     "dist:win": "electron-builder --win"
   },

@@ -83,6 +83,20 @@ if ($Name) {
                 }
             }
         }
+        # Ensure package.json "name" is valid for npm/electron-builder (lowercase, no spaces)
+        $pkgPath = Join-Path $ProjectRoot "package.json"
+        if (Test-Path $pkgPath) {
+            try {
+                $pkg = Get-Content $pkgPath -Raw | ConvertFrom-Json
+                $validName = ($pkg.name -replace '[^a-z0-9\-]', '').ToLower()
+                if ([string]::IsNullOrWhiteSpace($validName)) { $validName = $Id }
+                if ($pkg.name -ne $validName) {
+                    $pkg.name = $validName
+                    $pkg | ConvertTo-Json -Depth 20 | Set-Content $pkgPath -NoNewline
+                    $count++
+                }
+            } catch { }
+        }
         Write-Host "  Updated $count files" -ForegroundColor Green
     } | Out-Null
     Write-Host ""
