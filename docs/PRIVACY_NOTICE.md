@@ -9,6 +9,7 @@ This document describes data collection, retention, and deletion for corporate c
 | User profiles | `data/profiles.json` | Name, username, preferred roles |
 | Patch content | `temp/patch_store/*.json` | Uploaded diff files for review |
 | Audit log | `data/audit.jsonl` | Login, logout, role selection, review actions |
+| User activity log | `data/user_activity.log` | Raw TSV: app opens, logins, logouts, reviews (NG/NA/OK counts) |
 | Session | Server memory / cookie | Active review state |
 
 ## Retention

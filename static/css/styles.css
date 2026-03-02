@@ -788,6 +788,12 @@ details summary { cursor: pointer; }
 .diff-line-removed .diff-num-new::before { content: ''; }
 .diff-line-added .diff-num-old { visibility: hidden; }
 
+/* Test-focused view: highlight methods/classes without tests */
+.diff-line-needs-test .diff-content,
+.diff-line-needs-test .diff-num-old,
+.diff-line-needs-test .diff-num-new { background: var(--warning-light) !important; }
+.diff-line-needs-test .diff-content { border-left: 3px solid var(--warning-color); }
+
 /* File type icons (GitLab-style: Android, Gradle, Kotlin K) */
 .file-type-icon { display: inline-block; width: 1rem; height: 1rem; flex-shrink: 0; border-radius: 2px; }
 .file-type-manifest { background: #3ddc84; }

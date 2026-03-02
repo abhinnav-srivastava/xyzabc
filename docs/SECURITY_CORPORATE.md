@@ -66,6 +66,7 @@ Data upload and download use **git only** (clone, pull, push, fetch). No GitLab,
 
 - Auth and review events are logged to `data/audit.jsonl` (JSON Lines).
 - Events: `login`, `logout`, `select_roles`, `review_submit`, `patch_upload`, `profile_delete`.
+- **User activity log** (`data/user_activity.log`): Raw tab-separated log for analytics—app opens, logins, logouts, reviews completed (NG/NA/OK counts). See `services/user_activity_log.py` for format.
 - Rotate or archive per your retention policy.
 
 ## 7. Dependencies

@@ -70,6 +70,13 @@ from services.user_profile import (
 )
 from services.network_security import network_security
 from services.audit_log import audit_log
+from services.user_activity_log import (
+    log_app_open,
+    log_login,
+    log_logout,
+    log_review_completed,
+    log_review_started,
+)
 from services.dynamic_categories import dynamic_categories
 from services.patch_parser import (
     parse_patch,
@@ -90,6 +97,12 @@ from services.projects_service import (
     get_project as get_user_project,
     add_project as add_user_project,
     remove_project as remove_user_project,
+)
+from services.project_index_service import (
+    get_project_index,
+    get_project_summary,
+    schedule_index_build,
+    invalidate_index,
 )
 from services.access_tokens_service import (
     get_tokens as get_user_tokens,
@@ -224,6 +237,16 @@ def create_app() -> Flask:
 
         if not is_allowed:
             return f"Access denied: {reason}", 403
+
+    @app.before_request
+    def log_app_open_once():
+        """Log app open once per session when user hits index or dashboard."""
+        if request.endpoint in ("index", "dashboard") and not session.get("_user_activity_app_open_logged"):
+            session["_user_activity_app_open_logged"] = True
+            log_app_open(
+                user_id=session.get("user_username", ""),
+                user_name=session.get("user_name", ""),
+            )
 
     @app.after_request
     def add_security_headers(response):
@@ -551,12 +574,14 @@ def create_app() -> Flask:
                     save_profile(user_id=username, name=name, preferred_roles=profile["preferred_roles"])
                     audit_log("login", user_id=username, user_name=name, roles=profile["preferred_roles"],
                               ip=request.environ.get("REMOTE_ADDR"))
+                    log_login(user_id=username, user_name=name, roles=profile["preferred_roles"])
                     next_url = request.args.get("next") or url_for("dashboard")
                     return redirect(next_url)
                 else:
                     save_profile(user_id=username, name=name, preferred_roles=[])
                     audit_log("login", user_id=username, user_name=name, roles=[],
                               ip=request.environ.get("REMOTE_ADDR"))
+                    log_login(user_id=username, user_name=name, roles=[])
                     next_url = request.args.get("next") or url_for("dashboard")
                     return redirect(url_for("select_roles", next=next_url))
         if session.get("user_name") and session.get("user_roles"):
@@ -604,6 +629,7 @@ def create_app() -> Flask:
         user_id = session.get("user_username")
         user_name = session.get("user_name")
         audit_log("logout", user_id=user_id, user_name=user_name, ip=request.environ.get("REMOTE_ADDR"))
+        log_logout(user_id=user_id or "", user_name=user_name or "")
         session.clear()
         return redirect(url_for("index"))
 
@@ -630,9 +656,78 @@ def create_app() -> Flask:
         role_map = {r["id"]: r["name"] for r in config.get("roles", [])}
         user_roles = session.get("user_roles", []) or ([session.get("user_role")] if session.get("user_role") else [])
         role_name = _format_roles_display(user_roles, role_map)
+        user_id = session.get("user_username") or session.get("reviewer_username") or ""
+        if not user_id:
+            from services.user_profile import get_profile_by_name, get_last_used_user_id
+            profile = get_profile_by_name(session.get("user_name", ""))
+            if profile:
+                user_id = profile.get("user_id") or profile.get("username") or ""
+            if not user_id:
+                user_id = get_last_used_user_id() or ""
+        projects = get_projects(user_id) or []
+        project_summaries = []
+        for p in projects:
+            proj_id = p.get("id", "")
+            proj_path = p.get("url_or_path", "")
+            summary = get_project_summary(proj_id, proj_path) if proj_id and proj_path else None
+            project_summaries.append({
+                "id": proj_id,
+                "name": p.get("name", ""),
+                "type": p.get("type", "local"),
+                "summary": summary,
+            })
         return render_template(
             "dashboard.html",
             role_name=role_name,
+            project_summaries=project_summaries,
+        )
+
+    def _resolve_user_id():
+        """Resolve user_id from session (for project routes)."""
+        user_id = session.get("user_username") or session.get("reviewer_username") or ""
+        if not user_id:
+            from services.user_profile import get_profile_by_name, get_last_used_user_id
+            profile = get_profile_by_name(session.get("user_name", ""))
+            if profile:
+                user_id = profile.get("user_id") or profile.get("username") or ""
+            if not user_id:
+                user_id = get_last_used_user_id() or ""
+        return user_id
+
+    @app.route("/project/<project_id>")
+    def project_details(project_id: str):
+        """Project details page: file tree, classes, methods, test cases."""
+        if not session.get("user_name"):
+            return redirect(url_for("login", next=url_for("project_details", project_id=project_id)))
+        user_id = _resolve_user_id()
+        if not user_id:
+            from flask import flash
+            flash("Session expired. Please sign in again.", "warning")
+            return redirect(url_for("login", next=url_for("project_details", project_id=project_id)))
+        project = get_user_project(user_id, project_id)
+        if not project:
+            from flask import flash
+            flash("Project not found.", "warning")
+            return redirect(url_for("dashboard"))
+        url_or_path = project.get("url_or_path", "")
+        proj_type = project.get("type", "local")
+        force = request.args.get("refresh", "").lower() in ("1", "true", "yes")
+        index = get_project_index(project_id, url_or_path, force_rebuild=force) if proj_type == "local" and url_or_path else None
+        files_by_type = {}
+        stats = {"classes": 0, "methods": 0, "test_cases": 0}
+        if index and index.get("files"):
+            for f in index["files"]:
+                ft = f.get("type", "other")
+                files_by_type.setdefault(ft, []).append(f)
+                stats["classes"] += len(f.get("classes", []))
+                stats["methods"] += len(f.get("methods", []))
+                stats["test_cases"] += len(f.get("test_cases", []))
+        return render_template(
+            "project_details.html",
+            project=project,
+            index=index,
+            files_by_type=files_by_type,
+            stats=stats,
         )
 
     @app.route("/profile", methods=["GET", "POST"])
@@ -673,6 +768,7 @@ def create_app() -> Flask:
                     if proj:
                         from flask import flash
                         flash(f"Project '{proj.get('name', '')}' added.", "success")
+                        schedule_index_build(proj["id"], url_or_path)
                     else:
                         from flask import flash
                         flash("Invalid project. Provide a valid local path.", "warning")
@@ -682,6 +778,7 @@ def create_app() -> Flask:
             elif action == "remove_project":
                 project_id = request.form.get("project_id", "").strip()
                 if project_id and remove_user_project(current_user_id, project_id):
+                    invalidate_index(project_id)
                     from flask import flash
                     flash("Project removed.", "info")
             elif action == "add_token":
@@ -1075,6 +1172,12 @@ def create_app() -> Flask:
 
         save_profile(user_id=session.get("user_username", ""), name=reviewer_name, preferred_roles=selected_roles)
 
+        log_review_started(
+            user_id=session.get("user_username", ""),
+            user_name=reviewer_name,
+            roles=selected_roles,
+        )
+
         # Flow: Start → Patch → Patch summary → Checklist
         return redirect(url_for("review_patch"))
 
@@ -1097,13 +1200,17 @@ def create_app() -> Flask:
                 if profile:
                     user_id = profile.get("user_id") or profile.get("username") or ""
             project_name = ""
+            project_path = ""
             if project_id and user_id:
                 proj = get_user_project(user_id, project_id)
                 if proj:
                     project_name = proj.get("name") or proj.get("url_or_path") or ""
+                    if proj.get("type") == "local":
+                        project_path = proj.get("url_or_path") or ""
             session["mr_details"] = {
                 "project_id": project_id,
                 "project_name": project_name,
+                "project_path": project_path,
                 "patch_mode": patch_mode,
                 "mr_link": mr_link,
                 "source_branch": source_branch,
@@ -1129,7 +1236,12 @@ def create_app() -> Flask:
                 flash("Please upload a .patch file (or drag and drop), or click Skip.", "warning")
                 return redirect(url_for("review_patch"))
             try:
-                files, summary = parse_patch(content)
+                project_path = ""
+                if project_id and user_id:
+                    proj = get_user_project(user_id, project_id)
+                    if proj and proj.get("type") == "local":
+                        project_path = proj.get("url_or_path") or ""
+                files, summary = parse_patch(content, project_path=project_path or None)
                 if not files:
                     from flask import flash
                     flash("No valid diff content found. Use a unified diff (e.g. from GitLab MR).", "warning")
@@ -1220,7 +1332,7 @@ def create_app() -> Flask:
                 flash("Please upload a .patch file (or drag and drop).", "warning")
                 return redirect(url_for("upload_patch"))
             try:
-                files, summary = parse_patch(content)
+                files, summary = parse_patch(content, project_path=None)
                 if not files:
                     from flask import flash
                     flash("No valid diff content found. Use a unified diff (e.g. from GitLab MR).", "warning")
@@ -1322,6 +1434,30 @@ def create_app() -> Flask:
                     current = child["children"]
         return root
 
+    def _build_methods_by_file_index(files, summary):
+        """Build list of method names per file index for test-focused highlighting."""
+        tca = (summary or {}).get("test_coverage_analysis") or {}
+        mwt = tca.get("methods_without_tests") or []
+        if not mwt:
+            return []
+
+        def _norm(p):
+            return (p or "").replace("\\", "/").lstrip("./")
+
+        path_to_methods: Dict[str, List[str]] = {}
+        for item in mwt:
+            path = _norm(item.get("source_path", ""))
+            method = item.get("method", "")
+            if path and method:
+                path_to_methods.setdefault(path, []).append(method)
+
+        result = []
+        for f in files:
+            path = _norm(getattr(f, "new_path", None) or getattr(f, "old_path", ""))
+            result.append(path_to_methods.get(path, []))
+
+        return result
+
     @app.route("/review/code")
     def review_code():
         """GitLab-style diff viewer: file list and per-file diff."""
@@ -1330,11 +1466,19 @@ def create_app() -> Flask:
             return redirect(url_for("upload_patch"))
         files = file_diffs_from_session(patch_data.get("files", []))
         file_tree = _build_file_tree(files)
+        summary = patch_data.get("summary") or {}
+        test_focus = request.args.get("test_focus", "").lower() in ("1", "true", "yes")
+        methods_by_file_index = _build_methods_by_file_index(files, summary)
+        has_highlightable = any(m for m in methods_by_file_index) if methods_by_file_index else False
         return render_template(
             "review_code.html",
             files=files,
             files_count=len(files),
             file_tree=file_tree,
+            summary=summary,
+            test_focus=test_focus,
+            methods_by_file_index=methods_by_file_index,
+            has_highlightable=has_highlightable,
         )
 
     @app.route("/review/all", methods=["GET", "POST"])
@@ -1516,6 +1660,19 @@ def create_app() -> Flask:
                 session["review_duration"] = "Unknown"
                 session["review_duration_seconds"] = 0
                 debug_log("DEBUG: No start time found, storing Unknown values")
+
+            log_review_completed(
+                user_id=reviewer_username or session.get("user_username", ""),
+                user_name=reviewer_name,
+                ok=counts_overall.get("OK", 0),
+                ng=counts_overall.get("NG", 0),
+                na=counts_overall.get("NA", 0),
+                skipped=counts_overall.get("SKIPPED", 0),
+                unanswered=counts_overall.get("UNANSWERED", 0),
+                total_items=len(steps),
+                duration_seconds=session.get("review_duration_seconds", 0),
+                roles=selected_roles,
+            )
         else:
             debug_log("DEBUG: Review already marked as completed")
 
@@ -1946,6 +2103,59 @@ def create_app() -> Flask:
             if not diff.strip():
                 return {"status": "error", "message": "No changes between branches"}, 404
             return {"status": "success", "patch": diff}, 200
+        except Exception as e:
+            return {"status": "error", "message": str(e)}, 500
+
+    @app.route("/api/project/<project_id>/index", methods=["GET"])
+    def api_project_index(project_id: str):
+        """Get project index (file tree, classes, test cases). Builds if missing or stale."""
+        try:
+            user_id = session.get("user_username") or session.get("reviewer_username") or ""
+            if not user_id:
+                from services.user_profile import get_profile_by_name
+                reviewer_name = session.get("reviewer_name", "")
+                profile = get_profile_by_name(reviewer_name) if reviewer_name else None
+                if profile:
+                    user_id = profile.get("user_id") or profile.get("username") or ""
+            if not user_id or not project_id:
+                return {"status": "error", "message": "Not authenticated"}, 401
+            project = get_user_project(user_id, project_id)
+            if not project:
+                return {"status": "error", "message": "Project not found"}, 404
+            url_or_path = project.get("url_or_path", "")
+            proj_type = project.get("type", "remote")
+            if proj_type != "local":
+                return {"status": "error", "message": "Index only for local projects"}, 400
+            force = request.args.get("refresh", "").lower() in ("1", "true", "yes")
+            index = get_project_index(project_id, url_or_path, force_rebuild=force)
+            if not index:
+                return {"status": "error", "message": "Project path not found or not a directory"}, 404
+            return {"status": "success", "index": index}, 200
+        except Exception as e:
+            return {"status": "error", "message": str(e)}, 500
+
+    @app.route("/api/project/<project_id>/index/refresh", methods=["POST"])
+    def api_project_index_refresh(project_id: str):
+        """Trigger project index rebuild in background."""
+        try:
+            user_id = session.get("user_username") or session.get("reviewer_username") or ""
+            if not user_id:
+                from services.user_profile import get_profile_by_name
+                reviewer_name = session.get("reviewer_name", "")
+                profile = get_profile_by_name(reviewer_name) if reviewer_name else None
+                if profile:
+                    user_id = profile.get("user_id") or profile.get("username") or ""
+            if not user_id or not project_id:
+                return {"status": "error", "message": "Not authenticated"}, 401
+            project = get_user_project(user_id, project_id)
+            if not project:
+                return {"status": "error", "message": "Project not found"}, 404
+            url_or_path = project.get("url_or_path", "")
+            proj_type = project.get("type", "remote")
+            if proj_type != "local":
+                return {"status": "error", "message": "Index only for local projects"}, 400
+            schedule_index_build(project_id, url_or_path)
+            return {"status": "success", "message": "Index rebuild scheduled"}, 200
         except Exception as e:
             return {"status": "error", "message": str(e)}, 500
 

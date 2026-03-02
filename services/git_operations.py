@@ -140,6 +140,19 @@ def get_credential_helper_info(repo_path: Optional[Path] = None) -> Dict[str, An
     return info
 
 
+def get_git_head(repo_path: Path) -> Optional[str]:
+    """
+    Return current git HEAD hash for the given repo path, or None if not a git repo.
+    """
+    path = Path(repo_path)
+    if not path.is_dir():
+        return None
+    ok, out, _ = _run_git(path, ["rev-parse", "HEAD"], timeout=5)
+    if ok and out.strip():
+        return out.strip()
+    return None
+
+
 def git_pull(
     repo_path: Optional[Path] = None,
     remote: str = "origin",

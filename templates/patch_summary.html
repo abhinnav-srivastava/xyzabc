@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 
 {% block content %}
+{% set _tca = summary.test_coverage_analysis|default({}) %}
+{% set has_tca_issues = _tca and (_tca.source_without_tests or _tca.methods_without_tests) %}
 <div class="container">
   {% if in_review_flow|default(false) %}
   <!-- Step indicator -->
@@ -23,6 +25,11 @@
       <a href="{{ url_for('review_code') }}" class="btn btn-primary">
         <i class="bi bi-code-slash me-1"></i>View changes
       </a>
+      {% if has_tca_issues %}
+      <a href="{{ url_for('review_code', test_focus=1) }}" class="btn btn-warning">
+        <i class="bi bi-bug me-1"></i>View test-focused
+      </a>
+      {% endif %}
       {% endif %}
       {% if in_review_flow|default(false) %}
       <a href="{{ url_for('review_all_categories') }}" class="btn btn-success">
@@ -68,269 +75,187 @@
   {% set source_pct = (source_count * 100 / total_categorized)|round(0) if total_categorized > 0 else 0 %}
   {% set test_pct = (test_count * 100 / total_categorized)|round(0) if total_categorized > 0 else 0 %}
 
-  <!-- 1. Executive summary bar -->
-  <div class="card border-0 shadow-sm mb-3 patch-summary-executive">
-    <div class="card-body py-3">
-      <div class="d-flex flex-wrap align-items-center gap-3 gap-md-4">
-        <span class="fs-5 fw-semibold">{{ files_count }} files changed</span>
-        <span class="text-success">+{{ lines_added }}</span>
-        <span class="text-danger">−{{ lines_deleted }}</span>
-        <span class="text-secondary">(net {% if net_lines >= 0 %}<span class="text-success">+{{ net_lines }}</span>{% else %}<span class="text-danger">{{ net_lines }}</span>{% endif %})</span>
-        <span class="badge bg-{% if change_size == 'small' %}success{% elif change_size == 'medium' %}warning text-dark{% else %}danger{% endif %}">{{ change_size|capitalize }} change</span>
-        {% if total_categorized > 0 %}
-        <span class="text-muted small">Source {{ source_pct }}% · Test {{ test_pct }}%</span>
-        {% endif %}
-      </div>
-    </div>
+  <!-- Dashboard: compact executive + grid -->
+  <div class="d-flex flex-wrap align-items-center gap-2 gap-md-3 mb-4 py-2 px-3 rounded-3 bg-light bg-opacity-50">
+    <span class="fw-semibold">{{ files_count }} files</span>
+    <span class="text-success">+{{ lines_added }}</span>
+    <span class="text-danger">−{{ lines_deleted }}</span>
+    <span class="badge bg-{% if change_size == 'small' %}success{% elif change_size == 'medium' %}warning text-dark{% else %}danger{% endif %}">{{ change_size|capitalize }}</span>
+    {% if total_categorized > 0 %}
+    <span class="text-muted small">Source {{ source_pct }}% · Test {{ test_pct }}%</span>
+    {% endif %}
   </div>
 
-  <!-- 2. Category breakdown at a glance -->
   {% set mf = summary.manifest_files|default([]) %}
   {% set gf = summary.gradle_files|default([]) %}
   {% set rf = summary.resource_files|default([]) %}
   {% set sf = summary.source_files|default([]) %}
   {% set tf = summary.test_files|default([]) %}
   {% set of = summary.other_files|default([]) %}
-  <div class="card border-0 shadow-sm mb-3">
-    <div class="card-header bg-light py-2">
-      <i class="bi bi-grid-3x3-gap me-2"></i>By category
+
+  <div class="row g-3 mb-4">
+    <!-- Category badges: visible at a glance -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body py-2">
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <span class="text-muted small me-1">Categories</span>
+            <a href="#collapse-manifest" class="badge bg-primary bg-opacity-25 text-primary text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-manifest">Manifest {{ mf|length }}</a>
+            <a href="#collapse-gradle" class="badge bg-warning bg-opacity-25 text-dark text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-gradle">Gradle {{ gf|length }}</a>
+            <a href="#collapse-resource" class="badge bg-info bg-opacity-25 text-dark text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-resource">Resources {{ rf|length }}</a>
+            <a href="#collapse-source" class="badge bg-primary bg-opacity-25 text-primary text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-source">Source {{ sf|length }}</a>
+            <a href="#collapse-test" class="badge bg-success bg-opacity-25 text-success text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-test">Test {{ tf|length }}</a>
+            {% if of %}<a href="#collapse-other" class="badge bg-secondary bg-opacity-25 text-secondary text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-other">Other {{ of|length }}</a>{% endif %}
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="card-body py-2">
-      <div class="d-flex flex-wrap gap-2 align-items-center">
-        <a href="#collapse-manifest" class="badge bg-primary text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-manifest">Manifest {{ mf|length }}</a>
-        <a href="#collapse-gradle" class="badge bg-warning text-dark text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-gradle">Gradle {{ gf|length }}</a>
-        <a href="#collapse-resource" class="badge bg-info text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-resource">Resources {{ rf|length }}</a>
-        <a href="#collapse-source" class="badge bg-primary text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-source">Source {{ sf|length }}</a>
-        <a href="#collapse-test" class="badge bg-success text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-test">Test {{ tf|length }}</a>
-        {% if of %}
-        <a href="#collapse-other" class="badge bg-secondary text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-other">Other {{ of|length }}</a>
+
+    {% set top_files = summary.top_changed_files|default([]) %}
+    {% set top_files_preview = top_files[:5] %}
+    <!-- Top changed files: show top 5, link to view all -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-transparent border-0 py-2 d-flex justify-content-between align-items-center">
+          <span class="fw-medium small">Top changed files</span>
+          <a href="{{ url_for('review_code') }}" class="btn btn-sm btn-outline-primary">View all</a>
+        </div>
+        <div class="card-body pt-0">
+          {% if top_files_preview %}
+          <ul class="list-unstyled mb-0 small">
+            {% for f in top_files_preview %}
+            <li class="d-flex justify-content-between align-items-center py-1 border-bottom border-light">
+              <a href="{{ url_for('review_code') }}#diff-file-{{ f.file_index }}" class="text-truncate text-dark text-decoration-none" style="max-width: 70%;" title="{{ f.path }}">{{ f.path }}</a>
+              <span class="text-nowrap ms-2"><span class="text-success">+{{ f.added }}</span> <span class="text-danger">−{{ f.deleted }}</span></span>
+            </li>
+            {% endfor %}
+          </ul>
+          {% if top_files|length > 5 %}<p class="small text-muted mb-0 mt-2">+{{ top_files|length - 5 }} more</p>{% endif %}
+          {% else %}
+          <p class="text-muted small mb-0">No file data</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Code metrics: compact, collapsed (only when CLOC/Pygount/Radon exist) -->
+    {% if summary.cloc and summary.cloc.by_lang or (summary.pygount and summary.pygount.by_lang and not summary.cloc) or summary.radon or summary.diffstat or summary.top_changed_files %}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-0 py-2 cursor-pointer d-flex align-items-center" data-bs-toggle="collapse" data-bs-target="#collapse-metrics" aria-expanded="false" role="button">
+          <i class="bi bi-chevron-right collapse-chevron me-1"></i>
+          <i class="bi bi-bar-chart-steps text-muted me-2"></i>
+          <span class="small text-muted">Code metrics</span>
+          {% if summary.cloc and summary.cloc.by_lang %}<span class="badge bg-dark ms-2">{{ summary.cloc.by_lang|length }} lang</span>{% endif %}
+          {% if summary.pygount and summary.pygount.by_lang and not summary.cloc %}<span class="badge bg-info ms-2">{{ summary.pygount.by_lang|length }} lang</span>{% endif %}
+          {% if summary.radon %}<span class="badge bg-warning text-dark ms-2">Radon</span>{% endif %}
+          {% if (summary.diffstat or summary.top_changed_files) and not summary.cloc and not (summary.pygount and summary.pygount.by_lang) and not summary.radon %}<span class="badge bg-secondary ms-2">Diffstat</span>{% endif %}
+        </div>
+        <div id="collapse-metrics" class="collapse">
+          <div class="card-body p-0">
+            {% if summary.cloc and summary.cloc.by_lang %}
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0">
+                <thead><tr><th>Language</th><th class="text-end">Code</th><th class="text-end">Files</th></tr></thead>
+                <tbody>
+                  {% for lang, stats in (summary.cloc.by_lang.items()|list)|sort %}
+                  <tr><td>{{ lang }}</td><td class="text-end">{{ stats.code|default(0) }}</td><td class="text-end">{{ stats.files|default(0) }}</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% endif %}
+            {% if summary.pygount and summary.pygount.by_lang and not summary.cloc %}
+            <table class="table table-sm table-hover mb-0">
+              <thead><tr><th>Language</th><th class="text-end">Code</th></tr></thead>
+              <tbody>
+                {% for lang, stats in (summary.pygount.by_lang.items()|list)|sort %}
+                <tr><td>{{ lang }}</td><td class="text-end">{{ stats.code|default(0) }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            {% endif %}
+            {% if summary.radon and (summary.radon.mi or summary.radon.cc) %}
+            <div class="p-2 small">
+              {% if summary.radon.mi %}<strong>Maintainability:</strong> {% for item in summary.radon.mi %}{{ item.file }}: {{ item.mi|round(1) }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+              {% if summary.radon.cc %}<br><strong>Complexity:</strong> {{ summary.radon.cc|length }} block(s){% endif %}
+            </div>
+            {% endif %}
+            {% if summary.diffstat or summary.top_changed_files %}
+            {% set top_for_bars = summary.top_changed_files|default([]) %}
+            {% set max_bar_val = (top_for_bars|map(attribute='total')|list|max) if top_for_bars else 1 %}
+            {% if top_for_bars %}
+            <div class="p-2 border-top">
+              <strong class="small">Diffstat</strong>
+              <div class="diffstat-bars mt-1">
+                {% for f in top_for_bars[:8] %}
+                <div class="d-flex align-items-center gap-2 mb-1 small">
+                  <a href="{{ url_for('review_code') }}#diff-file-{{ f.file_index }}" class="text-truncate" style="max-width: 50%;" title="{{ f.path }}">{{ f.path }}</a>
+                  <div class="flex-grow-1" style="max-width: 120px;"><div class="progress h-5"><div class="progress-bar bg-success" style="width: {{ (f.added * 100 / f.total)|round(1) }}%;"></div><div class="progress-bar bg-danger" style="width: {{ (f.deleted * 100 / f.total)|round(1) }}%;"></div></div></div>
+                  <span class="text-nowrap"><span class="text-success">+{{ f.added }}</span> <span class="text-danger">−{{ f.deleted }}</span></span>
+                </div>
+                {% endfor %}
+              </div>
+              {% if top_for_bars|length > 8 %}<p class="small text-muted mb-0">+{{ top_for_bars|length - 8 }} more — <a href="{{ url_for('review_code') }}">View all</a></p>{% endif %}
+            </div>
+            {% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Test coverage: collapsible, collapsed by default -->
+  {% set test_cases_added_count = summary.test_cases_added_count|default(0) %}
+  {% set test_cases_removed_count = summary.test_cases_removed_count|default(0) %}
+  {% set tca = _tca %}
+  {% set tca_issues = (tca.source_without_tests|length) + (tca.methods_without_tests|length) if tca else 0 %}
+  <div class="card border-0 shadow-sm mb-3 {% if has_tca_issues %}border-warning border-2{% elif test_cases_added_count or test_cases_removed_count %}border-success border-2{% endif %}">
+    <div class="card-header bg-transparent border-0 py-2 cursor-pointer d-flex align-items-center collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-test-coverage" aria-expanded="false" role="button">
+      <i class="bi bi-chevron-right collapse-chevron me-1"></i>
+      <i class="bi bi-bug {% if has_tca_issues %}text-warning{% elif test_cases_added_count or test_cases_removed_count %}text-success{% else %}text-muted{% endif %} me-2"></i>
+      <span class="fw-medium small">Test coverage</span>
+      {% if has_tca_issues %}<span class="badge bg-warning text-dark ms-2">{{ tca_issues }} issue{{ 's' if tca_issues != 1 else '' }}</span>{% elif test_cases_added_count or test_cases_removed_count %}<span class="badge bg-success ms-2">+{{ test_cases_added_count }}{% if test_cases_removed_count %} −{{ test_cases_removed_count }}{% endif %} tests</span>{% else %}<span class="text-muted small ms-2">No changes detected</span>{% endif %}
+    </div>
+    <div id="collapse-test-coverage" class="collapse">
+      <div class="card-body py-3">
+        {% if has_tca_issues %}
+        {% if tca.source_without_tests %}
+        <div class="mb-3"><strong class="small text-warning">Source without tests</strong>
+          <ul class="list-unstyled small mt-1 mb-0">{% for item in tca.source_without_tests[:10] %}
+            <li><code class="small">{{ item.path }}</code></li>{% endfor %}
+            {% if tca.source_without_tests|length > 10 %}<li class="text-muted">+{{ tca.source_without_tests|length - 10 }} more</li>{% endif %}
+          </ul>
+        </div>
+        {% endif %}
+        {% if tca.methods_without_tests %}
+        <div><strong class="small text-warning">Methods needing tests or test updates</strong>
+          <ul class="list-unstyled small mt-1 mb-0">{% for item in tca.methods_without_tests[:10] %}
+            <li><code>{{ item.method }}()</code> in {{ item.source_path }}{% if item.reason == 'no_test_file' %} <span class="text-muted">(no test file)</span>{% elif item.reason == 'test_update_required' or item.reason == 'no_coverage' %} <span class="text-muted">(needs test)</span>{% endif %}</li>{% endfor %}
+            {% if tca.methods_without_tests|length > 10 %}<li class="text-muted">+{{ tca.methods_without_tests|length - 10 }} more</li>{% endif %}
+          </ul>
+        </div>
+        {% endif %}
+        {% elif test_cases_added_count or test_cases_removed_count %}
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-bug-fill text-success fs-5"></i>
+          <span>+{{ test_cases_added_count }}{% if test_cases_removed_count %} −{{ test_cases_removed_count }}{% endif %} test cases in patch</span>
+        </div>
+        {% else %}
+        <p class="text-muted small mb-0">No test case changes detected in patch.</p>
         {% endif %}
       </div>
     </div>
   </div>
 
-  <!-- 3 & 4. Top changed files + Test coverage summary -->
-  <div class="row g-3 mb-4">
-    <div class="col-lg-8">
-      {% set top_files = summary.top_changed_files|default([]) %}
-      {% if top_files %}
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-header bg-light py-2 d-flex align-items-center justify-content-between">
-          <span><i class="bi bi-graph-up me-2"></i>Top changed files</span>
-          <a href="{{ url_for('review_code') }}" class="btn btn-sm btn-outline-primary">View all</a>
-        </div>
-        <div class="card-body p-0">
-          <ul class="list-group list-group-flush">
-            {% for f in top_files %}
-            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-              <a href="{{ url_for('review_code') }}#diff-file-{{ f.file_index }}" class="text-decoration-none text-dark small text-break">{{ f.path }}</a>
-              <span class="d-flex gap-1 flex-shrink-0">
-                <span class="badge bg-success">+{{ f.added }}</span>
-                <span class="badge bg-danger">−{{ f.deleted }}</span>
-              </span>
-            </li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-      {% endif %}
-    </div>
-    <div class="col-lg-4">
-      {% set test_cases_added_count = summary.test_cases_added_count|default(0) %}
-      {% set test_cases_removed_count = summary.test_cases_removed_count|default(0) %}
-      {% if test_cases_added_count or test_cases_removed_count %}
-      <div class="card border-0 shadow-sm h-100 border-success">
-        <div class="card-header bg-success bg-opacity-10 py-2">
-          <i class="bi bi-bug text-success me-2"></i>Test coverage
-        </div>
-        <div class="card-body py-3">
-          <div class="d-flex flex-wrap gap-2 align-items-center">
-            <span class="badge bg-success fs-6">+{{ test_cases_added_count }} tests</span>
-            {% if test_cases_removed_count %}
-            <span class="badge bg-danger">−{{ test_cases_removed_count }} removed</span>
-            {% endif %}
-          </div>
-        </div>
-      </div>
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- Stats row (kept for detail) -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-4">
-      <div class="card patch-summary-card border-0 shadow-sm h-100">
-        <div class="card-body d-flex align-items-center">
-          <div class="stat added me-3"><i class="bi bi-plus-circle-fill"></i> {{ lines_added }}</div>
-          <div>
-            <div class="fw-semibold">Lines added</div>
-            <small class="text-muted">Green in diff</small>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card patch-summary-card border-0 shadow-sm h-100">
-        <div class="card-body d-flex align-items-center">
-          <div class="stat deleted me-3"><i class="bi bi-dash-circle-fill"></i> {{ lines_deleted }}</div>
-          <div>
-            <div class="fw-semibold">Lines deleted</div>
-            <small class="text-muted">Red in diff</small>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card patch-summary-card border-0 shadow-sm h-100">
-        <div class="card-body d-flex align-items-center">
-          <div class="stat files me-3"><i class="bi bi-files"></i> {{ files_count }}</div>
-          <div>
-            <div class="fw-semibold">Files changed</div>
-            <small class="text-muted">Android project</small>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <p class="small text-muted mb-0 mt-2">
-    Stats are from the patch file. If GitLab shows different numbers (e.g. fewer files or fewer deletions), 
-    that’s because GitLab uses rename detection on the MR diff; the patch itself lists each changed path separately.
-  </p>
-
-  {% if summary.diffstat or summary.top_changed_files %}
-  <div class="card border-0 shadow-sm mb-3">
-    <div class="card-header bg-secondary bg-opacity-10 d-flex align-items-center">
-      <i class="bi bi-graph-down text-secondary me-2"></i>{% if summary.diffstat %}Diffstat{% else %}Change distribution{% endif %}
-      {% if summary.diffstat %}
-      <span class="ms-2">{{ summary.diffstat.files_changed|default(0) }} files</span>
-      <span class="text-success ms-2">+{{ summary.diffstat.insertions|default(0) }}</span>
-      <span class="text-danger">−{{ summary.diffstat.deletions|default(0) }}</span>
-      {% endif %}
-    </div>
-    <div class="card-body py-2">
-      {% set top_for_bars = summary.top_changed_files|default([]) %}
-      {% set max_bar_val = (top_for_bars|map(attribute='total')|list|max) if top_for_bars else 1 %}
-      {% if top_for_bars %}
-      <div class="diffstat-bars mb-2">
-        {% for f in top_for_bars %}
-        <div class="d-flex align-items-center gap-2 mb-1 small">
-          <a href="{{ url_for('review_code') }}#diff-file-{{ f.file_index }}" class="diffstat-filename text-truncate" style="min-width: 120px; max-width: 40%;" title="{{ f.path }}">{{ f.path }}</a>
-          <div class="flex-grow-1" style="max-width: 200px;">
-            <div class="progress h-6" style="min-width: 60px; width: {{ ([f.total * 100 / max_bar_val, 100]|min)|round(1) }}%;">
-              {% if f.total > 0 %}
-              <div class="progress-bar bg-success" role="progressbar" style="width: {{ (f.added * 100 / f.total)|round(1) }}%;" title="+{{ f.added }}"></div>
-              <div class="progress-bar bg-danger" role="progressbar" style="width: {{ (f.deleted * 100 / f.total)|round(1) }}%;" title="−{{ f.deleted }}"></div>
-              {% endif %}
-            </div>
-          </div>
-          <span class="text-nowrap"><span class="text-success">+{{ f.added }}</span> <span class="text-danger">−{{ f.deleted }}</span></span>
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-      {% if summary.diffstat.raw %}
-      <details class="mt-2">
-        <summary class="small text-muted cursor-pointer">Show raw diffstat</summary>
-        <pre class="small mb-0 font-monospace mt-1">{{ summary.diffstat.raw }}</pre>
-      </details>
-      {% endif %}
-    </div>
-  </div>
-  {% endif %}
-
-  {% if summary.cloc and summary.cloc.by_lang %}
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-dark bg-opacity-10 d-flex align-items-center">
-      <i class="bi bi-bar-chart-steps text-dark me-2"></i>Lines of code (CLOC) — changed files
-      <span class="badge bg-dark ms-2">{{ summary.cloc.by_lang|length }} languages</span>
-    </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-sm table-hover mb-0">
-          <thead>
-            <tr>
-              <th>Language</th>
-              <th class="text-end">Files</th>
-              <th class="text-end">Code</th>
-              <th class="text-end">Comment</th>
-              <th class="text-end">Blank</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for lang, stats in (summary.cloc.by_lang.items()|list)|sort %}
-            <tr>
-              <td><strong>{{ lang }}</strong></td>
-              <td class="text-end">{{ stats.files|default(0) }}</td>
-              <td class="text-end">{{ stats.code|default(0) }}</td>
-              <td class="text-end">{{ stats.comment|default(0) }}</td>
-              <td class="text-end">{{ stats.blank|default(0) }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% if summary.cloc.SUM %}
-      <div class="p-2 bg-light small text-muted">
-        Total (changed files): {{ summary.cloc.SUM.code|default(0) }} code, {{ summary.cloc.SUM.comment|default(0) }} comment, {{ summary.cloc.SUM.blank|default(0) }} blank lines.
-      </div>
-      {% endif %}
-    </div>
-  </div>
-  {% endif %}
-
-  {% if summary.pygount and summary.pygount.by_lang and not summary.cloc %}
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-info bg-opacity-10 d-flex align-items-center">
-      <i class="bi bi-bar-chart text-info me-2"></i>Lines of code (Pygount) — changed files
-      <span class="badge bg-info ms-2">{{ summary.pygount.by_lang|length }} languages</span>
-    </div>
-    <div class="card-body p-0">
-      <table class="table table-sm table-hover mb-0">
-        <thead><tr><th>Language</th><th class="text-end">Files</th><th class="text-end">Code</th></tr></thead>
-        <tbody>
-          {% for lang, stats in (summary.pygount.by_lang.items()|list)|sort %}
-          <tr><td><strong>{{ lang }}</strong></td><td class="text-end">{{ stats.files|default(0) }}</td><td class="text-end">{{ stats.code|default(0) }}</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      {% if summary.pygount.SUM %}
-      <div class="p-2 bg-light small">Total: {{ summary.pygount.SUM.code|default(0) }} code, {{ summary.pygount.SUM.files|default(0) }} files.</div>
-      {% endif %}
-    </div>
-  </div>
-  {% endif %}
-
-  {% if summary.radon %}
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-warning bg-opacity-10 d-flex align-items-center">
-      <i class="bi bi-speedometer2 text-warning me-2"></i>Python complexity (Radon)
-    </div>
-    <div class="card-body p-0">
-      {% if summary.radon.mi %}
-      <div class="p-2 small">
-        <strong>Maintainability index</strong> (higher is better):
-        {% for item in summary.radon.mi %}
-        <span class="me-2">{{ item.file }}: {{ item.mi|round(1) }} ({{ item.rank|default('') }})</span>
-        {% endfor %}
-      </div>
-      {% endif %}
-      {% if summary.radon.cc %}
-      <div class="p-2 small border-top">
-        <strong>Cyclomatic complexity</strong>: {{ summary.radon.cc|length }} block(s). 
-        <a href="#" class="collapse-link" data-bs-toggle="collapse" data-bs-target="#radon-cc-detail">Show details</a>
-        <div id="radon-cc-detail" class="collapse mt-1"><small>{{ summary.radon.cc|length }} blocks with complexity data.</small></div>
-      </div>
-      {% endif %}
-    </div>
-  </div>
-  {% endif %}
-
-  <!-- Android-specific file categories (collapsible, default collapsed) -->
-  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-    <h5 class="mb-0"><i class="bi bi-android2 me-2"></i>By Android category</h5>
+  <!-- File categories: expand for file lists -->
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2 mt-3">
+    <span class="text-muted small fw-medium">File categories</span>
     <div class="btn-group btn-group-sm" role="group">
-      <button type="button" class="btn btn-outline-secondary" id="patch-summary-expand-all" title="Expand all categories">Expand all</button>
-      <button type="button" class="btn btn-outline-secondary" id="patch-summary-collapse-all" title="Collapse all categories">Collapse all</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm py-1" id="patch-summary-expand-all" title="Expand all">Expand</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm py-1" id="patch-summary-collapse-all" title="Collapse all">Collapse</button>
     </div>
   </div>
 
@@ -341,9 +266,8 @@
     <div class="card-header bg-primary bg-opacity-10 d-flex align-items-center py-2 cursor-pointer collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-manifest" aria-expanded="false" aria-controls="collapse-manifest" role="button">
       <i class="bi bi-chevron-right collapse-chevron me-1"></i>
       <i class="bi bi-file-earmark-text text-primary me-2"></i>Manifests
-      <span class="badge bg-primary ms-2">{{ mf|length }}</span>
-      <span class="text-success ms-2">+{{ mf_added }}</span>
-      <span class="text-danger">−{{ mf_deleted }}</span>
+      <span class="badge bg-primary bg-opacity-50 text-dark ms-2">{{ mf|length }}</span>
+      <span class="ms-2 small"><span class="text-success">+{{ mf_added }}</span> <span class="text-danger">−{{ mf_deleted }}</span></span>
     </div>
     <div id="collapse-manifest" class="collapse">
       <div class="card-body p-0">

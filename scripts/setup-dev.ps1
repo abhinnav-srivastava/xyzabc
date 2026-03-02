@@ -124,6 +124,21 @@ if (-not $pythonCmd) {
 # Create venv if -Venv passed
 if ($Venv) {
     $venvPath = Join-Path $ProjectRoot ".venv"
+    $venvPython = Join-Path $venvPath "Scripts\python.exe"
+    $venvValid = $false
+    if (Test-Path $venvPath) {
+        Write-Host "Venv .venv exists, verifying..."
+        try {
+            $null = & $venvPython --version 2>&1
+            $venvValid = ($LASTEXITCODE -eq 0)
+        } catch {
+            $venvValid = $false
+        }
+        if (-not $venvValid) {
+            Write-Host "  Venv appears broken (e.g. copied from another project). Recreating..." -ForegroundColor Yellow
+            Remove-Item -Recurse -Force $venvPath -ErrorAction SilentlyContinue
+        }
+    }
     if (-not (Test-Path $venvPath)) {
         Write-Host "Creating venv at .venv..."
         try {
@@ -132,8 +147,6 @@ if ($Venv) {
         } catch {
             Write-Host "  Venv creation failed (continuing)" -ForegroundColor Yellow
         }
-    } else {
-        Write-Host "Venv .venv exists"
     }
     $pythonCmd = Join-Path $venvPath "Scripts\python.exe"
     $pythonLauncher = @()
@@ -152,6 +165,18 @@ try {
     }
 } catch {
     Write-Host "  pip install failed (continuing). Run: pip install -r requirements.txt" -ForegroundColor Yellow
+}
+$optPath = Join-Path $ProjectRoot "requirements-optional.txt"
+if (Test-Path $optPath) {
+    Write-Host "Installing optional dependencies (pygount, radon, tree-sitter for Level C test coverage)..."
+    try {
+        & $pythonCmd @pythonLauncher -m pip install -r $optPath @pipArgs 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) { Write-Host "  OK" -ForegroundColor Green } else {
+            Write-Host "  Optional install failed (continuing). Run: pip install -r requirements-optional.txt" -ForegroundColor Gray
+        }
+    } catch {
+        Write-Host "  Optional install failed (continuing)" -ForegroundColor Gray
+    }
 }
 if ($Venv) {
     Write-Host "Activate venv: .\.venv\Scripts\Activate.ps1" -ForegroundColor Cyan

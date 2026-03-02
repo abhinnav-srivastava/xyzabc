@@ -70,6 +70,52 @@
         </div>
       </a>
     </div>
+
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between">
+          <h6 class="mb-0 fw-semibold">
+            <i class="bi bi-folder2-open text-primary me-2"></i>Project Summary
+          </h6>
+          <a href="{{ url_for('profile_page') }}#section-projects" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i>Add project
+          </a>
+        </div>
+        <div class="card-body">
+          {% if project_summaries %}
+          <div class="row g-3">
+            {% for p in project_summaries %}
+            <div class="col-md-6 col-lg-4">
+              <a href="{{ url_for('project_details', project_id=p.id) }}" class="text-decoration-none">
+                <div class="card border h-100 hover-lift">
+                  <div class="card-body py-3">
+                    <h6 class="card-title mb-2 fw-semibold">
+                      <i class="bi bi-folder text-muted me-1"></i>{{ p.name }}
+                    </h6>
+                    {% if p.summary %}
+                    <div class="small text-muted">
+                      <span class="me-2"><i class="bi bi-file-earmark"></i> {{ p.summary.file_count }} files</span>
+                      <span class="me-2"><i class="bi bi-code-slash"></i> {{ p.summary.source_count }} source</span>
+                      <span><i class="bi bi-bug"></i> {{ p.summary.test_count }} test</span>
+                    </div>
+                    <small class="text-success">Indexed</small>
+                    {% else %}
+                    <small class="text-muted">Not indexed yet — click to build</small>
+                    {% endif %}
+                  </div>
+                </div>
+              </a>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-muted mb-0">
+            <i class="bi bi-info-circle me-1"></i>No projects yet. Add local project paths in your <a href="{{ url_for('profile_page') }}#section-projects">Profile</a> to see summaries.
+          </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 

@@ -105,6 +105,14 @@ class FileDiff:
     file_type: str = "other"  # "manifest" | "gradle" | "resources" | "source" | "test" | "other"
 
 
+def classify_file_type(path: str) -> str:
+    """
+    Classify path into Android-specific categories: manifest, gradle, resources, source, test, other.
+    Public API for use by project_index_service and other callers.
+    """
+    return _classify_android_file(path)
+
+
 def _classify_android_file(path: str) -> str:
     """Classify into Android-specific categories: manifest, gradle, resources, source, test, other."""
     path_n = path.replace("\\", "/")
@@ -444,7 +452,7 @@ def _run_cloc_on_files(files: List[FileDiff]) -> Optional[Dict[str, Any]]:
         return None
 
 
-def parse_patch(content: str) -> Tuple[List[FileDiff], Dict[str, Any]]:
+def parse_patch(content: str, project_path: Optional[str] = None) -> Tuple[List[FileDiff], Dict[str, Any]]:
     """
     Parse patch: use git apply --numstat for exact stats (GitLab-accurate) when available;
     always use unified-diff parser for hunk content (diff viewer). Fall back to parser-only stats if git fails.
@@ -563,12 +571,13 @@ def parse_patch(content: str) -> Tuple[List[FileDiff], Dict[str, Any]]:
     cloc_result = _run_cloc_on_files(files)
     if cloc_result:
         summary["cloc"] = cloc_result
-    # Optional: diffstat, pygount, radon (see services/code_metrics.py)
+    # Optional: diffstat, pygount, radon, test coverage (see services/code_metrics.py)
     try:
         from services.code_metrics import run_patch_metrics
         extra = run_patch_metrics(
             content, files, summary,
             reconstruct_file_content_fn=_reconstruct_new_file_content,
+            project_path=project_path,
         )
         if extra:
             summary.update(extra)

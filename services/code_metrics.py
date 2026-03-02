@@ -269,6 +269,7 @@ def run_patch_metrics(
     summary: Dict[str, Any],
     reconstruct_file_content_fn,
     timeout_per_tool: int = 60,
+    project_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Run all enabled patch-level metrics and return extra dict to merge into summary.
@@ -311,6 +312,15 @@ def run_patch_metrics(
         radon_result = run_radon_on_python_files(to_analyze, timeout=timeout_per_tool)
         if radon_result:
             extra["radon"] = radon_result
+    except Exception:
+        pass
+
+    # 5) Test coverage analysis — changed methods vs project tests
+    try:
+        from services.test_coverage_analysis import run_test_coverage_analysis
+        tca = run_test_coverage_analysis(files, reconstruct_file_content_fn, project_path=project_path)
+        if tca:
+            extra.update(tca)
     except Exception:
         pass
 

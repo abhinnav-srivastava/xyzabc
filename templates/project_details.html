@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-3 px-md-4">
+  <!-- Breadcrumb + header -->
+  <nav aria-label="Breadcrumb" class="mb-2">
+    <ol class="breadcrumb mb-0" style="--bs-breadcrumb-divider: '›';">
+      <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{{ project.name or project.url_or_path }}</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <h4 class="mb-0 fw-bold">
+          <i class="bi bi-folder2-open text-primary me-2"></i>{{ project.name or project.url_or_path }}
+        </h4>
+        <span class="badge bg-secondary">{{ project.type|default('local') }}</span>
+      </div>
+      <p class="text-muted small mb-0">
+        <code class="bg-light px-1 rounded">{{ (index.project_path if index else project.url_or_path) or '—' }}</code>
+      </p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </a>
+      {% if index %}
+      <a href="{{ url_for('project_details', project_id=project.id, refresh=1) }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-arrow-clockwise me-1"></i>Refresh index
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if not index %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5">
+      <i class="bi bi-folder-x text-muted" style="font-size: 3rem;"></i>
+      <h5 class="mt-3 fw-semibold">Index not available</h5>
+      <p class="text-muted mb-0">Build the project index to see file structure, classes, and test cases.</p>
+      <a href="{{ url_for('project_details', project_id=project.id, refresh=1) }}" class="btn btn-primary mt-3">
+        <i class="bi bi-arrow-clockwise me-1"></i>Build index now
+      </a>
+    </div>
+  </div>
+  {% else %}
+  <!-- KPI cards -->
+  <div class="row g-2 g-md-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100 project-dash-card">
+        <div class="card-body d-flex align-items-center">
+          <div class="flex-shrink-0 me-3">
+            <i class="bi bi-file-earmark-text text-primary" style="font-size: 1.75rem;"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-4">{{ index.file_count }}</div>
+            <small class="text-muted">Files</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100 project-dash-card">
+        <div class="card-body d-flex align-items-center">
+          <div class="flex-shrink-0 me-3">
+            <i class="bi bi-code-slash text-success" style="font-size: 1.75rem;"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-4">{{ index.source_count }}</div>
+            <small class="text-muted">Source</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100 project-dash-card">
+        <div class="card-body d-flex align-items-center">
+          <div class="flex-shrink-0 me-3">
+            <i class="bi bi-bug text-warning" style="font-size: 1.75rem;"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-4">{{ index.test_count }}</div>
+            <small class="text-muted">Test</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100 project-dash-card">
+        <div class="card-body d-flex align-items-center">
+          <div class="flex-shrink-0 me-3">
+            <i class="bi bi-collection text-info" style="font-size: 1.75rem;"></i>
+          </div>
+          <div>
+            <div class="fw-bold fs-4">{{ stats.classes|default(0) }}</div>
+            <small class="text-muted">Classes</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Secondary stats bar -->
+  <div class="d-flex flex-wrap align-items-center gap-3 mb-4 py-2 px-3 rounded-3 bg-light bg-opacity-50">
+    <span><i class="bi bi-function text-muted me-1"></i><strong>{{ stats.methods|default(0) }}</strong> methods</span>
+    <span><i class="bi bi-check-circle text-success me-1"></i><strong>{{ stats.test_cases|default(0) }}</strong> test cases</span>
+    <span class="text-muted small">Indexed {{ index.indexed_at[:19] if index.indexed_at else '—' }}</span>
+    {% set total_cat = index.source_count + index.test_count %}
+    {% if total_cat > 0 %}
+    <div class="d-flex align-items-center gap-2 ms-auto">
+      <span class="text-muted small">Source/Test</span>
+      <div class="progress flex-grow-1" style="width: 100px; height: 6px;">
+        <div class="progress-bar bg-success" style="width: {{ (index.source_count * 100 / total_cat)|round(0) }}%;" title="Source"></div>
+        <div class="progress-bar bg-warning" style="width: {{ (index.test_count * 100 / total_cat)|round(0) }}%;" title="Test"></div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Category pills -->
+  {% set type_order = ['source', 'test', 'manifest', 'gradle', 'resources', 'other'] %}
+  {% set type_icons = {'source': 'code-slash', 'test': 'bug', 'manifest': 'file-earmark-text', 'gradle': 'gear', 'resources': 'palette', 'other': 'file-earmark'} %}
+  {% set type_colors = {'source': 'success', 'test': 'warning', 'manifest': 'primary', 'gradle': 'secondary', 'resources': 'info', 'other': 'dark'} %}
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span class="text-muted small me-1">Jump to</span>
+        {% for ft in type_order %}
+          {% set flist = files_by_type.get(ft, []) %}
+          {% if flist %}
+        <a href="#section-{{ ft }}" class="badge bg-{{ type_colors[ft] }} bg-opacity-25 text-{{ type_colors[ft] }} text-decoration-none py-2 px-2" data-bs-toggle="collapse" data-bs-target="#collapse-{{ ft }}">
+          <i class="bi bi-{{ type_icons[ft] }} me-1"></i>{{ ft|capitalize }} {{ flist|length }}
+        </a>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- File sections -->
+  <div class="row g-3">
+    {% for ft in type_order %}
+      {% set flist = files_by_type.get(ft, []) %}
+      {% if flist %}
+    <div class="col-12" id="section-{{ ft }}">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-bottom py-2 d-flex align-items-center justify-content-between cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapse-{{ ft }}" aria-expanded="true" role="button">
+          <h6 class="mb-0 fw-semibold">
+            <i class="bi bi-{{ type_icons[ft] }} me-2 text-{{ type_colors[ft] }}"></i>{{ ft|capitalize }}
+            <span class="badge bg-{{ type_colors[ft] }} bg-opacity-25 text-{{ type_colors[ft] }} ms-2">{{ flist|length }}</span>
+          </h6>
+          <i class="bi bi-chevron-down collapse-icon"></i>
+        </div>
+        <div class="collapse show" id="collapse-{{ ft }}">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover table-sm mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-3" style="width: 40%;">File</th>
+                    <th>Classes</th>
+                    <th>Methods</th>
+                    <th>Test cases</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for f in flist %}
+                  <tr>
+                    <td class="ps-3">
+                      <code class="small text-break">{{ f.path }}</code>
+                    </td>
+                    <td>
+                      {% if f.classes %}
+                      <span class="badge bg-secondary bg-opacity-25 text-dark small">{% for c in f.classes[:3] %}{{ c }}{% if not loop.last %}, {% endif %}{% endfor %}{% if f.classes|length > 3 %} +{{ f.classes|length - 3 }}{% endif %}</span>
+                      {% else %}<span class="text-muted">—</span>{% endif %}
+                    </td>
+                    <td>
+                      {% if f.methods %}
+                      <span class="small">{% for m in f.methods[:3] %}{{ m.name }}{% if not loop.last %}, {% endif %}{% endfor %}{% if f.methods|length > 3 %} +{{ f.methods|length - 3 }}{% endif %}</span>
+                      {% else %}<span class="text-muted">—</span>{% endif %}
+                    </td>
+                    <td>
+                      {% if f.test_cases %}
+                      <span class="small text-success">{% for t in f.test_cases[:3] %}{{ t.name }}{% if not loop.last %}, {% endif %}{% endfor %}{% if f.test_cases|length > 3 %} +{{ f.test_cases|length - 3 }}{% endif %}</span>
+                      {% else %}<span class="text-muted">—</span>{% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<style>
+.project-dash-card { transition: transform 0.15s; }
+.project-dash-card:hover { transform: translateY(-1px); }
+.cursor-pointer { cursor: pointer; }
+.collapse-icon { transition: transform 0.2s; }
+.collapse:not(.show) .collapse-icon { transform: rotate(-90deg); }
+</style>
+{% endblock %}

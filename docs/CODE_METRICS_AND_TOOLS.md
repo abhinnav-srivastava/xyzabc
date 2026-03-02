@@ -17,8 +17,9 @@ These run on the **patch file** or on **reconstructed files** from the patch (e.
 | **diffstat** | Binary | Insertions/deletions summary    | Bundled in `tools/diffstat/` or PATH; else **parsed in Python** | Patch content (stdin) |
 | **Pygount** | Python | LOC by language (alternative to CLOC) | `pip install pygount` | Reconstructed files   |
 | **Radon**  | Python | Cyclomatic complexity & maintainability (**.py** only) | `pip install radon` | Reconstructed .py files |
+| **Test coverage analysis** | Built-in + optional | Flag source without tests, methods without tests (Android Java/Kotlin). Level A/B always; Level C with tree-sitter | `pip install tree-sitter tree-sitter-java tree-sitter-kotlin` for Level C | Patch (source + test files) |
 
-- **Optional Python deps:** `pip install -r requirements-optional.txt` (pygount, radon).
+- **Optional Python deps:** `pip install -r requirements-optional.txt` (pygount, radon, tree-sitter for Level C test coverage).
 - **Binaries:** Place in `tools/<name>/` or install on system. See below for download links.
 
 ### Diffstat (binary)
@@ -38,6 +39,36 @@ These run on the **patch file** or on **reconstructed files** from the patch (e.
 
 - **Windows:** [Git for Windows](https://git-scm.com/download/win) — optional: extract PortableGit to `tools/git/` (e.g. `cmd/git.exe`).
 - **Others:** Use system Git (`git` on PATH).
+
+### Test coverage analysis
+
+Flags **changed/added methods** in the patch that lack test coverage. When a **local project** is selected at patch upload, scans the **project filesystem** (not just patch) for test files.
+
+| Mode | Description |
+|------|-------------|
+| **Project path provided** | Extracts methods touched by the diff; checks project for test files; flags methods needing tests or test updates |
+| **No project path** | Fallback: file-level (source without test in patch) and method-level (patch files only) |
+
+- **Output:** Shown in Patch Summary as "Test coverage analysis" when issues found.
+- **Conventions:** Android path mapping (`src/main` → `src/test`), heuristic matching (`login()` → `testLogin()`, `when_login_then_ok`).
+
+---
+
+## Project index (persistent)
+
+When a **local project** is added (Profile → Projects), CodeReview builds and persists a **project index** so structure analysis does not need to run every time.
+
+| What is indexed | Description |
+|-----------------|-------------|
+| **File tree** | All files (excluding `.git`, `node_modules`, `build`, etc.) with type: source, test, manifest, gradle, resources, other |
+| **Classes** | Java, Kotlin, Python classes (tree-sitter when available for Java/Kotlin, else regex) |
+| **Methods** | Methods in source files (non-test) |
+| **Test cases** | Test method names in test files (`test*`, `when_*`, `given_*` for Java/Kotlin; `test_*` for Python) |
+
+- **Storage:** `data/project_indexes/<project_id>.json`
+- **Invalidation:** Index is rebuilt when git HEAD changes (for git repos) or on manual refresh
+- **APIs:** `GET /api/project/<id>/index` (get or build), `POST /api/project/<id>/index/refresh` (rebuild in background)
+- **Optional:** `tree-sitter`, `tree-sitter-java`, `tree-sitter-kotlin` for accurate Java/Kotlin parsing (falls back to regex otherwise)
 
 ---
 

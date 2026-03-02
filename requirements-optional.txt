@@ -7,5 +7,11 @@ pygount>=1.2.0
 # Python complexity & maintainability (for .py files in patch)
 radon>=6.0.0
 
+# Level C test coverage analysis (AST-based method extraction for Java/Kotlin)
+# Enables "methods without tests" detection with accurate parsing.
+tree-sitter>=0.22.0
+tree-sitter-java>=0.23.0
+tree-sitter-kotlin>=1.1.0
+
 # Future: project-level analysis
 # semgrep  # uncomment when adding Semgrep integration
