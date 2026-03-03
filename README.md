@@ -1,8 +1,8 @@
-# CodeReview – Project Analysis
+# Restore app name – Project Analysis
 
 ## What It Is
 
-**CodeReview** is a **code review checklist app**: reviewers go through role-based, category-driven checklists and record pass/fail/comment per item. It’s a **Flask** web app with **PWA** support, optional **offline**, and **HTML/PDF export**.
+**Restore app name** is a **code review checklist app**: reviewers go through role-based, category-driven checklists and record pass/fail/comment per item. It’s a **Flask** web app with **PWA** support, optional **offline**, and **HTML/PDF export**.
 
 ---
 
@@ -44,7 +44,7 @@
 2. **Start Review** (`/start`) – GET initializes review from session (login data); redirects to **Patch** (step 2).
 3. **Patch** (`/review/patch`) – Step 2: Upload a `.patch` file or paste a unified diff (e.g. from GitLab MR), or **Skip** to go straight to checklist. No system Git required; parsing is in-app. Android-focused (source vs test file classification).
 4. **Patch analysis & summary** (`/patch-summary`) – MR-style summary: lines added/deleted, source vs test files. “View changes” (diff) and **Continue to checklist review**.
-5. **Review code** (`/review/code`) – GitLab-style diff viewer: file list and per-file unified diff (line numbers, added/removed highlighting).
+5. **Code browser** (`/code`) – Generic code browser and navigator. Reusable from patch review (diff view, test-focused highlighting) and project details (Source & Test hierarchy). `/review/code` and `/project/<id>/code` redirect to `/code?source=patch` and `/code?source=project&project_id=<id>`.
 6. **Checklist review**  
    - **Single-page** – `/review/all`: one page with all categories and items; POST submits all and redirects to summary.  
    - **Category-by-category** – `/review/category/<idx>`: one category at a time; each form POST saves to session and moves prev/next or to summary.
@@ -102,13 +102,13 @@ You can **pack git, cloc, and diffstat** in the project so patch metrics work wi
 - **Run (dev)** – `python app.py --dev-server` (Flask dev server, debug on).
 - **Run (default)** – `python app.py` uses Waitress if available.
 - **Portable (recommended)** – `npm run build:win` produces fully bundled Windows artifacts in `dist-electron/`:
-  - **CodeReview 1.0.0.exe** — single file, copy to target and run. No install, no admin.
-  - **CodeReview-portable.zip** — unzip anywhere, run `CodeReview.exe`.
-  - **win-unpacked/** — copy folder to target, run `CodeReview.exe`.
+  - **Restore app name 1.0.0.exe** — single file, copy to target and run. No install, no admin.
+  - **Restore app name-portable.zip** — unzip anywhere, run `Restore app name.exe`.
+  - **win-unpacked/** — copy folder to target, run `Restore app name.exe`.
   Requires: Node.js, Python (build time only). Target machine needs nothing.
 
 ---
 
 ## Summary
 
-CodeReview is a **session-based, role-driven code review checklist app**: config and checklists come from **JSON + Markdown (+ optional Excel)**, the **Flask app** serves the UI and API, **services** handle checklist loading and categories, and **network_security** enforces access rules. The same codebase supports **web**, **PWA/offline**, and **portable desktop** builds.
+Restore app name is a **session-based, role-driven code review checklist app**: config and checklists come from **JSON + Markdown (+ optional Excel)**, the **Flask app** serves the UI and API, **services** handle checklist loading and categories, and **network_security** enforces access rules. The same codebase supports **web**, **PWA/offline**, and **portable desktop** builds.

@@ -1,6 +1,6 @@
-# CodeReview Electron App
+# Restore app name Electron App
 
-Desktop wrapper for CodeReview. **Fully bundled** — no Python or Flask required on the target machine.
+Desktop wrapper for Restore app name. **Fully bundled** — no Python or Flask required on the target machine.
 
 ## Prerequisites (build time only)
 
@@ -31,7 +31,7 @@ node scripts/build-electron-win.js
 ```
 
 This will:
-1. Run **PyInstaller** to bundle the Flask app + Python + deps into `CodeReview.exe`
+1. Run **PyInstaller** to bundle the Flask app + Python + deps into `Restore app name.exe`
 2. Run **electron-builder** to package it as a Windows app
 
 Output: `dist-electron/` — installer (NSIS) and portable exe. **No Python required** on the target machine.
@@ -39,5 +39,5 @@ Output: `dist-electron/` — installer (NSIS) and portable exe. **No Python requ
 ### If Electron build fails (network, proxy, etc.)
 
 - **Retries:** The script retries electron-builder up to 3 times.
-- **PyInstaller-only:** `npm run build:win:pyonly` — builds `dist/CodeReview.exe` only (skip Electron).
+- **PyInstaller-only:** `npm run build:win:pyonly` — builds `dist/Restore app name.exe` only (skip Electron).
 - **Proxy:** Set `HTTPS_PROXY` and `HTTP_PROXY` if behind a firewall.

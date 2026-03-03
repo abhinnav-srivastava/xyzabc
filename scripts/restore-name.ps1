@@ -22,8 +22,8 @@ foreach ($f in $files) {
     $content = Get-Content $f.FullName -Raw -ErrorAction SilentlyContinue
     if (-not $content) { continue }
     $orig = $content
-    $content = $content -replace 'CodeReview', $Name
-    $content = $content -replace 'codereview', $Id
+    $content = $content -replace 'Restore app name', $Name
+    $content = $content -replace 'Restore app name', $Id
     if ($content -ne $orig) {
         Set-Content $f.FullName -Value $content -NoNewline
         $count++

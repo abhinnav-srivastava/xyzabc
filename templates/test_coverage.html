@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% set tca = summary.test_coverage_analysis|default({}) %}
+{% set pac = summary.patch_ast_changes|default({}) %}
+{% set source_without = tca.source_without_tests|default([]) %}
+{% set methods_without = tca.methods_without_tests|default([]) %}
+{% set tests_deleted_list = pac.tests_deleted_list|default([]) %}
+{% set methods_added_list = pac.methods_added_list|default([]) %}
+{% set critical_count = source_without|length + tests_deleted_list|length %}
+{% set warning_count = methods_without|length %}
+{% set info_count = methods_added_list|length %}
+{% set total_issues = critical_count + warning_count %}
+{% set has_issues = total_issues > 0 %}
+{% set ast_level = tca.level|default('A') %}
+<div class="container">
+  <nav aria-label="Breadcrumb" class="mb-2">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{{ url_for('patch_summary') }}" class="text-decoration-none">Patch summary</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Test coverage</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex align-items-center justify-between flex-wrap gap-2 mb-4">
+    <h4 class="mb-0">
+      <i class="bi bi-bug me-2"></i>Test coverage analysis
+      {% if ast_level == 'C' %}<span class="badge bg-success ms-2" title="AST/tree-sitter enabled">AST</span>{% elif ast_level == 'B' %}<span class="badge bg-info ms-2">Level B</span>{% endif %}
+    </h4>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('patch_summary') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Back to summary
+      </a>
+      {% if has_issues %}
+      <a href="{{ url_for('code_browser', source='patch', test_focus=1) }}" class="btn btn-warning btn-sm">
+        <i class="bi bi-bug me-1"></i>View test-focused
+      </a>
+      {% endif %}
+      <a href="{{ url_for('code_browser', source='patch') }}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-code-slash me-1"></i>View changes
+      </a>
+    </div>
+  </div>
+
+  {% if has_issues %}
+  <!-- Issue summary -->
+  <div class="alert alert-warning border-0 shadow-sm mb-4" role="alert">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div>
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>{{ total_issues }} issue{{ 's' if total_issues != 1 else '' }} flagged</strong>
+        {% if critical_count %}<span class="badge bg-danger ms-2">{{ critical_count }} critical</span>{% endif %}
+        {% if warning_count %}<span class="badge bg-warning text-dark ms-1">{{ warning_count }} warning</span>{% endif %}
+        {% if tests_deleted_list %}<span class="badge bg-danger ms-1">{{ tests_deleted_list|length }} test case(s) removed</span>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-success border-0 shadow-sm mb-4" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    <strong>No test coverage issues detected.</strong>
+    {% if summary.test_cases_added_count or summary.test_cases_removed_count %}
+    +{{ summary.test_cases_added_count|default(0) }} added, −{{ summary.test_cases_removed_count|default(0) }} removed test cases.
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="text-success fs-4">{{ summary.test_cases_added_count|default(0) }}</div>
+          <small class="text-muted">Test cases added</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="text-danger fs-4">{{ summary.test_cases_removed_count|default(0) }}</div>
+          <small class="text-muted">Test cases removed</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="text-primary fs-4">{{ tca.source_with_tests_count|default(0) }}/{{ tca.source_total_count|default(0) }}</div>
+          <small class="text-muted">Source files with tests</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="text-secondary fs-4">{{ pac.tests_added|default(0) }}/{{ pac.tests_deleted|default(0) }}/{{ pac.tests_modified|default(0) }}</div>
+          <small class="text-muted">Test cases +/−/~</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flagged issues -->
+  <div class="row g-3">
+    <!-- Critical: Source without tests -->
+    {% if source_without %}
+    <div class="col-12">
+      <div class="card border-danger h-100">
+        <div class="card-header bg-danger bg-opacity-10 d-flex align-items-center">
+          <i class="bi bi-x-circle-fill text-danger me-2"></i>
+          <strong>Source files without tests</strong>
+          <span class="badge bg-danger ms-2">{{ source_without|length }}</span>
+        </div>
+        <div class="card-body py-2">
+          <p class="small text-muted mb-2">These source files have no corresponding test file in the patch (or project).</p>
+          <ul class="list-unstyled mb-0 small">
+            {% for item in source_without %}
+            <li class="py-1">{% if item.path %}<code>{{ item.path }}</code>{% endif %}
+              {% if item.expected_test_paths %}
+              <span class="text-muted">→ expected: {{ item.expected_test_paths|join(', ') }}</span>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Critical: Tests removed -->
+    {% if tests_deleted_list %}
+    <div class="col-12">
+      <div class="card border-danger h-100">
+        <div class="card-header bg-danger bg-opacity-10 d-flex align-items-center">
+          <i class="bi bi-dash-circle-fill text-danger me-2"></i>
+          <strong>Test cases removed</strong>
+          <span class="badge bg-danger ms-2">{{ tests_deleted_list|length }}</span>
+        </div>
+        <div class="card-body py-2">
+          <p class="small text-muted mb-2">These test methods were removed in the patch. Verify removal is intentional.</p>
+          <ul class="list-unstyled mb-0 small">
+            {% for item in tests_deleted_list %}
+            <li class="py-1"><code>{{ item.path }}</code> — <code>{{ item.test }}()</code></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Warning: Methods without tests -->
+    {% if methods_without %}
+    <div class="col-12">
+      <div class="card border-warning h-100">
+        <div class="card-header bg-warning bg-opacity-10 d-flex align-items-center">
+          <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+          <strong>Methods needing tests</strong>
+          <span class="badge bg-warning text-dark ms-2">{{ methods_without|length }}</span>
+        </div>
+        <div class="card-body py-2">
+          <p class="small text-muted mb-2">These methods were changed or added but have no matching test coverage.</p>
+          <ul class="list-unstyled mb-0 small">
+            {% for item in methods_without %}
+            <li class="py-1">
+              <code>{{ item.method }}()</code> in <code>{{ item.source_path }}</code>
+              {% if item.reason == 'no_test_file' %}<span class="badge bg-secondary">no test file</span>{% endif %}
+              {% if item.reason == 'test_update_required' %}<span class="badge bg-warning text-dark">test update required</span>{% endif %}
+              {% if item.reason == 'no_coverage' %}<span class="badge bg-info">no coverage</span>{% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Info: Methods added (AST) -->
+    {% if methods_added_list %}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-light d-flex align-items-center">
+          <i class="bi bi-diagram-3 text-primary me-2"></i>
+          <strong>Methods added (AST)</strong>
+          <span class="badge bg-primary ms-2">{{ methods_added_list|length }}</span>
+        </div>
+        <div class="card-body py-2">
+          <p class="small text-muted mb-2">New methods detected via AST. Ensure each has corresponding tests.</p>
+          <ul class="list-unstyled mb-0 small">
+            {% for item in methods_added_list %}
+            <li class="py-1"><code>{{ item.path }}</code> — <code>{{ item.method }}()</code></li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if not has_issues and not methods_added_list %}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-4 text-muted">
+          <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+          <p class="mb-0 mt-2">No Java/Kotlin source or test changes detected, or no issues flagged.</p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

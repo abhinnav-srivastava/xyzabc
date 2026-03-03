@@ -1,6 +1,6 @@
 # Bundled diffstat (optional)
 
-Place the **diffstat** native binary here. CodeReview uses only **native executables** (e.g. `diffstat.exe` on Windows) so that no extra window or Java process starts when the app runs.
+Place the **diffstat** native binary here. Restore app name uses only **native executables** (e.g. `diffstat.exe` on Windows) so that no extra window or Java process starts when the app runs.
 
 ## Layout
 
@@ -17,4 +17,4 @@ Place the **diffstat** native binary here. CodeReview uses only **native executa
 
 ## If this folder is empty
 
-CodeReview will still show diff stats: it uses a **pure-Python** fallback that parses the patch when the diffstat binary is not available. The binary is only needed if you want the exact `diffstat` output format.
+Restore app name will still show diff stats: it uses a **pure-Python** fallback that parses the patch when the diffstat binary is not available. The binary is only needed if you want the exact `diffstat` output format.

@@ -1,6 +1,6 @@
 # Bundled CLOC (optional)
 
-Place **cloc** (Count Lines of Code) here so CodeReview can show lines-of-code breakdown by language for the changed files in a patch, without requiring cloc to be installed system-wide.
+Place **cloc** (Count Lines of Code) here so Restore app name can show lines-of-code breakdown by language for the changed files in a patch, without requiring cloc to be installed system-wide.
 
 ## Layout
 
@@ -19,4 +19,4 @@ So the executable should be at:
 
 ## If this folder is empty
 
-CodeReview will use `cloc` from the system **PATH**. Install cloc (e.g. `apt install cloc`, `brew install cloc`) if you want the “Lines of code (CLOC)” section in the patch summary.
+Restore app name will use `cloc` from the system **PATH**. Install cloc (e.g. `apt install cloc`, `brew install cloc`) if you want the “Lines of code (CLOC)” section in the patch summary.

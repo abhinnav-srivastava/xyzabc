@@ -1,7 +1,7 @@
 # Dependency Audit Report
 
 **Date:** March 2025  
-**Project:** CodeReview  
+**Project:** Restore app name  
 **Last fixed:** March 2025
 
 ---

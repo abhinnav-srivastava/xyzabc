@@ -1,0 +1,4063 @@
+{
+  "version": 2,
+  "project_id": "06ba0b9c-419e-42a1-9960-e57dd7765a45",
+  "project_path": "C:\\workspace\\csapp",
+  "indexed_at": "2026-03-03T12:09:46.660128+00:00",
+  "git_head": "9940515e13feb67ccbd7de142a7481fed174558d",
+  "file_count": 153,
+  "source_count": 107,
+  "test_count": 7,
+  "files": [
+    {
+      "path": "build.gradle.kts",
+      "type": "gradle",
+      "ext": ".kts",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "gradle.properties",
+      "type": "gradle",
+      "ext": ".properties",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "gradlew.bat",
+      "type": "other",
+      "ext": ".bat",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "local.properties",
+      "type": "other",
+      "ext": ".properties",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "logcat-app-errors.bat",
+      "type": "other",
+      "ext": ".bat",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "run.bat",
+      "type": "other",
+      "ext": ".bat",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "settings.gradle.kts",
+      "type": "gradle",
+      "ext": ".kts",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/build.gradle.kts",
+      "type": "gradle",
+      "ext": ".kts",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/proguard-rules.pro",
+      "type": "other",
+      "ext": ".pro",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/debug/res/values/config.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/AndroidManifest.xml",
+      "type": "manifest",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/CSApplication.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "CSApplication"
+      ],
+      "methods": [
+        {
+          "name": "onCreate",
+          "line": 16
+        },
+        {
+          "name": "initializeKoin",
+          "line": 24
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/AppErrorType.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "AppErrorType"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/DriverPermitSettings.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "DriverPermitSettings"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/PlatformSettings.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "PlatformSettings"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/PrivacyModeSettings.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "PrivacyModeSettings"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/UrlConfig.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "UrlConfig"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/UrlParameters.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "UrlParameters"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/VehicleRegion.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "VehicleRegion"
+      ],
+      "methods": [
+        {
+          "name": "fromString",
+          "line": 26
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/VehicleState.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "VehicleState"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/constants/HttpConstants.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "HttpConstants"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/constants/RegionConfigKeyResolver.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "RegionConfigKeyResolver"
+      ],
+      "methods": [
+        {
+          "name": "getConfigKeyForRegion",
+          "line": 9
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/constants/UrlConfigConstants.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "UrlConfigConstants"
+      ],
+      "methods": [
+        {
+          "name": "getConfigKeyForRegion",
+          "line": 14
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/constants/UrlConstants.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "UrlConstants"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/datasource/AndroidDataSource.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "AndroidDataSource"
+      ],
+      "methods": [
+        {
+          "name": "getVehicleState",
+          "line": 10
+        },
+        {
+          "name": "registerVehicleStateCallback",
+          "line": 11
+        },
+        {
+          "name": "unregisterVehicleStateCallback",
+          "line": 12
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/datasource/FALDataSource.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "FALDataSource"
+      ],
+      "methods": [
+        {
+          "name": "getPrivacyModeBlocking",
+          "line": 12
+        },
+        {
+          "name": "getDriverPermitValid",
+          "line": 13
+        },
+        {
+          "name": "getVehicleRegion",
+          "line": 14
+        },
+        {
+          "name": "getUserId",
+          "line": 15
+        },
+        {
+          "name": "registerNotificationCallback",
+          "line": 17
+        },
+        {
+          "name": "unregisterNotificationCallback",
+          "line": 18
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/datasource/LocalDataSource.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "for",
+        "LocalDataSource"
+      ],
+      "methods": [
+        {
+          "name": "getUrlConfig",
+          "line": 12
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/datasource/LocalDataSourceImpl.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "LocalDataSourceImpl"
+      ],
+      "methods": [
+        {
+          "name": "getUrlConfig",
+          "line": 16
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/datasource/NotificationCallbackData.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "NotificationCallbackData"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/di/appModule.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/di/IntentUrlExtractorImpl.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "IntentUrlExtractorImpl"
+      ],
+      "methods": [
+        {
+          "name": "getUrlFromIntent",
+          "line": 15
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/exception/PlatformException.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "PlatformException",
+        "SettingsFetchFailed",
+        "RegionFetchFailed",
+        "UserIdFetchFailed",
+        "InvalidRegion"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/exception/UrlException.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "UrlException",
+        "ConfigFetchFailed",
+        "InvalidUrlFormat",
+        "ParameterBuildFailed"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/receiver/BootReceiver.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "BootReceiver"
+      ],
+      "methods": [
+        {
+          "name": "onReceive",
+          "line": 16
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/repository/AppRepository.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "AppRepository"
+      ],
+      "methods": [
+        {
+          "name": "getVehicleRegion",
+          "line": 13
+        },
+        {
+          "name": "getUserId",
+          "line": 14
+        },
+        {
+          "name": "getUrlConfig",
+          "line": 15
+        },
+        {
+          "name": "getPrivacyModeBlocking",
+          "line": 17
+        },
+        {
+          "name": "getDriverPermitValid",
+          "line": 18
+        },
+        {
+          "name": "getVehicleState",
+          "line": 20
+        },
+        {
+          "name": "registerVehicleStateCallback",
+          "line": 21
+        },
+        {
+          "name": "unregisterVehicleStateCallback",
+          "line": 22
+        },
+        {
+          "name": "registerNotificationCallback",
+          "line": 24
+        },
+        {
+          "name": "unregisterNotificationCallback",
+          "line": 25
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/repository/AppRepositoryImpl.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "AppRepositoryImpl"
+      ],
+      "methods": [
+        {
+          "name": "getVehicleRegion",
+          "line": 20
+        },
+        {
+          "name": "getUserId",
+          "line": 23
+        },
+        {
+          "name": "getUrlConfig",
+          "line": 26
+        },
+        {
+          "name": "getPrivacyModeBlocking",
+          "line": 29
+        },
+        {
+          "name": "getDriverPermitValid",
+          "line": 32
+        },
+        {
+          "name": "getVehicleState",
+          "line": 35
+        },
+        {
+          "name": "registerVehicleStateCallback",
+          "line": 38
+        },
+        {
+          "name": "unregisterVehicleStateCallback",
+          "line": 42
+        },
+        {
+          "name": "registerNotificationCallback",
+          "line": 46
+        },
+        {
+          "name": "unregisterNotificationCallback",
+          "line": 50
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/repository/PendingUrlQueue.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "PendingUrlQueue"
+      ],
+      "methods": [
+        {
+          "name": "addUrl",
+          "line": 10
+        },
+        {
+          "name": "getAndClearUrls",
+          "line": 13
+        },
+        {
+          "name": "hasPendingUrls",
+          "line": 16
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/repository/PendingUrlQueueImpl.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "PendingUrlQueueImpl"
+      ],
+      "methods": [
+        {
+          "name": "loadFromStorage",
+          "line": 26
+        },
+        {
+          "name": "persistToStorage",
+          "line": 33
+        },
+        {
+          "name": "addUrl",
+          "line": 41
+        },
+        {
+          "name": "getAndClearUrls",
+          "line": 49
+        },
+        {
+          "name": "hasPendingUrls",
+          "line": 58
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/security/UrlValidator.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "UrlValidator"
+      ],
+      "methods": [
+        {
+          "name": "isUrlAllowedForWebView",
+          "line": 9
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/security/WebViewUrlValidator.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "WebViewUrlValidator"
+      ],
+      "methods": [
+        {
+          "name": "isUrlAllowedForWebView",
+          "line": 27
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/service/AppLifecycleNotifierImpl.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "AppLifecycleNotifierImpl"
+      ],
+      "methods": [
+        {
+          "name": "onAppForeground",
+          "line": 13
+        },
+        {
+          "name": "onAppBackground",
+          "line": 17
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/service/BackgroundNotificationService.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "BackgroundNotificationService"
+      ],
+      "methods": [
+        {
+          "name": "onCreate",
+          "line": 55
+        },
+        {
+          "name": "onStartCommand",
+          "line": 73
+        },
+        {
+          "name": "onDestroy",
+          "line": 80
+        },
+        {
+          "name": "onBind",
+          "line": 91
+        },
+        {
+          "name": "registerPlatformCallbacks",
+          "line": 93
+        },
+        {
+          "name": "canShowNotifications",
+          "line": 105
+        },
+        {
+          "name": "handleNotificationFromPlatform",
+          "line": 122
+        },
+        {
+          "name": "handleUrlFromPlatform",
+          "line": 140
+        },
+        {
+          "name": "showQueuedNotifications",
+          "line": 158
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/service/BackgroundServiceController.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "BackgroundServiceController"
+      ],
+      "methods": [
+        {
+          "name": "start",
+          "line": 9
+        },
+        {
+          "name": "stop",
+          "line": 10
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/service/BackgroundServiceControllerImpl.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "BackgroundServiceControllerImpl"
+      ],
+      "methods": [
+        {
+          "name": "start",
+          "line": 14
+        },
+        {
+          "name": "stop",
+          "line": 18
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/service/MainAppIntentProvider.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "MainAppIntentProvider"
+      ],
+      "methods": [
+        {
+          "name": "intentToOpenMainApp",
+          "line": 12
+        },
+        {
+          "name": "intentToOpenMainAppWithUrl",
+          "line": 15
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/service/NotificationConstants.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "NotificationConstants"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/service/NotificationHelper.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "NotificationHelper"
+      ],
+      "methods": [
+        {
+          "name": "createChannels",
+          "line": 22
+        },
+        {
+          "name": "buildBackgroundNotification",
+          "line": 45
+        },
+        {
+          "name": "buildUrlAvailableNotification",
+          "line": 69
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/service/UrlNotificationDisplay.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "UrlNotificationDisplay"
+      ],
+      "methods": [
+        {
+          "name": "showUrlAvailable",
+          "line": 23
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/task/AppLifecycleNotifier.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "AppLifecycleNotifier"
+      ],
+      "methods": [
+        {
+          "name": "onAppForeground",
+          "line": 9
+        },
+        {
+          "name": "onAppBackground",
+          "line": 10
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/task/DataSharingModeConditionChecker.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "DefaultDataSharingModeConditionChecker",
+        "DataSharingModeConditionChecker"
+      ],
+      "methods": [
+        {
+          "name": "evaluate",
+          "line": 15
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/task/LoadUrlResult.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "LoadUrlResult",
+        "Success",
+        "DataSharingModeError",
+        "ConnectionError"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/task/MainTask.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "DataSharingModeConditionResult",
+        "ConditionsMet",
+        "PrivacyError",
+        "DriverPermitError",
+        "MainTask"
+      ],
+      "methods": [
+        {
+          "name": "loadUrl",
+          "line": 20
+        },
+        {
+          "name": "loadUrlFromNotification",
+          "line": 26
+        },
+        {
+          "name": "getPrivacyModeBlocking",
+          "line": 29
+        },
+        {
+          "name": "getDriverPermitValid",
+          "line": 32
+        },
+        {
+          "name": "onAppForeground",
+          "line": 35
+        },
+        {
+          "name": "onAppBackground",
+          "line": 38
+        },
+        {
+          "name": "isUrlAllowedForWebView",
+          "line": 41
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/task/MainTaskImpl.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "MainTaskImpl"
+      ],
+      "methods": [
+        {
+          "name": "loadUrl",
+          "line": 34
+        },
+        {
+          "name": "loadUrlFromNotification",
+          "line": 43
+        },
+        {
+          "name": "getPrivacyModeBlocking",
+          "line": 51
+        },
+        {
+          "name": "getDriverPermitValid",
+          "line": 53
+        },
+        {
+          "name": "onAppForeground",
+          "line": 55
+        },
+        {
+          "name": "onAppBackground",
+          "line": 57
+        },
+        {
+          "name": "isUrlAllowedForWebView",
+          "line": 59
+        },
+        {
+          "name": "mapConditionResultToLoadResult",
+          "line": 62
+        },
+        {
+          "name": "checkDataSharingModeConditions",
+          "line": 68
+        },
+        {
+          "name": "resolveUrlAndMapToLoadResult",
+          "line": 85
+        },
+        {
+          "name": "getUrlParameters",
+          "line": 97
+        },
+        {
+          "name": "resolveWebViewUrl",
+          "line": 110
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/task/UrlParameterAppender.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "UrlParameterAppender"
+      ],
+      "methods": [
+        {
+          "name": "appendParameters",
+          "line": 10
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/task/UrlParameterBuilder.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "UrlParameterBuilder"
+      ],
+      "methods": [
+        {
+          "name": "appendParameters",
+          "line": 13
+        },
+        {
+          "name": "buildQueryParameters",
+          "line": 43
+        },
+        {
+          "name": "insertParametersBeforeFragment",
+          "line": 69
+        },
+        {
+          "name": "encodeParameter",
+          "line": 88
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/util/DefaultUrlNormalizer.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "DefaultUrlNormalizer"
+      ],
+      "methods": [
+        {
+          "name": "normalizeBaseUrl",
+          "line": 11
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/util/NotificationIntentParser.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "DefaultNotificationIntentParser",
+        "NotificationIntentParser"
+      ],
+      "methods": [
+        {
+          "name": "getUrlFromNotificationIntent",
+          "line": 11
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/util/ServiceExtensions.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/util/UrlNormalizer.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "UrlNormalizer"
+      ],
+      "methods": [
+        {
+          "name": "normalizeBaseUrl",
+          "line": 13
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/model/util/UrlUtils.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/view/CsAppWebView.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "CsAppWebView"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/view/CsAppWebViewClient.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "CsAppWebViewClient"
+      ],
+      "methods": [
+        {
+          "name": "onPageStarted",
+          "line": 25
+        },
+        {
+          "name": "onPageFinished",
+          "line": 30
+        },
+        {
+          "name": "shouldOverrideUrlLoading",
+          "line": 39
+        },
+        {
+          "name": "onReceivedError",
+          "line": 44
+        },
+        {
+          "name": "onReceivedHttpError",
+          "line": 73
+        },
+        {
+          "name": "onReceivedSslError",
+          "line": 92
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/view/MainActivity.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "MainActivity"
+      ],
+      "methods": [
+        {
+          "name": "onCreate",
+          "line": 34
+        },
+        {
+          "name": "onNewIntent",
+          "line": 46
+        },
+        {
+          "name": "handleIntent",
+          "line": 55
+        },
+        {
+          "name": "setupNavigation",
+          "line": 64
+        },
+        {
+          "name": "setupLifecycleObserver",
+          "line": 74
+        },
+        {
+          "name": "onStateChanged",
+          "line": 76
+        },
+        {
+          "name": "onSupportNavigateUp",
+          "line": 92
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/view/MainAppIntentProviderImpl.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "MainAppIntentProviderImpl"
+      ],
+      "methods": [
+        {
+          "name": "intentToOpenMainApp",
+          "line": 16
+        },
+        {
+          "name": "intentToOpenMainAppWithUrl",
+          "line": 22
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/view/WebViewSecurityConfig.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "WebViewSecurityConfig"
+      ],
+      "methods": [
+        {
+          "name": "applySecureSettings",
+          "line": 23
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/view/dialog/AlertDialogErrorPopupPresenter.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "AlertDialogErrorPopupPresenter"
+      ],
+      "methods": [
+        {
+          "name": "showError",
+          "line": 18
+        },
+        {
+          "name": "dismiss",
+          "line": 50
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/view/dialog/ErrorContentResolver.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "DefaultErrorContentResolver",
+        "ErrorContentResolver"
+      ],
+      "methods": [
+        {
+          "name": "getTitleAndMessageResIdsFor",
+          "line": 12
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/view/dialog/ErrorDialog.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "ErrorDialog"
+      ],
+      "methods": [
+        {
+          "name": "dismiss",
+          "line": 18
+        },
+        {
+          "name": "show",
+          "line": 29
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/view/dialog/ErrorPopupPresenter.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "ErrorPopupPresenter"
+      ],
+      "methods": [
+        {
+          "name": "showError",
+          "line": 21
+        },
+        {
+          "name": "dismiss",
+          "line": 32
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/view/dialog/StubErrorPopupPresenter.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "StubErrorPopupPresenter"
+      ],
+      "methods": [
+        {
+          "name": "showError",
+          "line": 14
+        },
+        {
+          "name": "dismiss",
+          "line": 26
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/view/fragment/WebViewFragment.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "WebViewFragment"
+      ],
+      "methods": [
+        {
+          "name": "get",
+          "line": 24
+        },
+        {
+          "name": "onViewCreated",
+          "line": 33
+        },
+        {
+          "name": "observePendingUrlFromNotification",
+          "line": 45
+        },
+        {
+          "name": "setupWebView",
+          "line": 58
+        },
+        {
+          "name": "observeViewModel",
+          "line": 71
+        },
+        {
+          "name": "handleUrlState",
+          "line": 82
+        },
+        {
+          "name": "showErrorDialog",
+          "line": 108
+        },
+        {
+          "name": "loadUrl",
+          "line": 127
+        },
+        {
+          "name": "onDestroyView",
+          "line": 136
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/viewmodel/DefaultErrorMessages.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "DefaultErrorMessages"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/viewmodel/DismissErrorPopup.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "DismissErrorPopup"
+      ],
+      "methods": [
+        {
+          "name": "dismiss",
+          "line": 9
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/viewmodel/IntentUrlExtractor.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "IntentUrlExtractor"
+      ],
+      "methods": [
+        {
+          "name": "getUrlFromIntent",
+          "line": 12
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/viewmodel/MainViewModel.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "MainViewModel"
+      ],
+      "methods": [
+        {
+          "name": "onAppForeground",
+          "line": 61
+        },
+        {
+          "name": "onAppBackground",
+          "line": 72
+        },
+        {
+          "name": "isUrlAllowedForWebView",
+          "line": 78
+        },
+        {
+          "name": "onCleared",
+          "line": 80
+        },
+        {
+          "name": "setPendingUrl",
+          "line": 88
+        },
+        {
+          "name": "clearPendingUrl",
+          "line": 93
+        },
+        {
+          "name": "loadUrl",
+          "line": 100
+        },
+        {
+          "name": "applyLoadUrlResult",
+          "line": 113
+        },
+        {
+          "name": "toViewModelErrorType",
+          "line": 123
+        },
+        {
+          "name": "loadUrlFromNotification",
+          "line": 132
+        },
+        {
+          "name": "retry",
+          "line": 145
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/viewmodel/MainViewModelFactory.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "MainViewModelFactory"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/viewmodel/state/UrlState.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "UrlState",
+        "Success",
+        "Error",
+        "DataSharingModeError",
+        "Loading"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/java/com/csapp/viewmodel/state/ViewModelErrorType.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "ViewModelErrorType"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_launcher_foreground.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/res/drawable/splash_icon_transparent.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/res/layout/activity_main.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/res/layout/dialog_error.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/res/layout/fragment_web_view.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/res/mipmap-hdpi/ic_launcher.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/res/mipmap-hdpi/ic_launcher_round.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/res/navigation/nav_graph.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/res/values/colors.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/res/values/config.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/res/values/strings.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/res/values/themes.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/main/res/values-v31/themes.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/mock/AndroidManifest.xml",
+      "type": "manifest",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/mock/java/com/csapp/model/constants/MockDelayConstants.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "MockDelayConstants"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/mock/java/com/csapp/model/datasource/AndroidDataSourceImpl.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "AndroidDataSourceImpl"
+      ],
+      "methods": [
+        {
+          "name": "getVehicleState",
+          "line": 18
+        },
+        {
+          "name": "registerVehicleStateCallback",
+          "line": 20
+        },
+        {
+          "name": "unregisterVehicleStateCallback",
+          "line": 29
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/mock/java/com/csapp/model/datasource/FALDataSourceImpl.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "FALDataSourceImpl"
+      ],
+      "methods": [
+        {
+          "name": "getPrivacyModeBlocking",
+          "line": 16
+        },
+        {
+          "name": "getDriverPermitValid",
+          "line": 17
+        },
+        {
+          "name": "getVehicleRegion",
+          "line": 18
+        },
+        {
+          "name": "getUserId",
+          "line": 20
+        },
+        {
+          "name": "registerNotificationCallback",
+          "line": 25
+        },
+        {
+          "name": "unregisterNotificationCallback",
+          "line": 31
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/mock/java/com/csapp/view/TestActivity.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "TestActivity"
+      ],
+      "methods": [
+        {
+          "name": "onCreate",
+          "line": 21
+        },
+        {
+          "name": "onResume",
+          "line": 33
+        },
+        {
+          "name": "setupRegionSpinner",
+          "line": 38
+        },
+        {
+          "name": "refreshUiFromFal",
+          "line": 46
+        },
+        {
+          "name": "applyToFal",
+          "line": 55
+        },
+        {
+          "name": "openMainNormalLoad",
+          "line": 70
+        },
+        {
+          "name": "openMainWithUrl",
+          "line": 76
+        },
+        {
+          "name": "sendUrlToBackgroundService",
+          "line": 86
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/mock/res/layout/activity_test.xml",
+      "type": "resources",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/prod/java/com/csapp/model/datasource/AndroidDataSourceImpl.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "AndroidDataSourceImpl"
+      ],
+      "methods": [
+        {
+          "name": "getVehicleState",
+          "line": 21
+        },
+        {
+          "name": "registerVehicleStateCallback",
+          "line": 23
+        },
+        {
+          "name": "unregisterVehicleStateCallback",
+          "line": 28
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/prod/java/com/csapp/model/datasource/FALDataSourceImpl.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "FALDataSourceImpl"
+      ],
+      "methods": [
+        {
+          "name": "getPrivacyModeBlocking",
+          "line": 14
+        },
+        {
+          "name": "getDriverPermitValid",
+          "line": 15
+        },
+        {
+          "name": "getVehicleRegion",
+          "line": 16
+        },
+        {
+          "name": "getUserId",
+          "line": 18
+        },
+        {
+          "name": "registerNotificationCallback",
+          "line": 21
+        },
+        {
+          "name": "unregisterNotificationCallback",
+          "line": 27
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/test/java/com/csapp/model/security/WebViewUrlValidatorTest.kt",
+      "type": "test",
+      "ext": ".kt",
+      "classes": [
+        "WebViewUrlValidatorTest"
+      ],
+      "methods": [
+        {
+          "name": "isUrlAllowedForWebView_https_returnsTrue",
+          "line": 13
+        },
+        {
+          "name": "isUrlAllowedForWebView_http_returnsFalse",
+          "line": 19
+        },
+        {
+          "name": "isUrlAllowedForWebView_file_returnsFalse",
+          "line": 24
+        },
+        {
+          "name": "isUrlAllowedForWebView_content_returnsFalse",
+          "line": 29
+        },
+        {
+          "name": "isUrlAllowedForWebView_javascript_returnsFalse",
+          "line": 34
+        },
+        {
+          "name": "isUrlAllowedForWebView_null_returnsFalse",
+          "line": 39
+        },
+        {
+          "name": "isUrlAllowedForWebView_blank_returnsFalse",
+          "line": 44
+        }
+      ],
+      "test_cases": [
+        {
+          "name": "isUrlAllowedForWebView_https_returnsTrue",
+          "line": 13
+        },
+        {
+          "name": "isUrlAllowedForWebView_http_returnsFalse",
+          "line": 19
+        },
+        {
+          "name": "isUrlAllowedForWebView_file_returnsFalse",
+          "line": 24
+        },
+        {
+          "name": "isUrlAllowedForWebView_content_returnsFalse",
+          "line": 29
+        },
+        {
+          "name": "isUrlAllowedForWebView_javascript_returnsFalse",
+          "line": 34
+        },
+        {
+          "name": "isUrlAllowedForWebView_null_returnsFalse",
+          "line": 39
+        },
+        {
+          "name": "isUrlAllowedForWebView_blank_returnsFalse",
+          "line": 44
+        }
+      ],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/test/java/com/csapp/model/task/MainTaskImplTest.kt",
+      "type": "test",
+      "ext": ".kt",
+      "classes": [
+        "MainTaskImplTest"
+      ],
+      "methods": [
+        {
+          "name": "setUp",
+          "line": 29
+        },
+        {
+          "name": "loadUrl_privacyError_returnsDataSharingModeError",
+          "line": 43
+        },
+        {
+          "name": "loadUrl_driverPermitError_returnsDataSharingModeError",
+          "line": 55
+        },
+        {
+          "name": "loadUrl_conditionsMet_andUrlSuccess_returnsSuccess",
+          "line": 67
+        },
+        {
+          "name": "loadUrl_conditionsMet_andUrlConfigFails_returnsConnectionError",
+          "line": 83
+        },
+        {
+          "name": "loadUrlFromNotification_validHttps_returnsSuccess",
+          "line": 97
+        },
+        {
+          "name": "loadUrlFromNotification_blankUrl_returnsConnectionError",
+          "line": 105
+        },
+        {
+          "name": "loadUrlFromNotification_httpUrl_returnsConnectionError",
+          "line": 113
+        }
+      ],
+      "test_cases": [
+        {
+          "name": "loadUrl_privacyError_returnsDataSharingModeError",
+          "line": 43
+        },
+        {
+          "name": "loadUrl_driverPermitError_returnsDataSharingModeError",
+          "line": 55
+        },
+        {
+          "name": "loadUrl_conditionsMet_andUrlSuccess_returnsSuccess",
+          "line": 67
+        },
+        {
+          "name": "loadUrl_conditionsMet_andUrlConfigFails_returnsConnectionError",
+          "line": 83
+        },
+        {
+          "name": "loadUrlFromNotification_validHttps_returnsSuccess",
+          "line": 97
+        },
+        {
+          "name": "loadUrlFromNotification_blankUrl_returnsConnectionError",
+          "line": 105
+        },
+        {
+          "name": "loadUrlFromNotification_httpUrl_returnsConnectionError",
+          "line": 113
+        }
+      ],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/test/java/com/csapp/model/task/UrlParameterBuilderTest.kt",
+      "type": "test",
+      "ext": ".kt",
+      "classes": [
+        "UrlParameterBuilderTest"
+      ],
+      "methods": [
+        {
+          "name": "appendParameters_baseUrlOnly_addsQueryWithQuestionMark",
+          "line": 13
+        },
+        {
+          "name": "appendParameters_emptyParams_returnsBaseUrl",
+          "line": 26
+        },
+        {
+          "name": "appendParameters_baseUrlHasQuery_appendsWithAmpersand",
+          "line": 36
+        },
+        {
+          "name": "appendParameters_baseUrlHasFragment_insertsParamsBeforeFragment",
+          "line": 48
+        }
+      ],
+      "test_cases": [
+        {
+          "name": "appendParameters_baseUrlOnly_addsQueryWithQuestionMark",
+          "line": 13
+        },
+        {
+          "name": "appendParameters_emptyParams_returnsBaseUrl",
+          "line": 26
+        },
+        {
+          "name": "appendParameters_baseUrlHasQuery_appendsWithAmpersand",
+          "line": 36
+        },
+        {
+          "name": "appendParameters_baseUrlHasFragment_insertsParamsBeforeFragment",
+          "line": 48
+        }
+      ],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/test/java/com/csapp/view/util/MainDispatcherRule.kt",
+      "type": "test",
+      "ext": ".kt",
+      "classes": [
+        "MainDispatcherRule"
+      ],
+      "methods": [
+        {
+          "name": "starting",
+          "line": 17
+        },
+        {
+          "name": "finished",
+          "line": 21
+        }
+      ],
+      "test_cases": [
+        {
+          "name": "TestWatcher",
+          "line": 16
+        },
+        {
+          "name": "starting",
+          "line": 17
+        },
+        {
+          "name": "finished",
+          "line": 21
+        }
+      ],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "app/src/test/java/com/csapp/viewmodel/MainViewModelTest.kt",
+      "type": "test",
+      "ext": ".kt",
+      "classes": [
+        "MainViewModelTest"
+      ],
+      "methods": [
+        {
+          "name": "setUp",
+          "line": 35
+        },
+        {
+          "name": "loadUrl_success_mapsToUrlStateSuccess",
+          "line": 42
+        },
+        {
+          "name": "loadUrl_dataSharingModeError_privacy_mapsToUrlStateDataSharingModeError",
+          "line": 52
+        },
+        {
+          "name": "loadUrl_dataSharingModeError_driverPermit_mapsToUrlStateDataSharingModeError",
+          "line": 62
+        },
+        {
+          "name": "loadUrl_connectionError_mapsToUrlStateError",
+          "line": 72
+        },
+        {
+          "name": "loadUrl_connectionError_blankMessage_usesDefault",
+          "line": 82
+        },
+        {
+          "name": "loadUrlFromNotification_validUrl_mapsToSuccess",
+          "line": 92
+        },
+        {
+          "name": "retry_callsLoadUrlAgain",
+          "line": 105
+        }
+      ],
+      "test_cases": [
+        {
+          "name": "loadUrl_success_mapsToUrlStateSuccess",
+          "line": 42
+        },
+        {
+          "name": "loadUrl_dataSharingModeError_privacy_mapsToUrlStateDataSharingModeError",
+          "line": 52
+        },
+        {
+          "name": "loadUrl_dataSharingModeError_driverPermit_mapsToUrlStateDataSharingModeError",
+          "line": 62
+        },
+        {
+          "name": "loadUrl_connectionError_mapsToUrlStateError",
+          "line": 72
+        },
+        {
+          "name": "loadUrl_connectionError_blankMessage_usesDefault",
+          "line": 82
+        },
+        {
+          "name": "loadUrlFromNotification_validUrl_mapsToSuccess",
+          "line": 92
+        },
+        {
+          "name": "retry_callsLoadUrlAgain",
+          "line": 105
+        }
+      ],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "config/detekt/detekt.yml",
+      "type": "other",
+      "ext": ".yml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "docs/CODE_STANDARDS.md",
+      "type": "other",
+      "ext": ".md",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "docs/LIVEDATA_FLOW.md",
+      "type": "other",
+      "ext": ".md",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/build.gradle.kts",
+      "type": "gradle",
+      "ext": ".kts",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/consumer-rules.pro",
+      "type": "other",
+      "ext": ".pro",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/MOCK_TESTING.md",
+      "type": "other",
+      "ext": ".md",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/proguard-rules.pro",
+      "type": "other",
+      "ext": ".pro",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/README.md",
+      "type": "other",
+      "ext": ".md",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/androidTest/java/com/arka/fal/ExampleInstrumentedTest.kt",
+      "type": "test",
+      "ext": ".kt",
+      "classes": [
+        "ExampleInstrumentedTest"
+      ],
+      "methods": [
+        {
+          "name": "useAppContext",
+          "line": 19
+        }
+      ],
+      "test_cases": [
+        {
+          "name": "useAppContext",
+          "line": 19
+        }
+      ],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/main/AndroidManifest.xml",
+      "type": "manifest",
+      "ext": ".xml",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/main/java/com/arka/fal/FalModule.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "provides",
+        "FalModule"
+      ],
+      "methods": [
+        {
+          "name": "initialize",
+          "line": 45
+        },
+        {
+          "name": "getConnectivityManager",
+          "line": 57
+        },
+        {
+          "name": "getCsManager",
+          "line": 72
+        },
+        {
+          "name": "getNotificationCallbackApi",
+          "line": 87
+        },
+        {
+          "name": "getUpdateManager",
+          "line": 103
+        },
+        {
+          "name": "getStorageManager",
+          "line": 119
+        },
+        {
+          "name": "reset",
+          "line": 130
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/main/java/com/arka/fal/connectivity/abstraction/ConnectivityManagerAPI.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "if",
+        "for",
+        "defines",
+        "ConnectivityManagerAPI"
+      ],
+      "methods": [
+        {
+          "name": "isConnected",
+          "line": 24
+        },
+        {
+          "name": "getActiveNetwork",
+          "line": 30
+        },
+        {
+          "name": "getNetworkCapabilities",
+          "line": 36
+        },
+        {
+          "name": "isWifiConnected",
+          "line": 42
+        },
+        {
+          "name": "isCellularConnected",
+          "line": 48
+        },
+        {
+          "name": "isEthernetConnected",
+          "line": 54
+        },
+        {
+          "name": "getAllNetworks",
+          "line": 60
+        },
+        {
+          "name": "setWifiEnabled",
+          "line": 69
+        },
+        {
+          "name": "setNetworkPreference",
+          "line": 76
+        },
+        {
+          "name": "getActiveNetworkLiveData",
+          "line": 85
+        },
+        {
+          "name": "getWifiStateLiveData",
+          "line": 92
+        },
+        {
+          "name": "getCellularStateLiveData",
+          "line": 99
+        },
+        {
+          "name": "getNetworkCapabilitiesLiveData",
+          "line": 106
+        },
+        {
+          "name": "registerNetworkCallback",
+          "line": 113
+        },
+        {
+          "name": "unregisterNetworkCallback",
+          "line": 118
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/main/java/com/arka/fal/connectivity/adapter/ConnectivityService.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "for",
+        "is",
+        "ConnectivityService"
+      ],
+      "methods": [
+        {
+          "name": "isConnected",
+          "line": 16
+        },
+        {
+          "name": "getActiveNetwork",
+          "line": 17
+        },
+        {
+          "name": "getNetworkCapabilities",
+          "line": 18
+        },
+        {
+          "name": "isWifiConnected",
+          "line": 19
+        },
+        {
+          "name": "isCellularConnected",
+          "line": 20
+        },
+        {
+          "name": "isEthernetConnected",
+          "line": 21
+        },
+        {
+          "name": "getAllNetworks",
+          "line": 22
+        },
+        {
+          "name": "setWifiEnabled",
+          "line": 26
+        },
+        {
+          "name": "setNetworkPreference",
+          "line": 27
+        },
+        {
+          "name": "getActiveNetworkLiveData",
+          "line": 31
+        },
+        {
+          "name": "getWifiStateLiveData",
+          "line": 32
+        },
+        {
+          "name": "getCellularStateLiveData",
+          "line": 33
+        },
+        {
+          "name": "getNetworkCapabilitiesLiveData",
+          "line": 34
+        },
+        {
+          "name": "registerNetworkCallback",
+          "line": 35
+        },
+        {
+          "name": "unregisterNetworkCallback",
+          "line": 36
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/main/java/com/arka/fal/csmanager/abstraction/CsManagerAPI.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "CsManagerAPI"
+      ],
+      "methods": [
+        {
+          "name": "getPrivacyModeBlocking",
+          "line": 10
+        },
+        {
+          "name": "getDriverPermitValid",
+          "line": 11
+        },
+        {
+          "name": "getVehicleRegion",
+          "line": 12
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/main/java/com/arka/fal/csmanager/adapter/CsService.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "for",
+        "CsService"
+      ],
+      "methods": [
+        {
+          "name": "getPrivacyModeBlocking",
+          "line": 10
+        },
+        {
+          "name": "getDriverPermitValid",
+          "line": 11
+        },
+        {
+          "name": "getVehicleRegion",
+          "line": 12
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/main/java/com/arka/fal/notification/abstraction/NotificationCallbackAPI.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "NotificationCallbackAPI"
+      ],
+      "methods": [
+        {
+          "name": "registerNotificationCallback",
+          "line": 15
+        },
+        {
+          "name": "unregisterNotificationCallback",
+          "line": 20
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/main/java/com/arka/fal/notification/abstraction/NotificationPayload.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "NotificationPayload"
+      ],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/main/java/com/arka/fal/notification/adapter/NotificationCallbackService.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "for",
+        "NotificationCallbackService"
+      ],
+      "methods": [
+        {
+          "name": "registerNotificationCallback",
+          "line": 11
+        },
+        {
+          "name": "unregisterNotificationCallback",
+          "line": 12
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/main/java/com/arka/fal/storagemanager/abstraction/StorageManagerAPI.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "for",
+        "defines",
+        "StorageManagerAPI"
+      ],
+      "methods": [
+        {
+          "name": "getTotalStorageSpace",
+          "line": 21
+        },
+        {
+          "name": "getAvailableStorageSpace",
+          "line": 27
+        },
+        {
+          "name": "getUsedStorageSpace",
+          "line": 33
+        },
+        {
+          "name": "hasEnoughStorage",
+          "line": 40
+        },
+        {
+          "name": "getStorageSpaceForPath",
+          "line": 47
+        },
+        {
+          "name": "clearCache",
+          "line": 55
+        },
+        {
+          "name": "setLowStorageThreshold",
+          "line": 62
+        },
+        {
+          "name": "getAvailableStorageSpaceLiveData",
+          "line": 71
+        },
+        {
+          "name": "getLowStorageWarningLiveData",
+          "line": 78
+        },
+        {
+          "name": "getTotalStorageSpaceLiveData",
+          "line": 85
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/main/java/com/arka/fal/storagemanager/adapter/StorageService.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "for",
+        "is",
+        "StorageService"
+      ],
+      "methods": [
+        {
+          "name": "getTotalStorageSpace",
+          "line": 13
+        },
+        {
+          "name": "getAvailableStorageSpace",
+          "line": 14
+        },
+        {
+          "name": "getUsedStorageSpace",
+          "line": 15
+        },
+        {
+          "name": "hasEnoughStorage",
+          "line": 16
+        },
+        {
+          "name": "getStorageSpaceForPath",
+          "line": 17
+        },
+        {
+          "name": "clearCache",
+          "line": 21
+        },
+        {
+          "name": "setLowStorageThreshold",
+          "line": 22
+        },
+        {
+          "name": "getAvailableStorageSpaceLiveData",
+          "line": 26
+        },
+        {
+          "name": "getLowStorageWarningLiveData",
+          "line": 27
+        },
+        {
+          "name": "getTotalStorageSpaceLiveData",
+          "line": 28
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/main/java/com/arka/fal/updatemanager/abstraction/UpdateManagerAPI.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "for",
+        "defines",
+        "UpdateManagerAPI"
+      ],
+      "methods": [
+        {
+          "name": "isUpdateAvailable",
+          "line": 12
+        },
+        {
+          "name": "getCurrentVersion",
+          "line": 18
+        },
+        {
+          "name": "getAvailableUpdateVersion",
+          "line": 24
+        },
+        {
+          "name": "startDownload",
+          "line": 30
+        },
+        {
+          "name": "getDownloadProgress",
+          "line": 36
+        },
+        {
+          "name": "installUpdate",
+          "line": 42
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/main/java/com/arka/fal/updatemanager/adapter/UpdateService.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "for",
+        "is",
+        "UpdateService"
+      ],
+      "methods": [
+        {
+          "name": "isUpdateAvailable",
+          "line": 13
+        },
+        {
+          "name": "getCurrentVersion",
+          "line": 19
+        },
+        {
+          "name": "getAvailableUpdateVersion",
+          "line": 25
+        },
+        {
+          "name": "startDownload",
+          "line": 31
+        },
+        {
+          "name": "getDownloadProgress",
+          "line": 37
+        },
+        {
+          "name": "installUpdate",
+          "line": 43
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/mock/java/com/arka/fal/FalModuleMockExtensions.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "CsMockState",
+        "FalModuleMockExtensions"
+      ],
+      "methods": [
+        {
+          "name": "setConnectivityMockProperty",
+          "line": 18
+        },
+        {
+          "name": "setStorageMockProperty",
+          "line": 36
+        },
+        {
+          "name": "setUpdateMockProperty",
+          "line": 73
+        },
+        {
+          "name": "setCsMockProperty",
+          "line": 106
+        },
+        {
+          "name": "getCurrentCsMockState",
+          "line": 132
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/mock/java/com/arka/fal/MockIntentReceiver.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "MockIntentReceiver"
+      ],
+      "methods": [
+        {
+          "name": "onReceive",
+          "line": 58
+        },
+        {
+          "name": "handleConnectivityManager",
+          "line": 105
+        },
+        {
+          "name": "handleStorageManager",
+          "line": 140
+        },
+        {
+          "name": "handleUpdateManager",
+          "line": 170
+        },
+        {
+          "name": "setConnectivityMockProperty",
+          "line": 193
+        },
+        {
+          "name": "setStorageMockProperty",
+          "line": 217
+        },
+        {
+          "name": "setUpdateMockProperty",
+          "line": 238
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/mock/java/com/arka/fal/connectivity/abstraction/ConnectivityGateway.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "ConnectivityGateway"
+      ],
+      "methods": [
+        {
+          "name": "isConnected",
+          "line": 22
+        },
+        {
+          "name": "getActiveNetwork",
+          "line": 26
+        },
+        {
+          "name": "getNetworkCapabilities",
+          "line": 30
+        },
+        {
+          "name": "isWifiConnected",
+          "line": 34
+        },
+        {
+          "name": "isCellularConnected",
+          "line": 38
+        },
+        {
+          "name": "isEthernetConnected",
+          "line": 42
+        },
+        {
+          "name": "getAllNetworks",
+          "line": 46
+        },
+        {
+          "name": "setWifiEnabled",
+          "line": 52
+        },
+        {
+          "name": "setNetworkPreference",
+          "line": 56
+        },
+        {
+          "name": "getActiveNetworkLiveData",
+          "line": 62
+        },
+        {
+          "name": "getWifiStateLiveData",
+          "line": 66
+        },
+        {
+          "name": "getCellularStateLiveData",
+          "line": 70
+        },
+        {
+          "name": "getNetworkCapabilitiesLiveData",
+          "line": 74
+        },
+        {
+          "name": "registerNetworkCallback",
+          "line": 78
+        },
+        {
+          "name": "unregisterNetworkCallback",
+          "line": 82
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/mock/java/com/arka/fal/connectivity/adapter/ConnectivityMockServiceAdapter.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "ConnectivityMockServiceAdapter",
+        "null"
+      ],
+      "methods": [
+        {
+          "name": "isConnected",
+          "line": 35
+        },
+        {
+          "name": "getActiveNetwork",
+          "line": 40
+        },
+        {
+          "name": "getNetworkCapabilities",
+          "line": 51
+        },
+        {
+          "name": "isWifiConnected",
+          "line": 64
+        },
+        {
+          "name": "isCellularConnected",
+          "line": 69
+        },
+        {
+          "name": "isEthernetConnected",
+          "line": 74
+        },
+        {
+          "name": "getAllNetworks",
+          "line": 79
+        },
+        {
+          "name": "setWifiEnabled",
+          "line": 86
+        },
+        {
+          "name": "setNetworkPreference",
+          "line": 93
+        },
+        {
+          "name": "getActiveNetworkLiveData",
+          "line": 101
+        },
+        {
+          "name": "getWifiStateLiveData",
+          "line": 105
+        },
+        {
+          "name": "getCellularStateLiveData",
+          "line": 109
+        },
+        {
+          "name": "getNetworkCapabilitiesLiveData",
+          "line": 113
+        },
+        {
+          "name": "registerNetworkCallback",
+          "line": 117
+        },
+        {
+          "name": "unregisterNetworkCallback",
+          "line": 124
+        },
+        {
+          "name": "setMockConnected",
+          "line": 132
+        },
+        {
+          "name": "setMockWifiConnected",
+          "line": 142
+        },
+        {
+          "name": "setMockCellularConnected",
+          "line": 151
+        },
+        {
+          "name": "setMockEthernetConnected",
+          "line": 159
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/mock/java/com/arka/fal/csmanager/abstraction/CsGateway.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "CsGateway"
+      ],
+      "methods": [
+        {
+          "name": "getPrivacyModeBlocking",
+          "line": 15
+        },
+        {
+          "name": "getDriverPermitValid",
+          "line": 16
+        },
+        {
+          "name": "getVehicleRegion",
+          "line": 17
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/mock/java/com/arka/fal/csmanager/adapter/CsMockServiceAdapter.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "CsMockServiceAdapter"
+      ],
+      "methods": [
+        {
+          "name": "getPrivacyModeBlocking",
+          "line": 15
+        },
+        {
+          "name": "getDriverPermitValid",
+          "line": 16
+        },
+        {
+          "name": "getVehicleRegion",
+          "line": 18
+        },
+        {
+          "name": "setPrivacyModeBlocking",
+          "line": 32
+        },
+        {
+          "name": "setDriverPermitValid",
+          "line": 37
+        },
+        {
+          "name": "setVehicleRegion",
+          "line": 42
+        },
+        {
+          "name": "getCurrentPrivacyModeBlocking",
+          "line": 47
+        },
+        {
+          "name": "getCurrentDriverPermitValid",
+          "line": 48
+        },
+        {
+          "name": "getCurrentVehicleRegion",
+          "line": 49
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/mock/java/com/arka/fal/notification/abstraction/NotificationGateway.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "NotificationGateway"
+      ],
+      "methods": [
+        {
+          "name": "registerNotificationCallback",
+          "line": 16
+        },
+        {
+          "name": "unregisterNotificationCallback",
+          "line": 20
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/mock/java/com/arka/fal/notification/adapter/NotificationMockServiceAdapter.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "NotificationMockServiceAdapter"
+      ],
+      "methods": [
+        {
+          "name": "registerNotificationCallback",
+          "line": 17
+        },
+        {
+          "name": "unregisterNotificationCallback",
+          "line": 31
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/mock/java/com/arka/fal/storagemanager/abstraction/StorageGateway.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "StorageGateway"
+      ],
+      "methods": [
+        {
+          "name": "getTotalStorageSpace",
+          "line": 21
+        },
+        {
+          "name": "getAvailableStorageSpace",
+          "line": 25
+        },
+        {
+          "name": "getUsedStorageSpace",
+          "line": 29
+        },
+        {
+          "name": "hasEnoughStorage",
+          "line": 33
+        },
+        {
+          "name": "getStorageSpaceForPath",
+          "line": 37
+        },
+        {
+          "name": "clearCache",
+          "line": 43
+        },
+        {
+          "name": "setLowStorageThreshold",
+          "line": 47
+        },
+        {
+          "name": "getAvailableStorageSpaceLiveData",
+          "line": 53
+        },
+        {
+          "name": "getLowStorageWarningLiveData",
+          "line": 57
+        },
+        {
+          "name": "getTotalStorageSpaceLiveData",
+          "line": 61
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/mock/java/com/arka/fal/storagemanager/adapter/StorageMockServiceAdapter.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "StorageMockServiceAdapter"
+      ],
+      "methods": [
+        {
+          "name": "getTotalStorageSpace",
+          "line": 33
+        },
+        {
+          "name": "getAvailableStorageSpace",
+          "line": 38
+        },
+        {
+          "name": "getUsedStorageSpace",
+          "line": 43
+        },
+        {
+          "name": "hasEnoughStorage",
+          "line": 48
+        },
+        {
+          "name": "getStorageSpaceForPath",
+          "line": 53
+        },
+        {
+          "name": "clearCache",
+          "line": 61
+        },
+        {
+          "name": "setLowStorageThreshold",
+          "line": 71
+        },
+        {
+          "name": "getAvailableStorageSpaceLiveData",
+          "line": 80
+        },
+        {
+          "name": "getLowStorageWarningLiveData",
+          "line": 84
+        },
+        {
+          "name": "getTotalStorageSpaceLiveData",
+          "line": 88
+        },
+        {
+          "name": "updateLowStorageWarning",
+          "line": 95
+        },
+        {
+          "name": "setMockStorage",
+          "line": 106
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/mock/java/com/arka/fal/updatemanager/abstraction/UpdateGateway.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "UpdateGateway"
+      ],
+      "methods": [
+        {
+          "name": "isUpdateAvailable",
+          "line": 18
+        },
+        {
+          "name": "getCurrentVersion",
+          "line": 22
+        },
+        {
+          "name": "getAvailableUpdateVersion",
+          "line": 26
+        },
+        {
+          "name": "startDownload",
+          "line": 30
+        },
+        {
+          "name": "getDownloadProgress",
+          "line": 34
+        },
+        {
+          "name": "installUpdate",
+          "line": 38
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/mock/java/com/arka/fal/updatemanager/adapter/UpdateMockServiceAdapter.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "UpdateMockServiceAdapter"
+      ],
+      "methods": [
+        {
+          "name": "isUpdateAvailable",
+          "line": 16
+        },
+        {
+          "name": "getCurrentVersion",
+          "line": 21
+        },
+        {
+          "name": "getAvailableUpdateVersion",
+          "line": 26
+        },
+        {
+          "name": "startDownload",
+          "line": 35
+        },
+        {
+          "name": "getDownloadProgress",
+          "line": 42
+        },
+        {
+          "name": "installUpdate",
+          "line": 50
+        },
+        {
+          "name": "setMockUpdateAvailable",
+          "line": 58
+        },
+        {
+          "name": "setMockVersions",
+          "line": 65
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/prod/java/com/arka/fal/connectivity/abstraction/ConnectivityGateway.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "ConnectivityGateway"
+      ],
+      "methods": [
+        {
+          "name": "isConnected",
+          "line": 22
+        },
+        {
+          "name": "getActiveNetwork",
+          "line": 26
+        },
+        {
+          "name": "getNetworkCapabilities",
+          "line": 30
+        },
+        {
+          "name": "isWifiConnected",
+          "line": 34
+        },
+        {
+          "name": "isCellularConnected",
+          "line": 38
+        },
+        {
+          "name": "isEthernetConnected",
+          "line": 42
+        },
+        {
+          "name": "getAllNetworks",
+          "line": 46
+        },
+        {
+          "name": "setWifiEnabled",
+          "line": 52
+        },
+        {
+          "name": "setNetworkPreference",
+          "line": 56
+        },
+        {
+          "name": "getActiveNetworkLiveData",
+          "line": 62
+        },
+        {
+          "name": "getWifiStateLiveData",
+          "line": 66
+        },
+        {
+          "name": "getCellularStateLiveData",
+          "line": 70
+        },
+        {
+          "name": "getNetworkCapabilitiesLiveData",
+          "line": 74
+        },
+        {
+          "name": "registerNetworkCallback",
+          "line": 78
+        },
+        {
+          "name": "unregisterNetworkCallback",
+          "line": 82
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/prod/java/com/arka/fal/connectivity/adapter/ConnectivityProdServiceAdapter.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "ConnectivityProdServiceAdapter"
+      ],
+      "methods": [
+        {
+          "name": "registerAllListeners",
+          "line": 54
+        },
+        {
+          "name": "onAvailable",
+          "line": 58
+        },
+        {
+          "name": "onLost",
+          "line": 63
+        },
+        {
+          "name": "onCapabilitiesChanged",
+          "line": 68
+        },
+        {
+          "name": "updateConnectionStates",
+          "line": 93
+        },
+        {
+          "name": "isConnected",
+          "line": 114
+        },
+        {
+          "name": "getActiveNetwork",
+          "line": 120
+        },
+        {
+          "name": "getNetworkCapabilities",
+          "line": 124
+        },
+        {
+          "name": "isWifiConnected",
+          "line": 129
+        },
+        {
+          "name": "isCellularConnected",
+          "line": 136
+        },
+        {
+          "name": "isEthernetConnected",
+          "line": 143
+        },
+        {
+          "name": "getAllNetworks",
+          "line": 150
+        },
+        {
+          "name": "setWifiEnabled",
+          "line": 156
+        },
+        {
+          "name": "setNetworkPreference",
+          "line": 169
+        },
+        {
+          "name": "getActiveNetworkLiveData",
+          "line": 182
+        },
+        {
+          "name": "getWifiStateLiveData",
+          "line": 186
+        },
+        {
+          "name": "getCellularStateLiveData",
+          "line": 190
+        },
+        {
+          "name": "getNetworkCapabilitiesLiveData",
+          "line": 194
+        },
+        {
+          "name": "registerNetworkCallback",
+          "line": 198
+        },
+        {
+          "name": "unregisterNetworkCallback",
+          "line": 220
+        },
+        {
+          "name": "cleanup",
+          "line": 231
+        },
+        {
+          "name": "callVendorSpecificApi",
+          "line": 246
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/prod/java/com/arka/fal/csmanager/abstraction/CsGateway.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "CsGateway"
+      ],
+      "methods": [
+        {
+          "name": "getPrivacyModeBlocking",
+          "line": 16
+        },
+        {
+          "name": "getDriverPermitValid",
+          "line": 17
+        },
+        {
+          "name": "getVehicleRegion",
+          "line": 18
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/prod/java/com/arka/fal/csmanager/adapter/CsProdServiceAdapter.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "CsProdServiceAdapter"
+      ],
+      "methods": [
+        {
+          "name": "getPrivacyModeBlocking",
+          "line": 18
+        },
+        {
+          "name": "getDriverPermitValid",
+          "line": 19
+        },
+        {
+          "name": "getVehicleRegion",
+          "line": 21
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/prod/java/com/arka/fal/notification/abstraction/NotificationGateway.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "NotificationGateway"
+      ],
+      "methods": [
+        {
+          "name": "registerNotificationCallback",
+          "line": 17
+        },
+        {
+          "name": "unregisterNotificationCallback",
+          "line": 21
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/prod/java/com/arka/fal/notification/adapter/NotificationProdServiceAdapter.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "NotificationProdServiceAdapter"
+      ],
+      "methods": [
+        {
+          "name": "registerNotificationCallback",
+          "line": 17
+        },
+        {
+          "name": "unregisterNotificationCallback",
+          "line": 22
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/prod/java/com/arka/fal/storagemanager/abstraction/StorageGateway.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "StorageGateway"
+      ],
+      "methods": [
+        {
+          "name": "getTotalStorageSpace",
+          "line": 21
+        },
+        {
+          "name": "getAvailableStorageSpace",
+          "line": 25
+        },
+        {
+          "name": "getUsedStorageSpace",
+          "line": 29
+        },
+        {
+          "name": "hasEnoughStorage",
+          "line": 33
+        },
+        {
+          "name": "getStorageSpaceForPath",
+          "line": 37
+        },
+        {
+          "name": "clearCache",
+          "line": 43
+        },
+        {
+          "name": "setLowStorageThreshold",
+          "line": 47
+        },
+        {
+          "name": "getAvailableStorageSpaceLiveData",
+          "line": 53
+        },
+        {
+          "name": "getLowStorageWarningLiveData",
+          "line": 57
+        },
+        {
+          "name": "getTotalStorageSpaceLiveData",
+          "line": 61
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/prod/java/com/arka/fal/storagemanager/adapter/StorageProdServiceAdapter.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "StorageProdServiceAdapter"
+      ],
+      "methods": [
+        {
+          "name": "registerAllListeners",
+          "line": 50
+        },
+        {
+          "name": "getTotalStorageSpace",
+          "line": 80
+        },
+        {
+          "name": "getAvailableStorageSpace",
+          "line": 86
+        },
+        {
+          "name": "getUsedStorageSpace",
+          "line": 92
+        },
+        {
+          "name": "hasEnoughStorage",
+          "line": 98
+        },
+        {
+          "name": "getStorageSpaceForPath",
+          "line": 103
+        },
+        {
+          "name": "clearCache",
+          "line": 119
+        },
+        {
+          "name": "setLowStorageThreshold",
+          "line": 137
+        },
+        {
+          "name": "getAvailableStorageSpaceLiveData",
+          "line": 145
+        },
+        {
+          "name": "getLowStorageWarningLiveData",
+          "line": 149
+        },
+        {
+          "name": "getTotalStorageSpaceLiveData",
+          "line": 153
+        },
+        {
+          "name": "calculateDirectorySize",
+          "line": 160
+        },
+        {
+          "name": "deleteDirectory",
+          "line": 177
+        },
+        {
+          "name": "cleanup",
+          "line": 196
+        },
+        {
+          "name": "refreshStorageInfo",
+          "line": 204
+        },
+        {
+          "name": "callVendorSpecificApi",
+          "line": 212
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/prod/java/com/arka/fal/updatemanager/abstraction/UpdateGateway.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "UpdateGateway"
+      ],
+      "methods": [
+        {
+          "name": "isUpdateAvailable",
+          "line": 18
+        },
+        {
+          "name": "getCurrentVersion",
+          "line": 22
+        },
+        {
+          "name": "getAvailableUpdateVersion",
+          "line": 26
+        },
+        {
+          "name": "startDownload",
+          "line": 30
+        },
+        {
+          "name": "getDownloadProgress",
+          "line": 34
+        },
+        {
+          "name": "installUpdate",
+          "line": 38
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/prod/java/com/arka/fal/updatemanager/adapter/UpdateProdServiceAdapter.kt",
+      "type": "source",
+      "ext": ".kt",
+      "classes": [
+        "UpdateProdServiceAdapter"
+      ],
+      "methods": [
+        {
+          "name": "isUpdateAvailable",
+          "line": 19
+        },
+        {
+          "name": "getCurrentVersion",
+          "line": 28
+        },
+        {
+          "name": "getAvailableUpdateVersion",
+          "line": 33
+        },
+        {
+          "name": "startDownload",
+          "line": 40
+        },
+        {
+          "name": "getDownloadProgress",
+          "line": 49
+        },
+        {
+          "name": "installUpdate",
+          "line": 59
+        },
+        {
+          "name": "callVendorSpecificUpdateAPI",
+          "line": 70
+        }
+      ],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "fal/src/test/java/com/arka/fal/ExampleUnitTest.kt",
+      "type": "test",
+      "ext": ".kt",
+      "classes": [
+        "ExampleUnitTest"
+      ],
+      "methods": [
+        {
+          "name": "addition_isCorrect",
+          "line": 14
+        }
+      ],
+      "test_cases": [
+        {
+          "name": "addition_isCorrect",
+          "line": 14
+        }
+      ],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.jar",
+      "type": "other",
+      "ext": ".jar",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.properties",
+      "type": "gradle",
+      "ext": ".properties",
+      "classes": [],
+      "methods": [],
+      "test_cases": [],
+      "refs_instantiated": [],
+      "refs_invoked": []
+    }
+  ],
+  "test_files": [
+    {
+      "path": "app/src/test/java/com/csapp/model/security/WebViewUrlValidatorTest.kt",
+      "test_cases": [
+        {
+          "name": "isUrlAllowedForWebView_https_returnsTrue",
+          "line": 13
+        },
+        {
+          "name": "isUrlAllowedForWebView_http_returnsFalse",
+          "line": 19
+        },
+        {
+          "name": "isUrlAllowedForWebView_file_returnsFalse",
+          "line": 24
+        },
+        {
+          "name": "isUrlAllowedForWebView_content_returnsFalse",
+          "line": 29
+        },
+        {
+          "name": "isUrlAllowedForWebView_javascript_returnsFalse",
+          "line": 34
+        },
+        {
+          "name": "isUrlAllowedForWebView_null_returnsFalse",
+          "line": 39
+        },
+        {
+          "name": "isUrlAllowedForWebView_blank_returnsFalse",
+          "line": 44
+        }
+      ],
+      "classes": [
+        "WebViewUrlValidatorTest"
+      ]
+    },
+    {
+      "path": "app/src/test/java/com/csapp/model/task/MainTaskImplTest.kt",
+      "test_cases": [
+        {
+          "name": "loadUrl_privacyError_returnsDataSharingModeError",
+          "line": 43
+        },
+        {
+          "name": "loadUrl_driverPermitError_returnsDataSharingModeError",
+          "line": 55
+        },
+        {
+          "name": "loadUrl_conditionsMet_andUrlSuccess_returnsSuccess",
+          "line": 67
+        },
+        {
+          "name": "loadUrl_conditionsMet_andUrlConfigFails_returnsConnectionError",
+          "line": 83
+        },
+        {
+          "name": "loadUrlFromNotification_validHttps_returnsSuccess",
+          "line": 97
+        },
+        {
+          "name": "loadUrlFromNotification_blankUrl_returnsConnectionError",
+          "line": 105
+        },
+        {
+          "name": "loadUrlFromNotification_httpUrl_returnsConnectionError",
+          "line": 113
+        }
+      ],
+      "classes": [
+        "MainTaskImplTest"
+      ]
+    },
+    {
+      "path": "app/src/test/java/com/csapp/model/task/UrlParameterBuilderTest.kt",
+      "test_cases": [
+        {
+          "name": "appendParameters_baseUrlOnly_addsQueryWithQuestionMark",
+          "line": 13
+        },
+        {
+          "name": "appendParameters_emptyParams_returnsBaseUrl",
+          "line": 26
+        },
+        {
+          "name": "appendParameters_baseUrlHasQuery_appendsWithAmpersand",
+          "line": 36
+        },
+        {
+          "name": "appendParameters_baseUrlHasFragment_insertsParamsBeforeFragment",
+          "line": 48
+        }
+      ],
+      "classes": [
+        "UrlParameterBuilderTest"
+      ]
+    },
+    {
+      "path": "app/src/test/java/com/csapp/view/util/MainDispatcherRule.kt",
+      "test_cases": [
+        {
+          "name": "TestWatcher",
+          "line": 16
+        },
+        {
+          "name": "starting",
+          "line": 17
+        },
+        {
+          "name": "finished",
+          "line": 21
+        }
+      ],
+      "classes": [
+        "MainDispatcherRule"
+      ]
+    },
+    {
+      "path": "app/src/test/java/com/csapp/viewmodel/MainViewModelTest.kt",
+      "test_cases": [
+        {
+          "name": "loadUrl_success_mapsToUrlStateSuccess",
+          "line": 42
+        },
+        {
+          "name": "loadUrl_dataSharingModeError_privacy_mapsToUrlStateDataSharingModeError",
+          "line": 52
+        },
+        {
+          "name": "loadUrl_dataSharingModeError_driverPermit_mapsToUrlStateDataSharingModeError",
+          "line": 62
+        },
+        {
+          "name": "loadUrl_connectionError_mapsToUrlStateError",
+          "line": 72
+        },
+        {
+          "name": "loadUrl_connectionError_blankMessage_usesDefault",
+          "line": 82
+        },
+        {
+          "name": "loadUrlFromNotification_validUrl_mapsToSuccess",
+          "line": 92
+        },
+        {
+          "name": "retry_callsLoadUrlAgain",
+          "line": 105
+        }
+      ],
+      "classes": [
+        "MainViewModelTest"
+      ]
+    },
+    {
+      "path": "fal/src/androidTest/java/com/arka/fal/ExampleInstrumentedTest.kt",
+      "test_cases": [
+        {
+          "name": "useAppContext",
+          "line": 19
+        }
+      ],
+      "classes": [
+        "ExampleInstrumentedTest"
+      ]
+    },
+    {
+      "path": "fal/src/test/java/com/arka/fal/ExampleUnitTest.kt",
+      "test_cases": [
+        {
+          "name": "addition_isCorrect",
+          "line": 14
+        }
+      ],
+      "classes": [
+        "ExampleUnitTest"
+      ]
+    }
+  ]
+}

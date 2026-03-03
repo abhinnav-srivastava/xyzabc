@@ -1,5 +1,5 @@
 """
-Project index service for CodeReview.
+Project index service for Restore app name.
 
 When a project is added, we scan its directory and build a persistent index:
 - File tree (paths, types: source, test, manifest, gradle, resources, other)
@@ -44,7 +44,7 @@ def _classify_file(path: str) -> str:
 
 logger = logging.getLogger(__name__)
 
-_INDEX_VERSION = 1
+_INDEX_VERSION = 2
 _INDEX_DIR = "project_indexes"
 
 # Directories to skip when walking (common build/cache dirs)
@@ -128,7 +128,9 @@ _TEST_METHOD_PATTERNS = [
     re.compile(r"\b(test[A-Za-z0-9_]*)\s*\([^)]*\)\s*\{", re.IGNORECASE),
     re.compile(r"\b(when_[a-zA-Z0-9_]+)\s*\(", re.IGNORECASE),
     re.compile(r"\b(given_[a-zA-Z0-9_]+)\s*\(", re.IGNORECASE),
+    re.compile(r"\b(?:fun|void)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(", re.MULTILINE),  # any Kotlin/Java method
 ]
+_FIXTURE_METHODS = frozenset(("setup", "teardown", "beforeeach", "aftereach", "beforeall", "afterall", "before", "after"))
 # Python
 _PY_CLASS_PATTERN = re.compile(r"^\s*class\s+([a-zA-Z_][a-zA-Z0-9_]*)", re.MULTILINE)
 _PY_TEST_PATTERN = re.compile(r"^\s*def\s+(test_[a-zA-Z0-9_]+)\s*\(", re.MULTILINE)
@@ -164,14 +166,22 @@ def _extract_test_cases_regex(content: str, path: str) -> List[Tuple[str, int]]:
     ext = os.path.splitext(path)[1].lower()
     result: List[Tuple[str, int]] = []
     seen: Set[str] = set()
+
+    def _add(name: str, pos: int) -> None:
+        if not name or name in seen:
+            return
+        if name.lower() in _FIXTURE_METHODS:
+            return
+        seen.add(name)
+        line_no = content[:pos].count("\n") + 1
+        result.append((name, line_no))
+
     if ext in (".java", ".kt"):
         for pat in _TEST_METHOD_PATTERNS:
             for m in pat.finditer(content):
                 for g in m.groups():
-                    if g and g not in seen:
-                        seen.add(g)
-                        line_no = content[: m.start()].count("\n") + 1
-                        result.append((g, line_no))
+                    if g:
+                        _add(g.strip(), m.start())
     elif ext == ".py":
         for m in _PY_TEST_PATTERN.finditer(content):
             name = m.group(1)
@@ -240,6 +250,162 @@ def _child_by_type(node, typ: str):
     return None
 
 
+def _extract_test_cases_ast(content: str, path: str, lang: str) -> List[Tuple[str, int]]:
+    """Extract all methods from test file via tree-sitter (accurate, includes any naming)."""
+    try:
+        import tree_sitter
+        if lang == "java":
+            import tree_sitter_java
+            parser = tree_sitter.Language(tree_sitter_java.language(), "java")
+        else:
+            import tree_sitter_kotlin
+            parser = tree_sitter.Language(tree_sitter_kotlin.language(), "kotlin")
+        ts_parser = tree_sitter.Parser(parser)
+        content_bytes = content.encode("utf-8")
+        tree = ts_parser.parse(content_bytes)
+        root = tree.root_node
+        result: List[Tuple[str, int]] = []
+        seen: Set[str] = set()
+        for node in _iter_nodes(root):
+            if node.type in ("method_declaration", "function_declaration"):
+                name_node = _child_by_type(node, "identifier") or _child_by_type(node, "simple_identifier")
+                if name_node:
+                    name = content_bytes[name_node.start_byte : name_node.end_byte].decode("utf-8", errors="replace")
+                    if name and name.lower() not in _FIXTURE_METHODS and name not in seen:
+                        seen.add(name)
+                        result.append((name, node.start_point[0] + 1))
+        return sorted(result, key=lambda x: x[1])
+    except Exception:
+        return _extract_test_cases_regex(content, path)
+
+
+def _extract_references_ast(
+    content: str, path: str, lang: str
+) -> Tuple[Set[str], Set[str]]:
+    """
+    Extract class and method references from file via tree-sitter.
+    Returns (instantiated_types, invoked_method_names).
+    """
+    instantiated: Set[str] = set()
+    invoked: Set[str] = set()
+    try:
+        import tree_sitter
+        if lang == "java":
+            import tree_sitter_java
+            parser = tree_sitter.Language(tree_sitter_java.language(), "java")
+        else:
+            import tree_sitter_kotlin
+            parser = tree_sitter.Language(tree_sitter_kotlin.language(), "kotlin")
+        ts_parser = tree_sitter.Parser(parser)
+        content_bytes = content.encode("utf-8")
+        tree = ts_parser.parse(content_bytes)
+        root = tree.root_node
+
+        def _last_identifier(node) -> Optional[str]:
+            """Get rightmost identifier from expression (for Kotlin foo.bar.baz())."""
+            if node.type in ("identifier", "simple_identifier", "_reserved_identifier"):
+                return content_bytes[node.start_byte : node.end_byte].decode("utf-8", errors="replace")
+            for c in reversed(node.children):
+                r = _last_identifier(c)
+                if r:
+                    return r
+            return None
+
+        for node in _iter_nodes(root):
+            if node.type == "method_invocation":
+                name_node = None
+                try:
+                    name_node = node.child_by_field_name("name")
+                except (AttributeError, TypeError):
+                    pass
+                if not name_node:
+                    for c in node.children:
+                        if c.type in ("identifier", "_reserved_identifier"):
+                            name_node = c
+                            break
+                if name_node:
+                    name = content_bytes[name_node.start_byte : name_node.end_byte].decode("utf-8", errors="replace")
+                    if name and not name.startswith("_"):
+                        invoked.add(name)
+            elif node.type in ("object_creation_expression", "_unqualified_object_creation_expression"):
+                for c in node.children:
+                    if c.type in ("type_identifier", "scoped_type_identifier", "generic_type"):
+                        type_name = content_bytes[c.start_byte : c.end_byte].decode("utf-8", errors="replace")
+                        if type_name and type_name not in ("new",):
+                            base = type_name.split("<")[0].split(".")[-1]
+                            if base and len(base) > 0 and base[0].isupper():
+                                instantiated.add(base)
+                        break
+            elif node.type == "constructor_invocation":
+                for c in node.children:
+                    if c.type in ("user_type", "type_identifier", "simple_identifier"):
+                        type_name = content_bytes[c.start_byte : c.end_byte].decode("utf-8", errors="replace")
+                        if type_name:
+                            base = type_name.split("<")[0].split(".")[-1]
+                            if base and len(base) > 0 and base[0].isupper():
+                                instantiated.add(base)
+                        break
+            elif node.type == "call_expression":
+                if node.children:
+                    receiver = node.children[0]
+                    name = _last_identifier(receiver)
+                    if name and not name.startswith("_"):
+                        invoked.add(name)
+    except Exception:
+        pass
+    return (instantiated, invoked)
+
+
+def extract_methods_with_lines_ast(content: str, path: str) -> List[Tuple[str, int]]:
+    """
+    Extract (method_name, line) from Java/Kotlin source. Uses tree-sitter when available.
+    Excludes test* methods. Public API for test coverage analysis.
+    """
+    ext = os.path.splitext(path)[1].lower()
+    if ext not in (".java", ".kt"):
+        return []
+    try:
+        import tree_sitter
+        import tree_sitter_java
+        import tree_sitter_kotlin
+        lang = "java" if ext == ".java" else "kotlin"
+        _, meth_list = _extract_ast_java_kt(content, path, lang)
+        return meth_list
+    except Exception:
+        _, meth_list = _extract_classes_methods_regex(content, path)
+        return meth_list
+
+
+def extract_entities_ast(content: str, path: str, file_type: str) -> Dict[str, List[str]]:
+    """
+    Extract classes, methods, and test_cases from content via tree-sitter.
+    Public API for patch AST analysis. Returns {"classes": [...], "methods": [...], "test_cases": [...]}.
+    """
+    ext = os.path.splitext(path)[1].lower()
+    classes: List[str] = []
+    methods: List[str] = []
+    test_cases: List[str] = []
+    if ext in (".java", ".kt"):
+        try:
+            import tree_sitter
+            import tree_sitter_java
+            import tree_sitter_kotlin
+            lang = "java" if ext == ".java" else "kotlin"
+            cls_list, meth_list = _extract_ast_java_kt(content, path, lang)
+            classes = cls_list
+            methods = [m[0] for m in meth_list]
+            if file_type == "test":
+                tc_list = _extract_test_cases_ast(content, path, lang)
+                test_cases = [t[0] for t in tc_list]
+        except Exception:
+            classes, meth_tuples = _extract_classes_methods_regex(content, path)
+            methods = [m[0] for m in meth_tuples]
+            if file_type == "test":
+                tc_tuples = _extract_test_cases_regex(content, path)
+                test_cases = [t[0] for t in tc_tuples]
+    return {"classes": classes, "methods": methods, "test_cases": test_cases}
+
+
 def _extract_for_file(
     project_path: str,
     rel_path: str,
@@ -259,19 +425,41 @@ def _extract_for_file(
             import tree_sitter_kotlin
             lang = "java" if ext == ".java" else "kotlin"
             classes, methods = _extract_ast_java_kt(content, rel_path, lang)
+            if file_type == "test":
+                test_cases = _extract_test_cases_ast(content, rel_path, lang)
+            else:
+                test_cases = []
         except ImportError:
             classes, methods = _extract_classes_methods_regex(content, rel_path)
-        if file_type == "test":
-            test_cases = _extract_test_cases_regex(content, rel_path)
+            if file_type == "test":
+                test_cases = _extract_test_cases_regex(content, rel_path)
+            else:
+                test_cases = []
     elif ext == ".py":
         classes = _extract_py_classes(content)
         if file_type == "test" or "test" in rel_path.lower():
             test_cases = _extract_test_cases_regex(content, rel_path)
 
+    refs_instantiated: List[str] = []
+    refs_invoked: List[str] = []
+    if ext in (".java", ".kt"):
+        try:
+            import tree_sitter
+            import tree_sitter_java
+            import tree_sitter_kotlin
+            lang = "java" if ext == ".java" else "kotlin"
+            inst, inv = _extract_references_ast(content, rel_path, lang)
+            refs_instantiated = sorted(inst)
+            refs_invoked = sorted(inv)
+        except ImportError:
+            pass
+
     return {
         "classes": classes,
         "methods": [{"name": m[0], "line": m[1]} for m in methods],
         "test_cases": [{"name": t[0], "line": t[1]} for t in test_cases],
+        "refs_instantiated": refs_instantiated,
+        "refs_invoked": refs_invoked,
     }
 
 
@@ -315,6 +503,8 @@ def build_project_index(project_id: str, project_path: str) -> Dict[str, Any]:
         f["classes"] = extracted["classes"]
         f["methods"] = extracted["methods"]
         f["test_cases"] = extracted["test_cases"]
+        f["refs_instantiated"] = extracted.get("refs_instantiated", [])
+        f["refs_invoked"] = extracted.get("refs_invoked", [])
 
         if ftype == "test" and (extracted["test_cases"] or extracted["classes"]):
             test_files.append({
@@ -359,7 +549,9 @@ def _load_index(project_id: str) -> Optional[Dict[str, Any]]:
 
 
 def is_index_stale(project_path: str, index: Dict[str, Any]) -> bool:
-    """Return True if index is stale (git HEAD changed or path mismatch)."""
+    """Return True if index is stale (version mismatch, path/git change)."""
+    if index.get("version", 0) < _INDEX_VERSION:
+        return True
     stored_path = (index.get("project_path") or "").replace("\\", "/")
     current_path = str(Path(project_path).resolve()).replace("\\", "/")
     if stored_path != current_path:
@@ -422,6 +614,133 @@ def schedule_index_build(project_id: str, project_path: str) -> None:
 
     t = threading.Thread(target=_run, daemon=True)
     t.start()
+
+
+def _source_to_test_paths(source_path: str) -> List[str]:
+    """Derive expected test file paths from source path (Android/Gradle convention)."""
+    path = _normalize_path(source_path)
+    base = os.path.basename(path)
+    name, ext = os.path.splitext(base)
+    if ext not in (".java", ".kt"):
+        return []
+    result: List[str] = []
+    for main, test_dir in [("src/main", "src/test"), ("src/main", "src/androidTest")]:
+        if main in path:
+            test_path = path.replace(main, test_dir, 1)
+            for suffix in ("Test", "Tests"):
+                candidate = test_path.replace(f"{name}{ext}", f"{name}{suffix}{ext}")
+                result.append(candidate)
+    return result
+
+
+def _method_matches_test(source_method: str, test_methods: List[str]) -> bool:
+    """Heuristic: does any test method likely cover this source method?"""
+    src_lower = source_method.lower()
+    src_camel = source_method[0].upper() + source_method[1:] if source_method else ""
+    for tm in test_methods:
+        tm_lower = tm.lower()
+        if src_lower in tm_lower:
+            return True
+        if f"test{src_camel}" in tm or f"test_{src_lower}" in tm_lower:
+            return True
+        if tm_lower.startswith("when_") and src_lower in tm_lower:
+            return True
+        if tm_lower.startswith("given_") and src_lower in tm_lower:
+            return True
+    return False
+
+
+def build_source_hierarchy(index: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Build hierarchical view: File -> Class -> Methods, with AST-based class/method refs in test files.
+    Uses refs_instantiated and refs_invoked from tree-sitter for accurate cross-file references.
+    """
+    files = index.get("files", [])
+    test_path_to_file: Dict[str, Dict[str, Any]] = {}
+    for f in files:
+        if f.get("type") == "test":
+            test_path_to_file[_normalize_path(f["path"])] = f
+
+    # Build: class_name -> [test_file_paths that reference it via AST]
+    class_to_tests: Dict[str, List[str]] = {}
+    # Build: method_name -> [test_file_paths that invoke it via AST]
+    method_to_tests: Dict[str, List[str]] = {}
+
+    for tf_path, tf in test_path_to_file.items():
+        for cls in tf.get("classes", []):
+            class_to_tests.setdefault(cls, []).append(tf_path)
+        for t in tf.get("refs_instantiated", []):
+            class_to_tests.setdefault(t, []).append(tf_path)
+        for m in tf.get("refs_invoked", []):
+            method_to_tests.setdefault(m, []).append(tf_path)
+
+    result: List[Dict[str, Any]] = []
+    for f in files:
+        if f.get("type") != "source":
+            continue
+        path = f.get("path", "")
+        path_norm = _normalize_path(path)
+        classes = f.get("classes", [])
+        methods = f.get("methods", [])
+
+        # Class refs: test files that reference any of our classes (AST or path convention)
+        expected_test_paths = _source_to_test_paths(path)
+        seen_test_paths: Set[str] = set()
+        class_refs_in_test: List[Dict[str, Any]] = []
+
+        for cls in (classes or ["(no class)"]):
+            if cls == "(no class)":
+                continue
+            for tp in class_to_tests.get(cls, []):
+                if tp not in seen_test_paths:
+                    seen_test_paths.add(tp)
+                    tf = test_path_to_file.get(tp)
+                    test_methods = [t.get("name", "") for t in (tf or {}).get("test_cases", [])]
+                    class_refs_in_test.append({"path": tp, "test_cases": test_methods})
+
+        for tp in expected_test_paths:
+            tp_norm = _normalize_path(tp)
+            if tp_norm not in seen_test_paths and tp_norm in test_path_to_file:
+                seen_test_paths.add(tp_norm)
+                tf = test_path_to_file[tp_norm]
+                test_methods = [t.get("name", "") for t in tf.get("test_cases", [])]
+                class_refs_in_test.append({"path": tp_norm, "test_cases": test_methods})
+
+        # Method refs: test files that invoke this method (AST) or heuristic match
+        method_refs: List[Dict[str, Any]] = []
+        for m in methods:
+            mname = m.get("name", "") if isinstance(m, dict) else str(m)
+            refs: List[Dict[str, str]] = []
+            seen_refs: Set[Tuple[str, str]] = set()
+            for tp in method_to_tests.get(mname, []):
+                tf = test_path_to_file.get(tp)
+                if tf:
+                    for tc in tf.get("test_cases", []):
+                        tc_name = tc.get("name", "") if isinstance(tc, dict) else str(tc)
+                        key = (tp, tc_name)
+                        if key not in seen_refs:
+                            seen_refs.add(key)
+                            refs.append({"test_file": tp, "test_method": tc_name})
+            if not refs:
+                for ref in class_refs_in_test:
+                    for tc in ref.get("test_cases", []):
+                        tc_name = tc if isinstance(tc, str) else tc.get("name", "")
+                        if _method_matches_test(mname, [tc_name]):
+                            refs.append({"test_file": ref["path"], "test_method": tc_name})
+                            break
+            method_refs.append({
+                "name": mname,
+                "line": m.get("line") if isinstance(m, dict) else None,
+                "refs_in_test": refs if refs else None,
+            })
+
+        result.append({
+            "path": path,
+            "classes": classes or ["(no class)"],
+            "methods": method_refs,
+            "class_refs_in_test": class_refs_in_test if class_refs_in_test else None,
+        })
+    return result
 
 
 def invalidate_index(project_id: str) -> bool:

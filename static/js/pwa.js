@@ -1,5 +1,5 @@
 /**
- * CodeReview PWA JavaScript
+ * Restore app name PWA JavaScript
  * Handles PWA installation, updates, and offline functionality
  */
 
@@ -280,7 +280,7 @@ class PWAManager {
     const successMessage = document.createElement('div');
     successMessage.className = 'alert alert-success position-fixed';
     successMessage.style.cssText = 'top: 20px; right: 20px; z-index: 1050; max-width: 300px;';
-    successMessage.innerHTML = '<i class="bi bi-check-circle me-2"></i><strong>App Installed!</strong> CodeReview is now available on your device.';
+    successMessage.innerHTML = '<i class="bi bi-check-circle me-2"></i><strong>App Installed!</strong> Restore app name is now available on your device.';
     document.body.appendChild(successMessage);
     
     // Auto-hide after 5 seconds

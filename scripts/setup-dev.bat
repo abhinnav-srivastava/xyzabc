@@ -1,13 +1,13 @@
 @echo off
 setlocal EnableDelayedExpansion
-REM CodeReview - Development environment setup (Windows CMD)
+REM Restore app name - Development environment setup (Windows CMD)
 REM Run from project root: scripts\setup-dev.bat
 REM Env: PIP_PROXY, PIP_PROXY_USER, PIP_PROXY_PASS, APP_NAME
 
 cd /d "%~dp0\.."
 set "PROJECT_ROOT=%CD%"
 
-echo === CodeReview Dev Setup ===
+echo === Restore app name Dev Setup ===
 echo Project root: %PROJECT_ROOT%
 echo.
 
@@ -89,6 +89,11 @@ if defined PIP_PROXY set "PIP_EXTRA=!PIP_EXTRA! --proxy %PIP_PROXY%"
 if errorlevel 1 echo   pip upgrade failed (continuing)
 "%PYTHON_CMD%" -m pip install -r requirements.txt %PIP_EXTRA%
 if errorlevel 1 (echo   pip install failed - continuing) else (echo   OK)
+if exist "requirements-optional.txt" (
+  echo Installing optional dependencies (pygount, radon, tree-sitter for project index and AST references)...
+  "%PYTHON_CMD%" -m pip install -r requirements-optional.txt %PIP_EXTRA%
+  if errorlevel 1 (echo   Optional install failed - continuing. Run: pip install -r requirements-optional.txt) else (echo   OK)
+)
 if defined VENV echo Activate venv: .venv\Scripts\activate.bat
 echo.
 

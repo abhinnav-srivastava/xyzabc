@@ -1,6 +1,6 @@
 # Bundled Git (optional)
 
-Place a **portable Git** here so CodeReview can use it for exact patch stats (GitLab-accurate) without requiring Git to be installed on the system.
+Place a **portable Git** here so Restore app name can use it for exact patch stats (GitLab-accurate) without requiring Git to be installed on the system.
 
 ## Layout
 
@@ -24,4 +24,4 @@ So after extracting, the executable should be at:
 
 ## If this folder is empty
 
-CodeReview will use `git` from the system **PATH**. Install Git normally and ensure `git` is on PATH if you want exact patch stats.
+Restore app name will use `git` from the system **PATH**. Install Git normally and ensure `git` is on PATH if you want exact patch stats.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Production WSGI configuration for CodeReview
+Production WSGI configuration for Restore app name
 Use this with production WSGI servers like Gunicorn, uWSGI, or Waitress
 """
 

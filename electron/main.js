@@ -54,7 +54,7 @@ function stopBackend() {
 
 function getBackendPath() {
   if (app.isPackaged) {
-    return path.join(process.resourcesPath, 'backend', 'CodeReview.exe');
+    return path.join(process.resourcesPath, 'backend', 'Restore app name.exe');
   }
   return null;
 }

@@ -1,6 +1,6 @@
 {
-  "name": "CodeReview - Code Review Tool",
-  "short_name": "CodeReview",
+  "name": "Restore app name - Code Review Tool",
+  "short_name": "Restore app name",
   "description": "code review tool with role-based, category-driven checklists for comprehensive quality assurance",
   "start_url": "/",
   "display": "standalone",
@@ -66,14 +66,14 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "CodeReview Desktop Interface"
+      "label": "Restore app name Desktop Interface"
     },
     {
       "src": "/static/screenshots/mobile-screenshot.png",
       "sizes": "375x667",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "CodeReview Mobile Interface"
+      "label": "Restore app name Mobile Interface"
     }
   ],
   "shortcuts": [

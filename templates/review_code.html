@@ -6,19 +6,20 @@
   <div class="alert alert-warning py-2 mb-0 d-flex align-items-center gap-2" role="status">
     <i class="bi bi-bug-fill"></i>
     <span>Test-focused view: highlighting methods/classes without tests</span>
-    <a href="{{ url_for('review_code') }}" class="btn btn-sm btn-outline-warning ms-auto">View all</a>
+    <a href="{{ url_for('code_browser', source='patch') }}" class="btn btn-sm btn-outline-warning ms-auto">View all</a>
   </div>
   {% endif %}
   <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom bg-white">
     <h4 class="mb-0">
-      <i class="bi bi-code-slash me-2"></i>Changes
+      <i class="bi bi-code-slash me-2"></i>Code browser
+      <span class="text-muted fw-normal fs-6 ms-2">— Changes</span>
     </h4>
     <div class="d-flex gap-2">
       <a href="{{ url_for('patch_summary') }}" class="btn btn-outline-primary btn-sm">
         <i class="bi bi-graph-up me-1"></i>Summary
       </a>
       {% if has_highlightable and not test_focus %}
-      <a href="{{ url_for('review_code', test_focus=1) }}" class="btn btn-outline-warning btn-sm">
+      <a href="{{ url_for('code_browser', source='patch', test_focus=1) }}" class="btn btn-outline-warning btn-sm">
         <i class="bi bi-bug me-1"></i>View test-focused
       </a>
       {% endif %}

@@ -2,11 +2,26 @@
 
 {% block content %}
 <div class="container">
-  <div class="mb-4">
-    <h4 class="fw-bold mb-1">
-      <i class="bi bi-speedometer2 me-2"></i>Dashboard
-    </h4>
-    <p class="text-muted mb-0">Welcome, {{ session.get('user_name', '') }}{% if session.get('user_username') %} ({{ session.get('user_username') }}){% endif %} — {{ role_name }}</p>
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+      <h4 class="fw-bold mb-1">
+        <i class="bi bi-speedometer2 me-2"></i>Dashboard
+      </h4>
+      <p class="text-muted mb-0">Welcome, {{ session.get('user_name', '') }}{% if session.get('user_username') %} ({{ session.get('user_username') }}){% endif %} — {{ role_name }}</p>
+    </div>
+    <a href="{{ url_for('profile_page') }}" class="text-decoration-none">
+      <div class="card border-0 shadow-sm hover-lift" style="min-width: 180px;">
+        <div class="card-body d-flex align-items-center py-2 px-3">
+          <div class="flex-shrink-0 me-2">
+            <i class="bi bi-person-circle text-secondary" style="font-size: 1.5rem;"></i>
+          </div>
+          <div>
+            <h6 class="card-title mb-0 fw-semibold small">Profile</h6>
+            <small class="text-muted" style="font-size: 0.75rem;">Manage your profile</small>
+          </div>
+        </div>
+      </div>
+    </a>
   </div>
 
   <div class="row g-3">
@@ -55,21 +70,6 @@
         </div>
       </a>
     </div>
-    <div class="col-md-6 col-lg-4">
-      <a href="{{ url_for('profile_page') }}" class="text-decoration-none">
-        <div class="card border-0 shadow-sm h-100 hover-lift">
-          <div class="card-body d-flex align-items-center">
-            <div class="flex-shrink-0 me-3">
-              <i class="bi bi-person-circle text-secondary" style="font-size: 2rem;"></i>
-            </div>
-            <div>
-              <h6 class="card-title mb-0 fw-semibold">Profile</h6>
-              <small class="text-muted">Manage your profile</small>
-            </div>
-          </div>
-        </div>
-      </a>
-    </div>
 
     <div class="col-12">
       <div class="card border-0 shadow-sm">
@@ -95,8 +95,8 @@
                     {% if p.summary %}
                     <div class="small text-muted">
                       <span class="me-2"><i class="bi bi-file-earmark"></i> {{ p.summary.file_count }} files</span>
-                      <span class="me-2"><i class="bi bi-code-slash"></i> {{ p.summary.source_count }} source</span>
-                      <span><i class="bi bi-bug"></i> {{ p.summary.test_count }} test</span>
+                      <span class="me-2"><i class="bi bi-code-slash"></i> {{ p.summary.source_count }} source files</span>
+                      <span><i class="bi bi-bug"></i> {{ p.summary.test_count }} test files</span>
                     </div>
                     <small class="text-success">Indexed</small>
                     {% else %}

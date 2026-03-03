@@ -1,5 +1,5 @@
 """
-Git operations service for CodeReview.
+Git operations service for Restore app name.
 Provides git pull/push with automatic credential detection from the system.
 Uses Git's credential helper (Windows Credential Manager, Git Credential Manager, etc.)
 when running git commands — no manual credential handling required.

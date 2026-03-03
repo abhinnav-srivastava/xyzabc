@@ -1,4 +1,4 @@
-# CodeReview — Cursor / AI context
+# Restore app name — Cursor / AI context
 
 **Primary context:** See **project root `CLAUDE.md`** for full project overview, key paths, conventions, and run instructions.
 

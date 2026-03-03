@@ -1,65 +1,65 @@
 {
-  "name": "codereview",
-  "version": "1.0.0",
-  "description": "CodeReview - Code review checklist app",
-  "main": "electron/main.js",
-  "scripts": {
-    "start": "npx electron .",
-    "generate-icon": "node scripts/generate-icon.js",
-    "build:win": "node scripts/build-electron-win.js",
-    "build:win:pyonly": "node scripts/build-electron-win.js --skip-electron",
-    "fix:name": "node -e \"const p=require('./package.json'); const v=(p.name||'codereview').replace(/[^a-z0-9-]/g,'').toLowerCase()||'codereview'; p.name=v; require('fs').writeFileSync('package.json', JSON.stringify(p,null,2)); console.log('package.json name fixed to:', v);\"",
-    "pack:win": "electron-builder --win --dir",
-    "dist:win": "electron-builder --win"
-  },
-  "author": "",
-  "license": "MIT",
-  "devDependencies": {
-    "electron": "^35.7.5",
-    "electron-builder": "^26.8.1",
-    "sharp": "^0.34.5",
-    "sharp-ico": "^0.1.5"
-  },
-  "build": {
-    "appId": "com.codereview.app",
-    "productName": "CodeReview",
-    "directories": {
-      "output": "dist-electron"
-    },
-    "files": [
-      "app.py",
-      "config/**/*",
-      "checklists/**/*",
-      "services/**/*",
-      "templates/**/*",
-      "static/**/*",
-      "utils/**/*",
-      "tools/**/*",
-      "data",
-      "electron/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "dist/CodeReview.exe",
-        "to": "backend/CodeReview.exe"
-      }
-    ],
-    "win": {
-      "target": [
-        {
-          "target": "portable",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "dir",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "icon": "static/icons/icon.ico"
-    }
-  }
+    "name":  "restoreappname",
+    "version":  "1.0.0",
+    "description":  "Restore app name - Code review checklist app",
+    "main":  "electron/main.js",
+    "scripts":  {
+                    "start":  "npx electron .",
+                    "generate-icon":  "node scripts/generate-icon.js",
+                    "build:win":  "node scripts/build-electron-win.js",
+                    "build:win:pyonly":  "node scripts/build-electron-win.js --skip-electron",
+                    "fix:name":  "node -e \"const p=require(\u0027./package.json\u0027); const v=(p.name||\u0027Restore app name\u0027).replace(/[^a-z0-9-]/g,\u0027\u0027).toLowerCase()||\u0027Restore app name\u0027; p.name=v; require(\u0027fs\u0027).writeFileSync(\u0027package.json\u0027, JSON.stringify(p,null,2)); console.log(\u0027package.json name fixed to:\u0027, v);\"",
+                    "pack:win":  "electron-builder --win --dir",
+                    "dist:win":  "electron-builder --win"
+                },
+    "author":  "",
+    "license":  "MIT",
+    "devDependencies":  {
+                            "electron":  "^35.7.5",
+                            "electron-builder":  "^26.8.1",
+                            "sharp":  "^0.34.5",
+                            "sharp-ico":  "^0.1.5"
+                        },
+    "build":  {
+                  "appId":  "com.Restore app name.app",
+                  "productName":  "Restore app name",
+                  "directories":  {
+                                      "output":  "dist-electron"
+                                  },
+                  "files":  [
+                                "app.py",
+                                "config/**/*",
+                                "checklists/**/*",
+                                "services/**/*",
+                                "templates/**/*",
+                                "static/**/*",
+                                "utils/**/*",
+                                "tools/**/*",
+                                "data",
+                                "electron/**/*"
+                            ],
+                  "extraResources":  [
+                                         {
+                                             "from":  "dist/Restore app name.exe",
+                                             "to":  "backend/Restore app name.exe"
+                                         }
+                                     ],
+                  "win":  {
+                              "target":  [
+                                             {
+                                                 "target":  "portable",
+                                                 "arch":  [
+                                                              "x64"
+                                                          ]
+                                             },
+                                             {
+                                                 "target":  "dir",
+                                                 "arch":  [
+                                                              "x64"
+                                                          ]
+                                             }
+                                         ],
+                              "icon":  "static/icons/icon.ico"
+                          }
+              }
 }

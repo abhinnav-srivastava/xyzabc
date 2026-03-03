@@ -1,6 +1,6 @@
 # Corporate Security & Compliance
 
-Checklist for deploying CodeReview in a corporate environment.
+Checklist for deploying Restore app name in a corporate environment.
 
 ## Data Egress Policy
 

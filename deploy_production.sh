@@ -1,8 +1,8 @@
 #!/bin/bash
-# Production deployment script for CodeReview
-# This script provides options for running CodeReview in production
+# Production deployment script for Restore app name
+# This script provides options for running Restore app name in production
 
-echo "CodeReview Production Deployment Options"
+echo "Restore app name Production Deployment Options"
 echo "========================================="
 echo ""
 echo "Choose your deployment method:"

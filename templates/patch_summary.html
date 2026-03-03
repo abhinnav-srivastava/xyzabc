@@ -2,7 +2,9 @@
 
 {% block content %}
 {% set _tca = summary.test_coverage_analysis|default({}) %}
-{% set has_tca_issues = _tca and (_tca.source_without_tests or _tca.methods_without_tests) %}
+{% set _pac = summary.patch_ast_changes|default({}) %}
+{% set _tests_deleted = _pac.tests_deleted_list|default([]) %}
+{% set has_tca_issues = (_tca and (_tca.source_without_tests or _tca.methods_without_tests)) or _tests_deleted %}
 <div class="container">
   {% if in_review_flow|default(false) %}
   <!-- Step indicator -->
@@ -22,11 +24,11 @@
     </h4>
     <div class="d-flex flex-wrap gap-2 align-items-center">
       {% if has_patch|default(true) %}
-      <a href="{{ url_for('review_code') }}" class="btn btn-primary">
+      <a href="{{ url_for('code_browser', source='patch') }}" class="btn btn-primary">
         <i class="bi bi-code-slash me-1"></i>View changes
       </a>
       {% if has_tca_issues %}
-      <a href="{{ url_for('review_code', test_focus=1) }}" class="btn btn-warning">
+      <a href="{{ url_for('code_browser', source='patch', test_focus=1) }}" class="btn btn-warning">
         <i class="bi bi-bug me-1"></i>View test-focused
       </a>
       {% endif %}
@@ -82,7 +84,7 @@
     <span class="text-danger">−{{ lines_deleted }}</span>
     <span class="badge bg-{% if change_size == 'small' %}success{% elif change_size == 'medium' %}warning text-dark{% else %}danger{% endif %}">{{ change_size|capitalize }}</span>
     {% if total_categorized > 0 %}
-    <span class="text-muted small">Source {{ source_pct }}% · Test {{ test_pct }}%</span>
+    <span class="text-muted small">Source Files {{ source_pct }}% · Test Files {{ test_pct }}%</span>
     {% endif %}
   </div>
 
@@ -103,8 +105,8 @@
             <a href="#collapse-manifest" class="badge bg-primary bg-opacity-25 text-primary text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-manifest">Manifest {{ mf|length }}</a>
             <a href="#collapse-gradle" class="badge bg-warning bg-opacity-25 text-dark text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-gradle">Gradle {{ gf|length }}</a>
             <a href="#collapse-resource" class="badge bg-info bg-opacity-25 text-dark text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-resource">Resources {{ rf|length }}</a>
-            <a href="#collapse-source" class="badge bg-primary bg-opacity-25 text-primary text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-source">Source {{ sf|length }}</a>
-            <a href="#collapse-test" class="badge bg-success bg-opacity-25 text-success text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-test">Test {{ tf|length }}</a>
+            <a href="#collapse-source" class="badge bg-primary bg-opacity-25 text-primary text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-source">Source Files {{ sf|length }}</a>
+            <a href="#collapse-test" class="badge bg-success bg-opacity-25 text-success text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-test">Test Files {{ tf|length }}</a>
             {% if of %}<a href="#collapse-other" class="badge bg-secondary bg-opacity-25 text-secondary text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapse-other">Other {{ of|length }}</a>{% endif %}
           </div>
         </div>
@@ -118,14 +120,14 @@
       <div class="card border-0 shadow-sm h-100">
         <div class="card-header bg-transparent border-0 py-2 d-flex justify-content-between align-items-center">
           <span class="fw-medium small">Top changed files</span>
-          <a href="{{ url_for('review_code') }}" class="btn btn-sm btn-outline-primary">View all</a>
+          <a href="{{ url_for('code_browser', source='patch') }}" class="btn btn-sm btn-outline-primary">View all</a>
         </div>
         <div class="card-body pt-0">
           {% if top_files_preview %}
           <ul class="list-unstyled mb-0 small">
             {% for f in top_files_preview %}
             <li class="d-flex justify-content-between align-items-center py-1 border-bottom border-light">
-              <a href="{{ url_for('review_code') }}#diff-file-{{ f.file_index }}" class="text-truncate text-dark text-decoration-none" style="max-width: 70%;" title="{{ f.path }}">{{ f.path }}</a>
+              <a href="{{ url_for('code_browser', source='patch') }}#diff-file-{{ f.file_index }}" class="text-truncate text-dark text-decoration-none" style="max-width: 70%;" title="{{ f.path }}">{{ f.path }}</a>
               <span class="text-nowrap ms-2"><span class="text-success">+{{ f.added }}</span> <span class="text-danger">−{{ f.deleted }}</span></span>
             </li>
             {% endfor %}
@@ -190,13 +192,13 @@
               <div class="diffstat-bars mt-1">
                 {% for f in top_for_bars[:8] %}
                 <div class="d-flex align-items-center gap-2 mb-1 small">
-                  <a href="{{ url_for('review_code') }}#diff-file-{{ f.file_index }}" class="text-truncate" style="max-width: 50%;" title="{{ f.path }}">{{ f.path }}</a>
+                  <a href="{{ url_for('code_browser', source='patch') }}#diff-file-{{ f.file_index }}" class="text-truncate" style="max-width: 50%;" title="{{ f.path }}">{{ f.path }}</a>
                   <div class="flex-grow-1" style="max-width: 120px;"><div class="progress h-5"><div class="progress-bar bg-success" style="width: {{ (f.added * 100 / f.total)|round(1) }}%;"></div><div class="progress-bar bg-danger" style="width: {{ (f.deleted * 100 / f.total)|round(1) }}%;"></div></div></div>
                   <span class="text-nowrap"><span class="text-success">+{{ f.added }}</span> <span class="text-danger">−{{ f.deleted }}</span></span>
                 </div>
                 {% endfor %}
               </div>
-              {% if top_for_bars|length > 8 %}<p class="small text-muted mb-0">+{{ top_for_bars|length - 8 }} more — <a href="{{ url_for('review_code') }}">View all</a></p>{% endif %}
+              {% if top_for_bars|length > 8 %}<p class="small text-muted mb-0">+{{ top_for_bars|length - 8 }} more — <a href="{{ url_for('code_browser', source='patch') }}">View all</a></p>{% endif %}
             </div>
             {% endif %}
             {% endif %}
@@ -207,21 +209,77 @@
     {% endif %}
   </div>
 
-  <!-- Test coverage: collapsible, collapsed by default -->
+  <!-- AST changes: classes, methods, tests added/deleted/modified -->
+  {% set pac = summary.patch_ast_changes|default({}) %}
+  {% set has_ast = pac and (pac.classes_added or pac.classes_deleted or pac.classes_modified or pac.methods_added or pac.methods_deleted or pac.methods_modified or pac.tests_added or pac.tests_deleted or pac.tests_modified) %}
+  {% if has_ast %}
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-transparent border-0 py-2 cursor-pointer d-flex align-items-center collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-ast-changes" aria-expanded="false" role="button">
+      <i class="bi bi-chevron-right collapse-chevron me-1"></i>
+      <i class="bi bi-diagram-3 text-primary me-2"></i>
+      <span class="fw-medium small">Code structure changes (AST)</span>
+      <span class="badge bg-primary ms-2">Classes · Methods · Tests</span>
+    </div>
+    <div id="collapse-ast-changes" class="collapse">
+      <div class="card-body py-3">
+        <div class="row g-3 small">
+          <div class="col-md-4">
+            <strong class="text-primary">Classes</strong>
+            <div class="mt-1">
+              <span class="text-success">+{{ pac.classes_added|default(0) }} added</span>
+              <span class="text-danger ms-2">−{{ pac.classes_deleted|default(0) }} deleted</span>
+              <span class="text-secondary ms-2">{{ pac.classes_modified|default(0) }} modified</span>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <strong class="text-primary">Methods</strong>
+            <div class="mt-1">
+              <span class="text-success">+{{ pac.methods_added|default(0) }} added</span>
+              <span class="text-danger ms-2">−{{ pac.methods_deleted|default(0) }} deleted</span>
+              <span class="text-secondary ms-2">{{ pac.methods_modified|default(0) }} modified</span>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <strong class="text-primary">Test cases</strong>
+            <div class="mt-1">
+              <span class="text-success">+{{ pac.tests_added|default(0) }} added</span>
+              <span class="text-danger ms-2">−{{ pac.tests_deleted|default(0) }} deleted</span>
+              <span class="text-secondary ms-2">{{ pac.tests_modified|default(0) }} modified</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Test coverage: collapsible, expanded when issues -->
   {% set test_cases_added_count = summary.test_cases_added_count|default(0) %}
   {% set test_cases_removed_count = summary.test_cases_removed_count|default(0) %}
+  {% set tests_deleted_list = _tests_deleted %}
   {% set tca = _tca %}
-  {% set tca_issues = (tca.source_without_tests|length) + (tca.methods_without_tests|length) if tca else 0 %}
+  {% set tca_issues = (tca.source_without_tests|length) + (tca.methods_without_tests|length) + (tests_deleted_list|length) if tca else (tests_deleted_list|length) %}
   <div class="card border-0 shadow-sm mb-3 {% if has_tca_issues %}border-warning border-2{% elif test_cases_added_count or test_cases_removed_count %}border-success border-2{% endif %}">
-    <div class="card-header bg-transparent border-0 py-2 cursor-pointer d-flex align-items-center collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-test-coverage" aria-expanded="false" role="button">
+    <div class="card-header bg-transparent border-0 py-2 cursor-pointer d-flex align-items-center {% if not has_tca_issues %}collapsed{% endif %}" data-bs-toggle="collapse" data-bs-target="#collapse-test-coverage" aria-expanded="{{ 'true' if has_tca_issues else 'false' }}" role="button">
       <i class="bi bi-chevron-right collapse-chevron me-1"></i>
       <i class="bi bi-bug {% if has_tca_issues %}text-warning{% elif test_cases_added_count or test_cases_removed_count %}text-success{% else %}text-muted{% endif %} me-2"></i>
       <span class="fw-medium small">Test coverage</span>
-      {% if has_tca_issues %}<span class="badge bg-warning text-dark ms-2">{{ tca_issues }} issue{{ 's' if tca_issues != 1 else '' }}</span>{% elif test_cases_added_count or test_cases_removed_count %}<span class="badge bg-success ms-2">+{{ test_cases_added_count }}{% if test_cases_removed_count %} −{{ test_cases_removed_count }}{% endif %} tests</span>{% else %}<span class="text-muted small ms-2">No changes detected</span>{% endif %}
+      {% if has_tca_issues %}
+      <span class="badge bg-warning text-dark ms-2">{{ tca_issues }} issue{{ 's' if tca_issues != 1 else '' }} flagged</span>
+      <a href="{{ url_for('test_coverage') }}" class="btn btn-sm btn-outline-warning ms-2">View details</a>
+      {% elif test_cases_added_count or test_cases_removed_count %}<span class="badge bg-success ms-2">+{{ test_cases_added_count }}{% if test_cases_removed_count %} −{{ test_cases_removed_count }}{% endif %} tests</span>{% else %}<span class="text-muted small ms-2">No changes detected</span>{% endif %}
     </div>
     <div id="collapse-test-coverage" class="collapse">
       <div class="card-body py-3">
         {% if has_tca_issues %}
+        {% if tests_deleted_list %}
+        <div class="mb-3"><strong class="small text-danger">Test cases removed</strong>
+          <ul class="list-unstyled small mt-1 mb-0">{% for item in tests_deleted_list[:5] %}
+            <li><code>{{ item.path }}</code> — <code>{{ item.test }}()</code></li>{% endfor %}
+            {% if tests_deleted_list|length > 5 %}<li class="text-muted">+{{ tests_deleted_list|length - 5 }} more — <a href="{{ url_for('test_coverage') }}">View all</a></li>{% endif %}
+          </ul>
+        </div>
+        {% endif %}
         {% if tca.source_without_tests %}
         <div class="mb-3"><strong class="small text-warning">Source without tests</strong>
           <ul class="list-unstyled small mt-1 mb-0">{% for item in tca.source_without_tests[:10] %}
@@ -239,12 +297,14 @@
         </div>
         {% endif %}
         {% elif test_cases_added_count or test_cases_removed_count %}
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
           <i class="bi bi-bug-fill text-success fs-5"></i>
           <span>+{{ test_cases_added_count }}{% if test_cases_removed_count %} −{{ test_cases_removed_count }}{% endif %} test cases in patch</span>
+          <a href="{{ url_for('test_coverage') }}" class="btn btn-sm btn-outline-primary ms-2">View details</a>
         </div>
         {% else %}
         <p class="text-muted small mb-0">No test case changes detected in patch.</p>
+        <a href="{{ url_for('test_coverage') }}" class="btn btn-sm btn-outline-secondary mt-2">Test coverage report</a>
         {% endif %}
       </div>
     </div>
@@ -460,6 +520,7 @@
 <script>
 (function() {
   var collapseIds = ['collapse-manifest', 'collapse-gradle', 'collapse-resource', 'collapse-source', 'collapse-test', 'collapse-other'];
+  if (document.getElementById('collapse-ast-changes')) collapseIds.push('collapse-ast-changes');
   var expandBtn = document.getElementById('patch-summary-expand-all');
   var collapseBtn = document.getElementById('patch-summary-collapse-all');
   if (!expandBtn || !collapseBtn) return;

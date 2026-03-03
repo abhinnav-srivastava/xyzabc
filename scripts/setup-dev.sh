@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CodeReview - Development environment setup (Linux / macOS / WSL)
+# Restore app name - Development environment setup (Linux / macOS / WSL)
 # Run from project root: ./scripts/setup-dev.sh
 # Optional: ./scripts/setup-dev.sh --proxy http://proxy:8080 --name "YourApp" --build --venv
 # With auth (no encoding needed): ./scripts/setup-dev.sh --proxy http://proxy:8080 --proxy-user user --proxy-pass 'sr!n@v9914'
@@ -64,7 +64,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-echo "=== CodeReview Dev Setup ==="
+echo "=== Restore app name Dev Setup ==="
 echo "Project root: $PROJECT_ROOT"
 if [[ -n "$PIP_PROXY" ]]; then
   DISPLAY_PROXY=$(echo "$PIP_PROXY" | sed -E 's|^([^:]+://)[^:]+:[^@]+@|\1***:***@|')
@@ -81,8 +81,8 @@ if [[ -n "$APP_NAME" ]]; then
   ID=$(echo "$APP_NAME" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
   count=0
   while IFS= read -r f; do
-    if grep -q -E 'CodeReview|codereview' "$f" 2>/dev/null; then
-      perl -i -pe "s/CodeReview/$APP_NAME/g; s/codereview/$ID/g" "$f" 2>/dev/null && ((count++))
+    if grep -q -E 'Restore app name|Restore app name' "$f" 2>/dev/null; then
+      perl -i -pe "s/Restore app name/$APP_NAME/g; s/Restore app name/$ID/g" "$f" 2>/dev/null && ((count++))
     fi
   done < <(find "$PROJECT_ROOT" -type f \( -name "*.py" -o -name "*.js" -o -name "*.json" -o -name "*.html" -o -name "*.md" -o -name "*.yml" -o -name "*.sh" -o -name "*.ps1" -o -name "*.bat" -o -name "*.spec" \) ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/dist/*" ! -path "*/build/*" 2>/dev/null)
   echo "  Updated $count files"
@@ -125,6 +125,10 @@ PIP_EXTRA="-q"
 [[ -n "$PIP_PROXY" ]] && PIP_EXTRA="$PIP_EXTRA --proxy $PIP_PROXY"
 $PYTHON_CMD -m pip install --upgrade pip $PIP_EXTRA || echo "  pip upgrade failed (continuing)"
 $PYTHON_CMD -m pip install -r requirements.txt $PIP_EXTRA && echo "  OK" || echo "  pip install failed (continuing)"
+if [[ -f "requirements-optional.txt" ]]; then
+  echo "Installing optional dependencies (pygount, radon, tree-sitter for project index and AST references)..."
+  $PYTHON_CMD -m pip install -r requirements-optional.txt $PIP_EXTRA && echo "  OK" || echo "  Optional install failed (continuing). Run: pip install -r requirements-optional.txt"
+fi
 [[ "$VENV" == "true" ]] && echo "Activate venv: source .venv/bin/activate"
 echo ""
 

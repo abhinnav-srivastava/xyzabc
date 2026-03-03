@@ -185,3 +185,55 @@ def update_profile_roles(user_id: str, preferred_roles: List[str]) -> bool:
     profiles[user_id]["last_used"] = datetime.now().isoformat()
     _save_raw(data)
     return True
+
+
+def get_last_patch_selection(user_id: str) -> Optional[Dict[str, Any]]:
+    """Return the last selected project, branch, and commit for a user. Returns None if not found."""
+    p = get_profile(user_id)
+    if not p:
+        return None
+    last = p.get("last_patch_selection")
+    if not last or not isinstance(last, dict):
+        return None
+    return last
+
+
+def update_last_patch_selection(
+    user_id: str,
+    project_id: str = "",
+    patch_mode: str = "mr",
+    branch_name: str = "",
+    commit_hash: str = "",
+    source_branch: str = "",
+    target_branch: str = "",
+    project_name: str = "",
+    project_path: str = "",
+    mr_link: str = "",
+) -> bool:
+    """Save last selected project, branch, and commit to the user profile. Returns True if updated."""
+    user_id = user_id.strip()
+    if not user_id:
+        return False
+    data = _load_raw()
+    profiles = data.get("profiles", {})
+    if user_id not in profiles:
+        for uid, p in profiles.items():
+            if p.get("name") == user_id:
+                user_id = uid
+                break
+        else:
+            return False
+    profiles[user_id]["last_patch_selection"] = {
+        "project_id": project_id or "",
+        "project_name": project_name or "",
+        "project_path": project_path or "",
+        "patch_mode": patch_mode or "mr",
+        "branch_name": branch_name or "",
+        "commit_hash": commit_hash or "",
+        "source_branch": source_branch or "",
+        "target_branch": target_branch or "",
+        "mr_link": mr_link or "",
+    }
+    profiles[user_id]["last_used"] = datetime.now().isoformat()
+    _save_raw(data)
+    return True

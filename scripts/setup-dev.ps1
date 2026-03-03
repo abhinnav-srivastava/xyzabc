@@ -1,4 +1,4 @@
-# CodeReview - Development environment setup (Windows PowerShell)
+# Restore app name - Development environment setup (Windows PowerShell)
 # Run from project root: .\scripts\setup-dev.ps1
 # Optional: .\scripts\setup-dev.ps1 -Proxy "http://proxy:8080" -Name "YourApp" -Build -Venv
 # With auth (no encoding needed): .\scripts\setup-dev.ps1 -Proxy "http://proxy:8080" -ProxyUser "user" -ProxyPass "sr!n@v9914"
@@ -55,7 +55,7 @@ function Invoke-Step {
     }
 }
 
-Write-Host "=== CodeReview Dev Setup ===" -ForegroundColor Cyan
+Write-Host "=== Restore app name Dev Setup ===" -ForegroundColor Cyan
 Write-Host "Project root: $ProjectRoot"
 if ($Proxy) {
     $displayProxy = if ($Proxy -match '^([^:]+://)[^:]+:[^@]+@(.+)$') { $Matches[1] + '***:***@' + $Matches[2] } else { $Proxy }
@@ -75,8 +75,8 @@ if ($Name) {
         Get-ChildItem -Path $ProjectRoot -Recurse -File -Include *.py,*.js,*.json,*.html,*.md,*.yml,*.sh,*.ps1,*.bat,*.spec -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -notmatch '\\node_modules\\|\\\.git\\|\\dist|\\build' } | ForEach-Object {
             $content = Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue
-            if ($content -and ($content -match 'CodeReview|codereview')) {
-                $newContent = $content -replace 'CodeReview', $Name -replace 'codereview', $Id
+            if ($content -and ($content -match 'Restore app name|Restore app name')) {
+                $newContent = $content -replace 'Restore app name', $Name -replace 'Restore app name', $Id
                 if ($newContent -ne $content) {
                     Set-Content $_.FullName -Value $newContent -NoNewline
                     $count++
@@ -168,7 +168,7 @@ try {
 }
 $optPath = Join-Path $ProjectRoot "requirements-optional.txt"
 if (Test-Path $optPath) {
-    Write-Host "Installing optional dependencies (pygount, radon, tree-sitter for Level C test coverage)..."
+    Write-Host "Installing optional dependencies (pygount, radon, tree-sitter for project index and AST references)..."
     try {
         & $pythonCmd @pythonLauncher -m pip install -r $optPath @pipArgs 2>&1 | Out-Null
         if ($LASTEXITCODE -eq 0) { Write-Host "  OK" -ForegroundColor Green } else {

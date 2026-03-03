@@ -1,4 +1,4 @@
-# Code Metrics & Tools — CodeReview
+# Code Metrics & Tools — Restore app name
 
 This document describes the **patch-level** code metrics (used when analyzing an uploaded patch) and the **project-level** tools planned for full Android code review (repo path + commit IDs).
 
@@ -27,7 +27,7 @@ These run on the **patch file** or on **reconstructed files** from the patch (e.
 - **Linux:** `apt install diffstat` / `yum install diffstat`
 - **macOS:** `brew install diffstat`
 - **Windows:** [GnuWin32 diffstat](https://gnuwin32.sourceforge.net/packages/diffstat.htm) — extract to `tools/diffstat/` (e.g. `diffstat.exe`).  
-  If not present, CodeReview uses a **pure-Python** equivalent (parses the patch).
+  If not present, Restore app name uses a **pure-Python** equivalent (parses the patch).
 
 ### CLOC
 
@@ -56,7 +56,7 @@ Flags **changed/added methods** in the patch that lack test coverage. When a **l
 
 ## Project index (persistent)
 
-When a **local project** is added (Profile → Projects), CodeReview builds and persists a **project index** so structure analysis does not need to run every time.
+When a **local project** is added (Profile → Projects), Restore app name builds and persists a **project index** so structure analysis does not need to run every time.
 
 | What is indexed | Description |
 |-----------------|-------------|

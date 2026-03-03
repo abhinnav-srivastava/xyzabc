@@ -1,9 +1,9 @@
 """
-Test coverage analysis for CodeReview — Android (Java/Kotlin) focused.
+Test coverage analysis for Restore app name — Android (Java/Kotlin) focused.
 
 Analyzes changed/added methods in the patch and checks whether tests exist in the
-**project** (not just patch). When project_path is provided, scans the project
-filesystem for test files. Flags methods/classes needing tests or test updates.
+**project** (not just patch). Uses AST/tree-sitter when available for accurate
+extraction. Flags methods/classes needing tests or test updates.
 """
 
 import os
@@ -54,11 +54,22 @@ _SKIP_METHODS = frozenset(("equals", "hashCode", "toString", "clone", "finalize"
 
 
 def _extract_methods_with_lines(content: str, path: str) -> List[Tuple[str, int]]:
-    """Extract (method_name, line_number) from source. Excludes test* methods."""
+    """Extract (method_name, line_number) from source. Uses AST when available, else regex."""
+    try:
+        from services.project_index_service import extract_methods_with_lines_ast
+        result = extract_methods_with_lines_ast(content, path)
+        if result:
+            return result
+    except Exception:
+        pass
+    return _extract_methods_regex(content, path)
+
+
+def _extract_methods_regex(content: str, path: str) -> List[Tuple[str, int]]:
+    """Regex fallback for method extraction."""
     ext = os.path.splitext(path)[1].lower()
     if ext not in (".java", ".kt"):
         return []
-    lines = content.splitlines()
     result: List[Tuple[str, int]] = []
     seen: Set[str] = set()
     for pat in _METHOD_PATTERNS:
@@ -68,7 +79,6 @@ def _extract_methods_with_lines(content: str, path: str) -> List[Tuple[str, int]
                 continue
             if name.lower().startswith("test") or "test" in name.lower():
                 continue
-            # Find line number
             pos = m.start()
             line_no = content[:pos].count("\n") + 1
             seen.add(name)
@@ -153,8 +163,16 @@ def _find_test_file_in_project(project_path: str, expected_paths: List[str]) -> 
 # Test method extraction and matching
 # ---------------------------------------------------------------------------
 
-def _extract_test_methods_from_content(content: str) -> List[str]:
-    """Extract test method names from test file content (regex)."""
+def _extract_test_methods_from_content(content: str, path: str = "") -> List[str]:
+    """Extract test method names from test file. Uses AST when available, else regex."""
+    ext = os.path.splitext(path)[1].lower() if path else ""
+    if ext in (".java", ".kt"):
+        try:
+            from services.project_index_service import extract_entities_ast
+            entities = extract_entities_ast(content, path, "test")
+            return entities.get("test_cases", [])
+        except Exception:
+            pass
     pat = re.compile(
         r"\b(?:fun|void)\s+(test[A-Za-z0-9_]*)\s*\(|"
         r"\b(test[A-Za-z0-9_]*)\s*\(|"
@@ -172,11 +190,17 @@ def _extract_test_methods_from_content(content: str) -> List[str]:
     return names
 
 
-def _method_matches_test(source_method: str, test_methods: List[str]) -> bool:
+def _method_matches_test(
+    source_method: str,
+    test_methods: List[str],
+    invoked_in_test: Optional[Set[str]] = None,
+) -> bool:
     """
-    Heuristic: does any test method likely cover this source method?
-    Conventions: login() -> testLogin(), test_login(), when_login_then_ok, given_login
+    Check if source method is covered by tests. Uses AST-invoked methods when available,
+    else heuristic: login() -> testLogin(), test_login(), when_login_then_ok, given_login.
     """
+    if invoked_in_test and source_method in invoked_in_test:
+        return True
     src_lower = source_method.lower()
     src_camel = source_method[0].upper() + source_method[1:] if source_method else ""
     for tm in test_methods:
@@ -300,13 +324,23 @@ def run_test_coverage_analysis(
                     })
                 continue
             test_path, test_content = test_result
-            test_methods = _extract_test_methods_from_content(test_content)
+            test_methods = _extract_test_methods_from_content(test_content, test_path)
+            invoked_in_test: Set[str] = set()
+            try:
+                from services.project_index_service import _extract_references_ast
+                ext = os.path.splitext(test_path)[1].lower()
+                if ext in (".java", ".kt"):
+                    lang = "java" if ext == ".java" else "kotlin"
+                    _, inv = _extract_references_ast(test_content, test_path, lang)
+                    invoked_in_test = inv
+            except Exception:
+                pass
             test_in_patch = path_to_file.get(test_path)
             test_modified_in_patch = test_in_patch is not None and (
                 getattr(test_in_patch, "lines_added", 0) > 0 or getattr(test_in_patch, "lines_deleted", 0) > 0
             )
             for method in changed_methods:
-                if not _method_matches_test(method, test_methods):
+                if not _method_matches_test(method, test_methods, invoked_in_test):
                     reason = "test_update_required" if test_modified_in_patch else "no_coverage"
                     methods_without_tests.append({
                         "source_path": path,
@@ -353,13 +387,24 @@ def run_test_coverage_analysis(
                 continue
             source_methods = _extract_methods_with_lines(source_content, path)
             source_method_names = [m[0] for m in source_methods]
-            test_methods = _extract_test_methods_from_content(test_content)
+            test_methods = _extract_test_methods_from_content(test_content, test_path)
+            invoked_in_test: Set[str] = set()
+            try:
+                from services.project_index_service import _extract_references_ast
+                ext = os.path.splitext(test_path)[1].lower()
+                if ext in (".java", ".kt"):
+                    lang = "java" if ext == ".java" else "kotlin"
+                    _, inv = _extract_references_ast(test_content, test_path, lang)
+                    invoked_in_test = inv
+            except Exception:
+                pass
             for method in source_method_names:
-                if not _method_matches_test(method, test_methods):
+                if not _method_matches_test(method, test_methods, invoked_in_test):
                     methods_without_tests.append({
                         "source_path": path,
                         "test_path": test_path,
                         "method": method,
+                        "reason": "no_coverage",
                     })
 
     return {

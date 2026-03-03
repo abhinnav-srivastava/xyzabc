@@ -1,6 +1,6 @@
 {
   "application": {
-    "name": "CodeReview",
+    "name": "Restore app name",
     "version": "1.0.0",
     "description": "code review tool with role-based, category-driven checklists"
   },
@@ -180,7 +180,7 @@
   },
   "features": {
     "skip_categories": true,
-    "auto_launch_browser": true,
+    "auto_launch_browser": false,
     "pwa": true,
     "offline_mode": true,
     "auto_update": true,

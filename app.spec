@@ -1,8 +1,8 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-PyInstaller spec for CodeReview backend.
-Bundles Flask + Python + deps into a single CodeReview.exe for Electron.
-Output: dist/CodeReview.exe
+PyInstaller spec for Restore app name backend.
+Bundles Flask + Python + deps into a single Restore app name.exe for Electron.
+Output: dist/Restore app name.exe
 """
 
 import os
@@ -66,7 +66,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='CodeReview',
+    name='Restore app name',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

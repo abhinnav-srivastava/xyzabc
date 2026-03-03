@@ -38,6 +38,14 @@
               <h6 class="alert-heading fw-semibold">
                 <i class="bi bi-git me-2"></i>MR/GitLab Details
               </h6>
+              {% if patch_summary %}
+              <p class="mb-1"><strong>Methods:</strong> {{ patch_summary.total_methods_count|default(0) }}</p>
+              <p class="mb-1"><strong>Test cases:</strong> +{{ patch_summary.test_cases_added_count|default(0) }} added, −{{ patch_summary.test_cases_removed_count|default(0) }} removed</p>
+              {% set pac = patch_summary.patch_ast_changes|default({}) %}
+              {% if pac and (pac.classes_added or pac.classes_deleted or pac.classes_modified or pac.methods_added or pac.methods_deleted or pac.methods_modified or pac.tests_added or pac.tests_deleted or pac.tests_modified) %}
+              <p class="mb-0"><strong>AST changes:</strong> Classes +{{ pac.classes_added|default(0) }}/−{{ pac.classes_deleted|default(0) }}/{{ pac.classes_modified|default(0) }} · Methods +{{ pac.methods_added|default(0) }}/−{{ pac.methods_deleted|default(0) }}/{{ pac.methods_modified|default(0) }} · Tests +{{ pac.tests_added|default(0) }}/−{{ pac.tests_deleted|default(0) }}/{{ pac.tests_modified|default(0) }}</p>
+              {% endif %}
+              {% endif %}
               {% if mr_details.mr_link %}
                 <p class="mb-1"><strong>MR Link:</strong> <a href="{{ mr_details.mr_link }}" target="_blank" class="text-decoration-none">{{ mr_details.mr_link }}</a></p>
               {% endif %}

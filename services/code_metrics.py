@@ -1,5 +1,5 @@
 """
-Code metrics for CodeReview: patch-level and (future) project-level.
+Code metrics for Restore app name: patch-level and (future) project-level.
 
 Patch-level: run on patch content or on reconstructed files from the patch.
 - Git, CLOC: used in patch_parser.
@@ -321,6 +321,88 @@ def run_patch_metrics(
         tca = run_test_coverage_analysis(files, reconstruct_file_content_fn, project_path=project_path)
         if tca:
             extra.update(tca)
+    except Exception:
+        pass
+
+    # 6) Total methods count (source files in patch)
+    try:
+        from services.test_coverage_analysis import _extract_methods_with_lines
+        total_methods = 0
+        for f in files:
+            path = (getattr(f, "new_path", None) or "").replace("\\", "/")
+            if path and path.lower().endswith((".java", ".kt")):
+                ft = getattr(f, "file_type", "")
+                if ft == "source":
+                    content = reconstruct_file_content_fn(f)
+                    if content:
+                        total_methods += len(_extract_methods_with_lines(content, path))
+        extra["total_methods_count"] = total_methods
+    except Exception:
+        pass
+
+    # 7) AST-based patch changes: classes, methods, tests added/deleted/modified + issue lists
+    try:
+        from services.patch_parser import _reconstruct_old_file_content
+        from services.project_index_service import extract_entities_ast
+
+        classes_added = classes_deleted = classes_modified = 0
+        methods_added = methods_deleted = methods_modified = 0
+        tests_added = tests_deleted = tests_modified = 0
+        methods_added_list: List[Dict[str, Any]] = []
+        tests_deleted_list: List[Dict[str, Any]] = []
+
+        for f in files:
+            path = (getattr(f, "new_path", None) or getattr(f, "old_path", "") or "").replace("\\", "/")
+            if not path or not path.lower().endswith((".java", ".kt")):
+                continue
+            ft = getattr(f, "file_type", "")
+            if ft not in ("source", "test"):
+                continue
+
+            old_content = _reconstruct_old_file_content(f) or ""
+            new_content = reconstruct_file_content_fn(f) or ""
+
+            old_e = extract_entities_ast(old_content, path, ft)
+            new_e = extract_entities_ast(new_content, path, ft)
+
+            for key in ("classes", "methods", "test_cases"):
+                old_set = set(old_e.get(key, []))
+                new_set = set(new_e.get(key, []))
+                added_set = new_set - old_set
+                deleted_set = old_set - new_set
+                a = len(added_set)
+                d = len(deleted_set)
+                m = len(old_set & new_set)
+                if key == "classes":
+                    classes_added += a
+                    classes_deleted += d
+                    classes_modified += m
+                elif key == "methods":
+                    methods_added += a
+                    methods_deleted += d
+                    methods_modified += m
+                    for mname in added_set:
+                        methods_added_list.append({"path": path, "method": mname})
+                else:
+                    tests_added += a
+                    tests_deleted += d
+                    tests_modified += m
+                    for tname in deleted_set:
+                        tests_deleted_list.append({"path": path, "test": tname})
+
+        extra["patch_ast_changes"] = {
+            "classes_added": classes_added,
+            "classes_deleted": classes_deleted,
+            "classes_modified": classes_modified,
+            "methods_added": methods_added,
+            "methods_deleted": methods_deleted,
+            "methods_modified": methods_modified,
+            "tests_added": tests_added,
+            "tests_deleted": tests_deleted,
+            "tests_modified": tests_modified,
+            "methods_added_list": methods_added_list,
+            "tests_deleted_list": tests_deleted_list,
+        }
     except Exception:
         pass
 

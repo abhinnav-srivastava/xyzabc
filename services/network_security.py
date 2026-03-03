@@ -1,5 +1,5 @@
 """
-Network Security Service for CodeReview
+Network Security Service for Restore app name
 Implements network security controls and connection blocking.
 """
 

@@ -1,10 +1,10 @@
-# CodeReview — context for AI assistants
+# Restore app name — context for AI assistants
 
 Use this file for project context when editing or reviewing this codebase.
 
 ## What this project is
 
-**CodeReview** is a **code review checklist app**: role-based checklists (from Markdown/Excel), optional **patch upload** (unified diff), **patch summary** (Android categories, LOC, test cases), **GitLab-style diff viewer**, then checklist review and export (HTML/PDF). Target: **portable Windows / Electron** distribution with **no installation required** (all tools bundled; no system Python/Java/PATH).
+**Restore app name** is a **code review checklist app**: role-based checklists (from Markdown/Excel), optional **patch upload** (unified diff), **patch summary** (Android categories, LOC, test cases), **GitLab-style diff viewer**, then checklist review and export (HTML/PDF). Target: **portable Windows / Electron** distribution with **no installation required** (all tools bundled; no system Python/Java/PATH).
 
 - **Stack:** Flask 3.x, Jinja2, Bootstrap 5, PWA, Waitress.
 - **Paths:** `utils/path_utils.py` — all paths (dev + PyInstaller/portable); `get_tools_dir()`, `get_git_executable()`, `get_cloc_executable()`, `get_diffstat_executable()`.
@@ -13,7 +13,7 @@ Use this file for project context when editing or reviewing this codebase.
 
 | Area | Location |
 |------|----------|
-| App & routes | `app.py` — `create_app()`, routes for `/`, `/login`, `/start`, `/review/patch`, `/patch-summary`, `/review/code`, `/upload-patch`, `/patch-clear`, review/summary/download |
+| App & routes | `app.py` — `create_app()`, routes for `/`, `/login`, `/start`, `/review/patch`, `/patch-summary`, `/code` (generic code browser: patch diff or project index), `/upload-patch`, `/patch-clear`, review/summary/download |
 | Patch parsing & metrics | `services/patch_parser.py` — unified diff parsing, `git apply --numstat`, rename/delete-from handling, CLOC on reconstructed files, `parse_patch()`, Android categories (manifest, gradle, resources, source, test, other), test-case extraction |
 | Code metrics (patch) | `services/code_metrics.py` — diffstat (binary or Python fallback), pygount, radon; `run_patch_metrics()`; project-level stub |
 | Paths & tools | `utils/path_utils.py` — `get_project_root()`, `get_tools_dir()`, `get_git_executable()`, `get_cloc_executable()`, `get_diffstat_executable()` (native exe only; JARs ignored to avoid GUI windows) |

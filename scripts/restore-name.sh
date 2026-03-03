@@ -14,8 +14,8 @@ echo ""
 
 find "$PROJECT_ROOT" -type f \( -name "*.py" -o -name "*.js" -o -name "*.json" -o -name "*.html" -o -name "*.md" -o -name "*.yml" -o -name "*.sh" \) \
   ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/dist/*" ! -path "*/build/*" 2>/dev/null | while read -r f; do
-  if grep -q -E 'CodeReview|codereview' "$f" 2>/dev/null; then
-    perl -i -pe "s/CodeReview/$NAME/g; s/codereview/$ID/g" "$f" 2>/dev/null && echo "  ${f#$PROJECT_ROOT/}"
+  if grep -q -E 'Restore app name|Restore app name' "$f" 2>/dev/null; then
+    perl -i -pe "s/Restore app name/$NAME/g; s/Restore app name/$ID/g" "$f" 2>/dev/null && echo "  ${f#$PROJECT_ROOT/}"
   fi
 done
 

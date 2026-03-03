@@ -1,6 +1,6 @@
 # Portable Windows & Electron Distribution
 
-CodeReview is intended to be distributed as a **portable Windows app** (e.g. Electron-based) with **no installation required** — no system Python, Java, or PATH dependencies. Everything the app needs must live **inside the app directory**.
+Restore app name is intended to be distributed as a **portable Windows app** (e.g. Electron-based) with **no installation required** — no system Python, Java, or PATH dependencies. Everything the app needs must live **inside the app directory**.
 
 ---
 
@@ -60,9 +60,9 @@ Run `npm run build:win` to produce:
 
 | Artifact | Use |
 |----------|-----|
-| **CodeReview 1.0.0.exe** (portable) | Single file — copy to target machine, double-click to run. No installation, no admin. |
-| **CodeReview-portable.zip** | Unzip anywhere on target machine, run `CodeReview.exe`. No installation, no admin. |
-| **win-unpacked/** | Unpacked folder — copy the whole folder to target, run `CodeReview.exe`. No installation, no admin. |
+| **Restore app name 1.0.0.exe** (portable) | Single file — copy to target machine, double-click to run. No installation, no admin. |
+| **Restore app name-portable.zip** | Unzip anywhere on target machine, run `Restore app name.exe`. No installation, no admin. |
+| **win-unpacked/** | Unpacked folder — copy the whole folder to target, run `Restore app name.exe`. No installation, no admin. |
 
 All artifacts are in `dist-electron/`. No NSIS installer is produced; the build is **portable-only**.
 

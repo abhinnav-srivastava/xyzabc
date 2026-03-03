@@ -1,5 +1,5 @@
 /**
- * CodeReview Application JavaScript
+ * Restore app name Application JavaScript
  * Main application logic and utilities
  */
 
@@ -12,7 +12,7 @@ const AppState = {
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('CodeReview: Initializing application...');
+    console.log('Restore app name: Initializing application...');
     
     initializeApp();
     setupCustomTitlebar();
@@ -413,7 +413,7 @@ const Utils = {
 };
 
 // Export for use in other scripts
-window.CodeReview = {
+window.Restore app name = {
     AppState,
     Utils,
     showNotification,

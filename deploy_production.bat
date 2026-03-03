@@ -1,8 +1,8 @@
 @echo off
-REM Production deployment script for CodeReview
-REM This script provides options for running CodeReview in production
+REM Production deployment script for Restore app name
+REM This script provides options for running Restore app name in production
 
-echo CodeReview Production Deployment Options
+echo Restore app name Production Deployment Options
 echo =========================================
 echo.
 echo Choose your deployment method:

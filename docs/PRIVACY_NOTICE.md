@@ -1,4 +1,4 @@
-# Privacy Notice — CodeReview
+# Privacy Notice — Restore app name
 
 This document describes data collection, retention, and deletion for corporate compliance (GDPR, etc.).
 

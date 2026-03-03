@@ -1,5 +1,5 @@
 """
-Path Utilities for CodeReview
+Path Utilities for Restore app name
 Provides consistent path handling for both development and portable app environments
 """
 
@@ -145,11 +145,11 @@ def get_writable_data_dir() -> Path:
     """
     if is_portable_mode():
         if sys.platform == "win32":
-            base = Path(os.environ.get("APPDATA", os.path.expanduser("~"))) / "CodeReview"
+            base = Path(os.environ.get("APPDATA", os.path.expanduser("~"))) / "Restore app name"
         elif sys.platform == "darwin":
-            base = Path.home() / "Library" / "Application Support" / "CodeReview"
+            base = Path.home() / "Library" / "Application Support" / "Restore app name"
         else:
-            base = Path.home() / ".local" / "share" / "CodeReview"
+            base = Path.home() / ".local" / "share" / "Restore app name"
         base.mkdir(parents=True, exist_ok=True)
         return base
     return get_project_root()

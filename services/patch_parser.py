@@ -1,5 +1,5 @@
 """
-Patch Parser Service for CodeReview
+Patch Parser Service for Restore app name
 Parses unified diff / git patch format. Uses git binary for exact stats (GitLab-accurate)
 when available; falls back to pure-Python parsing. Android-focused categories.
 """
@@ -394,6 +394,18 @@ def _reconstruct_new_file_content(fd: FileDiff) -> Optional[str]:
     for hunk in fd.hunks:
         for line in hunk.lines:
             if line.kind in ("context", "added"):
+                lines.append(line.content)
+    return "\n".join(lines)
+
+
+def _reconstruct_old_file_content(fd: FileDiff) -> Optional[str]:
+    """Reconstruct the old (pre-patch) file content from hunks. Returns None for new file."""
+    if fd.is_new or not fd.hunks:
+        return None
+    lines: List[str] = []
+    for hunk in fd.hunks:
+        for line in hunk.lines:
+            if line.kind in ("context", "removed"):
                 lines.append(line.content)
     return "\n".join(lines)
 

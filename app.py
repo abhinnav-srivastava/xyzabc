@@ -62,10 +62,12 @@ from services.checklist_loader import (
 from services.user_profile import (
     get_last_used_name,
     get_last_used_user_id,
+    get_last_patch_selection,
     get_profile,
     save_profile,
     get_all_profiles,
     set_last_used,
+    update_last_patch_selection,
     update_profile_roles,
 )
 from services.network_security import network_security
@@ -103,6 +105,7 @@ from services.project_index_service import (
     get_project_summary,
     schedule_index_build,
     invalidate_index,
+    build_source_hierarchy,
 )
 from services.access_tokens_service import (
     get_tokens as get_user_tokens,
@@ -1164,13 +1167,17 @@ def create_app() -> Flask:
         session["current_category"] = 0
         session.pop("review_completed", None)  # New review
         session["reviewer_name"] = reviewer_name
-        session["reviewer_username"] = session.get("user_username", "")
+        from services.user_profile import get_profile_by_name
+        profile = get_profile_by_name(reviewer_name) if reviewer_name else None
+        profile_user_id = (profile.get("user_id") or profile.get("username") or "") if profile else ""
+        reviewer_user_id = profile_user_id or session.get("user_username", "")
+        session["reviewer_username"] = reviewer_user_id
         session["selected_roles"] = selected_roles
         session["selected_role"] = selected_roles[0] if selected_roles else ""  # backward compat
         session["single_page_mode"] = True  # Single-page mode only
         session["mr_details"] = {}
 
-        save_profile(user_id=session.get("user_username", ""), name=reviewer_name, preferred_roles=selected_roles)
+        save_profile(user_id=reviewer_user_id, name=reviewer_name, preferred_roles=selected_roles)
 
         log_review_started(
             user_id=session.get("user_username", ""),
@@ -1218,6 +1225,19 @@ def create_app() -> Flask:
                 "branch_name": branch_name,
                 "commit_hash": commit_hash,
             }
+            if user_id and project_id:
+                update_last_patch_selection(
+                    user_id,
+                    project_id=project_id,
+                    patch_mode=patch_mode,
+                    branch_name=branch_name,
+                    commit_hash=commit_hash,
+                    source_branch=source_branch,
+                    target_branch=target_branch,
+                    project_name=project_name,
+                    project_path=project_path,
+                    mr_link=mr_link,
+                )
 
             skip = request.form.get("skip_patch") == "1"
             if skip:
@@ -1268,11 +1288,17 @@ def create_app() -> Flask:
         mr_details = session.get("mr_details") or {}
         user_id = session.get("user_username") or session.get("reviewer_username") or ""
         if not user_id:
-            from services.user_profile import get_profile_by_name
+            from services.user_profile import get_profile_by_name, get_last_used_user_id
             reviewer_name = session.get("reviewer_name", "")
             profile = get_profile_by_name(reviewer_name) if reviewer_name else None
             if profile:
                 user_id = profile.get("user_id") or profile.get("username") or ""
+            if not user_id:
+                user_id = get_last_used_user_id() or ""
+        if not mr_details and user_id:
+            last = get_last_patch_selection(user_id)
+            if last:
+                mr_details = last
         projects = get_projects(user_id) if user_id else []
         return render_template("review_patch.html", mr_details=mr_details, projects=projects or [])
 
@@ -1394,6 +1420,21 @@ def create_app() -> Flask:
             )
         return redirect(url_for("upload_patch"))
 
+    @app.route("/test-coverage")
+    def test_coverage():
+        """Dedicated test coverage page with AST-based analysis and flagged issues."""
+        patch_data = _load_patch_data()
+        if not patch_data:
+            return redirect(url_for("upload_patch"))
+        summary = patch_data.get("summary") or {}
+        summary = _ensure_top_changed_files(patch_data, summary)
+        return render_template(
+            "test_coverage.html",
+            summary=summary,
+            in_review_flow=bool(session.get("reviewer_name") and (session.get("selected_roles") or session.get("selected_role"))),
+            has_patch=True,
+        )
+
     @app.route("/patch-clear", methods=["POST"])
     def patch_clear():
         """Remove patch from session and storage."""
@@ -1458,16 +1499,62 @@ def create_app() -> Flask:
 
         return result
 
-    @app.route("/review/code")
-    def review_code():
-        """GitLab-style diff viewer: file list and per-file diff."""
+    @app.route("/code")
+    def code_browser():
+        """
+        Generic code browser and navigator. Reusable from:
+        - Patch review: source=patch (diff view, test_focus for highlighting)
+        - Project details: source=project&project_id=<id> (index hierarchy)
+        """
+        source = request.args.get("source", "").lower() or "patch"
+        project_id = request.args.get("project_id", "")
+        test_focus = request.args.get("test_focus", "").lower() in ("1", "true", "yes")
+
+        # Project mode: show project index hierarchy
+        if source == "project" and project_id:
+            if not session.get("user_name"):
+                return redirect(url_for("login", next=url_for("code_browser", source="project", project_id=project_id)))
+            user_id = _resolve_user_id()
+            if not user_id:
+                from flask import flash
+                flash("Session expired. Please sign in again.", "warning")
+                return redirect(url_for("login", next=url_for("code_browser", source="project", project_id=project_id)))
+            project = get_user_project(user_id, project_id)
+            if not project:
+                from flask import flash
+                flash("Project not found.", "warning")
+                return redirect(url_for("dashboard"))
+            url_or_path = project.get("url_or_path", "")
+            proj_type = project.get("type", "local")
+            index = get_project_index(project_id, url_or_path, force_rebuild=False) if proj_type == "local" and url_or_path else None
+            files_by_type = {}
+            stats = {"classes": 0, "methods": 0, "test_cases": 0}
+            if index and index.get("files"):
+                for f in index["files"]:
+                    ft = f.get("type", "other")
+                    if ft in ("source", "test"):
+                        files_by_type.setdefault(ft, []).append(f)
+                        stats["classes"] += len(f.get("classes", []))
+                        stats["methods"] += len(f.get("methods", []))
+                        stats["test_cases"] += len(f.get("test_cases", []))
+            source_hierarchy = build_source_hierarchy(index) if index else []
+            return render_template(
+                "project_code.html",
+                project=project,
+                index=index,
+                files_by_type=files_by_type,
+                stats=stats,
+                source_hierarchy=source_hierarchy,
+                code_browser_context="project",
+            )
+
+        # Patch mode: diff viewer (default)
         patch_data = _load_patch_data()
         if not patch_data:
             return redirect(url_for("upload_patch"))
         files = file_diffs_from_session(patch_data.get("files", []))
         file_tree = _build_file_tree(files)
         summary = patch_data.get("summary") or {}
-        test_focus = request.args.get("test_focus", "").lower() in ("1", "true", "yes")
         methods_by_file_index = _build_methods_by_file_index(files, summary)
         has_highlightable = any(m for m in methods_by_file_index) if methods_by_file_index else False
         return render_template(
@@ -1479,7 +1566,18 @@ def create_app() -> Flask:
             test_focus=test_focus,
             methods_by_file_index=methods_by_file_index,
             has_highlightable=has_highlightable,
+            code_browser_context="patch",
         )
+
+    @app.route("/review/code")
+    def review_code():
+        """Redirect to generic code browser (patch mode). Kept for backward compatibility."""
+        return redirect(url_for("code_browser", source="patch", **{k: v for k, v in request.args.items()}))
+
+    @app.route("/project/<project_id>/code")
+    def project_code(project_id: str):
+        """Redirect to generic code browser (project mode). Kept for backward compatibility."""
+        return redirect(url_for("code_browser", source="project", project_id=project_id, **{k: v for k, v in request.args.items() if k != "project_id"}))
 
     @app.route("/review/all", methods=["GET", "POST"])
     def review_all_categories():
@@ -1679,6 +1777,14 @@ def create_app() -> Flask:
         review_timing = _calculate_review_time()
         mr_details = session.get("mr_details", {})
 
+        patch_summary = {}
+        try:
+            patch_data = _load_patch_data()
+            if patch_data:
+                patch_summary = patch_data.get("summary", {})
+        except Exception:
+            pass
+
         debug_log("DEBUG: Final review_timing: " + str(review_timing))
 
         return render_template(
@@ -1690,6 +1796,7 @@ def create_app() -> Flask:
             selected_role=selected_role,
             review_timing=review_timing,
             mr_details=mr_details,
+            patch_summary=patch_summary,
         )
 
     @app.route("/download/html")
@@ -1741,6 +1848,14 @@ def create_app() -> Flask:
                             inline_icons_css,
                         )
 
+            patch_summary = {}
+            try:
+                patch_data = _load_patch_data()
+                if patch_data:
+                    patch_summary = patch_data.get("summary", {})
+            except Exception:
+                pass
+
             html = render_template("report_standalone.html",
                                  summary=summary_data,
                                  counts_overall=counts_overall,
@@ -1749,6 +1864,7 @@ def create_app() -> Flask:
                                  selected_role=selected_role,
                                  review_timing=review_timing,
                                  mr_details=mr_details,
+                                 patch_summary=patch_summary,
                                  inline_bootstrap_css=inline_bootstrap_css,
                                  inline_icons_css=inline_icons_css)
             response = make_response(html)
@@ -1838,6 +1954,25 @@ def create_app() -> Flask:
             ['Review Completed:', review_timing['end_time']],
             ['Duration:', review_timing['duration']]
         ]
+        try:
+            patch_data = _load_patch_data()
+            if patch_data:
+                ps = patch_data.get("summary", {})
+                if ps:
+                    metadata_data += [
+                        ['Methods:', str(ps.get("total_methods_count", 0))],
+                        ['Test cases:', f"+{ps.get('test_cases_added_count', 0)} added, −{ps.get('test_cases_removed_count', 0)} removed"],
+                    ]
+                    pac = ps.get("patch_ast_changes", {})
+                    if pac and any(pac.values()):
+                        metadata_data.append([
+                            'AST changes:',
+                            f"Classes +{pac.get('classes_added', 0)}/−{pac.get('classes_deleted', 0)}/{pac.get('classes_modified', 0)} · "
+                            f"Methods +{pac.get('methods_added', 0)}/−{pac.get('methods_deleted', 0)}/{pac.get('methods_modified', 0)} · "
+                            f"Tests +{pac.get('tests_added', 0)}/−{pac.get('tests_deleted', 0)}/{pac.get('tests_modified', 0)}",
+                        ])
+        except Exception:
+            pass
 
         metadata_table = Table(metadata_data, colWidths=[60*mm, 100*mm])
         metadata_table.setStyle(TableStyle([
@@ -2166,7 +2301,7 @@ def create_app() -> Flask:
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description='CodeReview Flask Application')
+    parser = argparse.ArgumentParser(description='Restore app name Flask Application')
     parser.add_argument('--no-browser', action='store_true',
                        help='Disable auto-launch browser')
     parser.add_argument('--port', type=int, default=5000,
@@ -2210,7 +2345,7 @@ if __name__ == "__main__":
     port = args.port
     host = '0.0.0.0' if args.bind_all else args.host
 
-    print(f"Starting CodeReview on http://{host}:{port}")
+    print(f"Starting Restore app name on http://{host}:{port}")
     
     # Default to production WSGI server unless dev-server is explicitly requested
     if args.dev_server:
