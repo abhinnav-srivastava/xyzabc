@@ -260,14 +260,16 @@
   {% set tca = _tca %}
   {% set tca_issues = (tca.source_without_tests|length) + (tca.methods_without_tests|length) + (tests_deleted_list|length) if tca else (tests_deleted_list|length) %}
   <div class="card border-0 shadow-sm mb-3 {% if has_tca_issues %}border-warning border-2{% elif test_cases_added_count or test_cases_removed_count %}border-success border-2{% endif %}">
-    <div class="card-header bg-transparent border-0 py-2 cursor-pointer d-flex align-items-center {% if not has_tca_issues %}collapsed{% endif %}" data-bs-toggle="collapse" data-bs-target="#collapse-test-coverage" aria-expanded="{{ 'true' if has_tca_issues else 'false' }}" role="button">
-      <i class="bi bi-chevron-right collapse-chevron me-1"></i>
-      <i class="bi bi-bug {% if has_tca_issues %}text-warning{% elif test_cases_added_count or test_cases_removed_count %}text-success{% else %}text-muted{% endif %} me-2"></i>
-      <span class="fw-medium small">Test coverage</span>
-      {% if has_tca_issues %}
-      <span class="badge bg-warning text-dark ms-2">{{ tca_issues }} issue{{ 's' if tca_issues != 1 else '' }} flagged</span>
-      <a href="{{ url_for('test_coverage') }}" class="btn btn-sm btn-outline-warning ms-2">View details</a>
-      {% elif test_cases_added_count or test_cases_removed_count %}<span class="badge bg-success ms-2">+{{ test_cases_added_count }}{% if test_cases_removed_count %} −{{ test_cases_removed_count }}{% endif %} tests</span>{% else %}<span class="text-muted small ms-2">No changes detected</span>{% endif %}
+    <div class="card-header bg-transparent border-0 py-2 d-flex align-items-center {% if not has_tca_issues %}collapsed{% endif %}">
+      <div class="cursor-pointer flex-grow-1 d-flex align-items-center" data-bs-toggle="collapse" data-bs-target="#collapse-test-coverage" aria-expanded="{{ 'true' if has_tca_issues else 'false' }}" role="button">
+        <i class="bi bi-chevron-right collapse-chevron me-1"></i>
+        <i class="bi bi-bug {% if has_tca_issues %}text-warning{% elif test_cases_added_count or test_cases_removed_count %}text-success{% else %}text-muted{% endif %} me-2"></i>
+        <span class="fw-medium small">Test coverage</span>
+        {% if has_tca_issues %}
+        <span class="badge bg-warning text-dark ms-2">{{ tca_issues }} issue{{ 's' if tca_issues != 1 else '' }} flagged</span>
+        {% elif test_cases_added_count or test_cases_removed_count %}<span class="badge bg-success ms-2">+{{ test_cases_added_count }}{% if test_cases_removed_count %} −{{ test_cases_removed_count }}{% endif %} tests</span>{% else %}<span class="text-muted small ms-2">No changes detected</span>{% endif %}
+      </div>
+      <a href="{{ url_for('test_coverage') }}" class="btn btn-sm btn-outline-primary ms-2" title="Open detailed test coverage report">Detailed coverage</a>
     </div>
     <div id="collapse-test-coverage" class="collapse">
       <div class="card-body py-3">

@@ -277,6 +277,8 @@ def get_commit_patch(
 ) -> Optional[str]:
     """
     Get the patch/diff for a commit. Returns unified diff string or None.
+    Uses --first-parent so merge commits show diff against first parent
+    (default git show on merges often returns no diff).
     """
     path = Path(repo_path)
     h = (commit_hash or "").strip()
@@ -287,10 +289,12 @@ def get_commit_patch(
         return None
     ok, out, _ = _run_git(
         path,
-        ["show", h, "--no-color", "-p"],
+        ["show", h, "--first-parent", "--no-color", "-p"],
         timeout=timeout,
     )
-    return out if ok and out.strip() else None
+    if ok and out and out.strip():
+        return out
+    return None
 
 
 def get_diff_between_branches(

@@ -1225,19 +1225,35 @@ def create_app() -> Flask:
                 "branch_name": branch_name,
                 "commit_hash": commit_hash,
             }
-            if user_id and project_id:
-                update_last_patch_selection(
-                    user_id,
-                    project_id=project_id,
-                    patch_mode=patch_mode,
-                    branch_name=branch_name,
-                    commit_hash=commit_hash,
-                    source_branch=source_branch,
-                    target_branch=target_branch,
-                    project_name=project_name,
-                    project_path=project_path,
-                    mr_link=mr_link,
-                )
+            if user_id:
+                if project_id:
+                    update_last_patch_selection(
+                        user_id,
+                        project_id=project_id,
+                        patch_mode=patch_mode,
+                        branch_name=branch_name,
+                        commit_hash=commit_hash,
+                        source_branch=source_branch,
+                        target_branch=target_branch,
+                        project_name=project_name,
+                        project_path=project_path,
+                        mr_link=mr_link,
+                    )
+                else:
+                    last = get_last_patch_selection(user_id)
+                    base = last.copy() if last else {}
+                    update_last_patch_selection(
+                        user_id,
+                        project_id=base.get("project_id", ""),
+                        patch_mode=patch_mode,
+                        branch_name=base.get("branch_name", ""),
+                        commit_hash=base.get("commit_hash", ""),
+                        source_branch=source_branch or base.get("source_branch", ""),
+                        target_branch=target_branch or base.get("target_branch", ""),
+                        project_name=base.get("project_name", ""),
+                        project_path=base.get("project_path", ""),
+                        mr_link=mr_link or base.get("mr_link", ""),
+                    )
 
             skip = request.form.get("skip_patch") == "1"
             if skip:
@@ -1421,6 +1437,7 @@ def create_app() -> Flask:
         return redirect(url_for("upload_patch"))
 
     @app.route("/test-coverage")
+    @app.route("/test_coverage")  # alias for common typo
     def test_coverage():
         """Dedicated test coverage page with AST-based analysis and flagged issues."""
         patch_data = _load_patch_data()
@@ -2291,6 +2308,67 @@ def create_app() -> Flask:
                 return {"status": "error", "message": "Index only for local projects"}, 400
             schedule_index_build(project_id, url_or_path)
             return {"status": "success", "message": "Index rebuild scheduled"}, 200
+        except Exception as e:
+            return {"status": "error", "message": str(e)}, 500
+
+    @app.route("/api/last-patch-selection", methods=["POST"])
+    def api_save_last_patch_selection():
+        """Save last patch selection to profile (called on change, not just submit)."""
+        try:
+            user_id = session.get("user_username") or session.get("reviewer_username") or ""
+            if not user_id:
+                from services.user_profile import get_profile_by_name
+                reviewer_name = session.get("reviewer_name", "")
+                profile = get_profile_by_name(reviewer_name) if reviewer_name else None
+                if profile:
+                    user_id = profile.get("user_id") or profile.get("username") or ""
+            if not user_id:
+                return {"status": "error", "message": "Not authenticated"}, 401
+            data = request.get_json(silent=True) or {}
+            project_id = (data.get("project_id") or "").strip()
+            patch_mode = (data.get("patch_mode") or "mr").strip() or "mr"
+            branch_name = (data.get("branch_name") or "").strip()
+            commit_hash = (data.get("commit_hash") or "").strip()
+            source_branch = (data.get("source_branch") or "").strip()
+            target_branch = (data.get("target_branch") or "").strip()
+            mr_link = (data.get("mr_link") or "").strip()
+            project_name = ""
+            project_path = ""
+            if project_id:
+                proj = get_user_project(user_id, project_id)
+                if proj:
+                    project_name = proj.get("name") or proj.get("url_or_path") or ""
+                    if proj.get("type") == "local":
+                        project_path = proj.get("url_or_path") or ""
+            if project_id:
+                update_last_patch_selection(
+                    user_id,
+                    project_id=project_id,
+                    patch_mode=patch_mode,
+                    branch_name=branch_name,
+                    commit_hash=commit_hash,
+                    source_branch=source_branch,
+                    target_branch=target_branch,
+                    project_name=project_name,
+                    project_path=project_path,
+                    mr_link=mr_link,
+                )
+            else:
+                last = get_last_patch_selection(user_id)
+                base = last.copy() if last else {}
+                update_last_patch_selection(
+                    user_id,
+                    project_id=base.get("project_id", ""),
+                    patch_mode=patch_mode,
+                    branch_name=base.get("branch_name", ""),
+                    commit_hash=base.get("commit_hash", ""),
+                    source_branch=source_branch or base.get("source_branch", ""),
+                    target_branch=target_branch or base.get("target_branch", ""),
+                    project_name=base.get("project_name", ""),
+                    project_path=base.get("project_path", ""),
+                    mr_link=mr_link or base.get("mr_link", ""),
+                )
+            return {"status": "success"}, 200
         except Exception as e:
             return {"status": "error", "message": str(e)}, 500
 

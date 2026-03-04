@@ -270,10 +270,58 @@ document.addEventListener('DOMContentLoaded', function() {
   var commitFields = document.getElementById('commit-fields');
   var mrLinkInput = document.getElementById('mr_link');
   var uploadSection = document.getElementById('upload-patch-section');
-  var savedSource = '{{ mr_details.source_branch or '' }}';
-  var savedTarget = '{{ mr_details.target_branch or '' }}';
-  var savedBranch = '{{ mr_details.branch_name or '' }}';
-  var savedCommit = '{{ mr_details.commit_hash or '' }}';
+  var serverMrDetails = {{ mr_details|tojson|safe }};
+  var savedSource = (serverMrDetails && serverMrDetails.source_branch) || '';
+  var savedTarget = (serverMrDetails && serverMrDetails.target_branch) || '';
+  var savedBranch = (serverMrDetails && serverMrDetails.branch_name) || '';
+  var savedCommit = (serverMrDetails && serverMrDetails.commit_hash) || '';
+  var PATCH_STORAGE_KEY = 'review_patch_last';
+  var saveTimeout = null;
+
+  function getCurrentSelection() {
+    return {
+      project_id: projectSelect ? projectSelect.value : '',
+      patch_mode: document.getElementById('patch_mode_commit') && document.getElementById('patch_mode_commit').checked ? 'commit' : 'mr',
+      branch_name: branchSelect ? branchSelect.value : '',
+      commit_hash: commitSelect ? commitSelect.value : '',
+      source_branch: sourceBranchSelect ? sourceBranchSelect.value : '',
+      target_branch: targetBranchSelect ? targetBranchSelect.value : '',
+      mr_link: mrLinkInput ? mrLinkInput.value : ''
+    };
+  }
+
+  function saveLastSelection() {
+    var d = getCurrentSelection();
+    try { localStorage.setItem(PATCH_STORAGE_KEY, JSON.stringify(d)); } catch (e) {}
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(function() {
+      fetch('/api/last-patch-selection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(d)
+      }).catch(function() {});
+    }, 300);
+  }
+
+  function applySelection(d) {
+    if (!d || !projectSelect) return;
+    if (d.project_id) {
+      var opt = Array.prototype.find.call(projectSelect.options, function(o) { return o.value === d.project_id; });
+      if (opt) { projectSelect.value = d.project_id; }
+    }
+    if (d.patch_mode === 'commit') {
+      var commitRadio = document.getElementById('patch_mode_commit');
+      if (commitRadio) commitRadio.checked = true;
+    } else {
+      var mrRadio = document.getElementById('patch_mode_mr');
+      if (mrRadio) mrRadio.checked = true;
+    }
+    if (d.source_branch) savedSource = d.source_branch;
+    if (d.target_branch) savedTarget = d.target_branch;
+    if (d.branch_name) savedBranch = d.branch_name;
+    if (d.commit_hash) savedCommit = d.commit_hash;
+    if (mrLinkInput && d.mr_link) mrLinkInput.value = d.mr_link;
+  }
 
   function isGitLabMrUrl(url) {
     if (!url || typeof url !== 'string') return false;
@@ -467,15 +515,31 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   if (projectSelect) {
+    if (!(serverMrDetails && serverMrDetails.project_id)) {
+      try {
+        var local = localStorage.getItem(PATCH_STORAGE_KEY);
+        if (local) {
+          var d = JSON.parse(local);
+          if (d && (d.project_id || d.patch_mode)) {
+            applySelection(d);
+          }
+        }
+      } catch (e) {}
+    }
     projectSelect.addEventListener('change', function() {
       loadBranches(this.value);
+      saveLastSelection();
     });
     document.querySelectorAll('input[name="patch_mode"]').forEach(function(radio) {
-      radio.addEventListener('change', toggleMode);
+      radio.addEventListener('change', function() {
+        toggleMode();
+        saveLastSelection();
+      });
     });
     if (branchSelect) {
       branchSelect.addEventListener('change', function() {
         if (projectSelect.value) loadCommits(projectSelect.value, this.value);
+        saveLastSelection();
       });
     }
     if (commitSelect) {
@@ -484,6 +548,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var hash = this.value;
         if (projectId && hash) loadPatchForCommit(projectId, hash);
         else setPatchFromCommit('', '', '');
+        saveLastSelection();
       });
     }
     if (sourceBranchSelect && targetBranchSelect) {
@@ -495,13 +560,14 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
           setPatchFromCommit('', '', '');
         }
+        saveLastSelection();
       }
       sourceBranchSelect.addEventListener('change', onMrBranchChange);
       targetBranchSelect.addEventListener('change', onMrBranchChange);
     }
     if (mrLinkInput) {
-      mrLinkInput.addEventListener('input', updateUploadSectionVisibility);
-      mrLinkInput.addEventListener('change', updateUploadSectionVisibility);
+      mrLinkInput.addEventListener('input', function() { updateUploadSectionVisibility(); saveLastSelection(); });
+      mrLinkInput.addEventListener('change', function() { updateUploadSectionVisibility(); saveLastSelection(); });
     }
     toggleMode();
     if (projectSelect.value) loadBranches(projectSelect.value);
