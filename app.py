@@ -195,6 +195,14 @@ def create_app() -> Flask:
         pass
 
     @app.before_request
+    def redirect_localhost_to_127():
+        """Redirect localhost to 127.0.0.1 so app works when WiFi is off (localhost may not resolve)."""
+        host = request.environ.get("HTTP_HOST", "")
+        if host and host.startswith("localhost"):
+            url = request.url.replace("localhost", "127.0.0.1", 1)
+            return redirect(url, code=301)
+
+    @app.before_request
     def check_remote_user():
         """Corporate: trust REMOTE_USER from reverse proxy (SSO/LDAP)."""
         auth_cfg = app_config.get("auth", {})
@@ -2392,10 +2400,22 @@ if __name__ == "__main__":
                        help='Run in production mode (disable debug mode)')
     parser.add_argument('--dev-server', action='store_true',
                        help='Use Flask development server (not recommended for production)')
+    parser.add_argument('--offline', action='store_true',
+                       help='Enforce offline mode: block external resources, git remote, and downloads')
 
     args = parser.parse_args()
 
+    if args.offline:
+        os.environ['BLOCK_GIT_REMOTE'] = '1'
+        print("Offline mode enabled: external resources, git remote, and downloads blocked")
+
     app = create_app()
+
+    if args.offline:
+        app.config.setdefault('app_config', {}).setdefault('data_egress', {})
+        app.config['app_config']['data_egress']['block_external_resources'] = True
+        app.config['app_config']['data_egress']['block_external_downloads'] = True
+        app.config['app_config']['data_egress']['block_git_remote'] = True
 
     \
     if args.no_browser:

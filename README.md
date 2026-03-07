@@ -74,6 +74,27 @@ Additional routes: `/refresh`, `/refresh-categories`, `/refresh-all` (reload che
 
 ---
 
+## No-external-network mode
+
+The app behaves **identically** whether internet is connected or not. No external outbound requests; all traffic is localhost only.
+
+**One-time setup (requires network):**
+1. `pip install -r requirements.txt`
+2. `npm install` (if using Electron)
+3. `python scripts/download_metrics_tools.py` – downloads CLOC into `tools/cloc/`
+4. Add Git, diffstat to `tools/` per `tools/*/README.md` (manual)
+
+**Config** (`config/app_config.json` → `data_egress`):
+- `block_external_resources: true` – HTML export inlines CSS/fonts; CSP blocks external fetches
+- `block_external_downloads: true` – Skips tool downloads
+- `block_git_remote: true` – Git pull/push disabled; use local paths only for projects
+
+**Behavior:** No offline/online indicators; app works the same regardless of internet connectivity.
+
+**WiFi off:** Use `http://127.0.0.1:5000` (not localhost). When WiFi is disabled, `localhost` may not resolve; `127.0.0.1` works. The app redirects localhost→127.0.0.1 and adds a base tag so links work.
+
+---
+
 ## Checklist Pipeline
 
 1. **Excel** (optional) – In `checklists/excel/<role>/`; columns like `MainCategory`/`Category`.

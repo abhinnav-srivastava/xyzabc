@@ -23,7 +23,8 @@ class PWAManager {
   async registerServiceWorker() {
     if ('serviceWorker' in navigator) {
       try {
-        const registration = await navigator.serviceWorker.register('/static/sw.js');
+        // Register at /sw.js (root scope) so SW can intercept all app routes, not just /static/*
+        const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
         console.log('PWA: Service Worker registered successfully', registration);
         
         // Check for updates
@@ -79,17 +80,14 @@ class PWAManager {
   }
   
   setupOnlineStatus() {
+    // App uses localhost only; no external network. Keep isOnline for internal state
+    // but do not show offline/online UI - behavior is identical regardless of internet.
     window.addEventListener('online', () => {
-      console.log('PWA: App is online');
       this.isOnline = true;
-      this.hideOfflineIndicator();
       this.syncOfflineData();
     });
-    
     window.addEventListener('offline', () => {
-      console.log('PWA: App is offline');
       this.isOnline = false;
-      this.showOfflineIndicator();
     });
   }
   
@@ -104,17 +102,29 @@ class PWAManager {
   }
   
   setupOfflineHandling() {
-    // Store form data when offline
+    // Only intercept forms that post to external URLs. Same-origin forms (login, review, etc.)
+    // post to our server (localhost) and work even when navigator.onLine is false.
     const forms = document.querySelectorAll('form');
     forms.forEach(form => {
       form.addEventListener('submit', (e) => {
-        if (!this.isOnline) {
+        if (!this.isOnline && this._isCrossOriginForm(form)) {
           e.preventDefault();
           this.storeOfflineData(form);
           this.showOfflineMessage();
         }
       });
     });
+  }
+
+  _isCrossOriginForm(form) {
+    const action = (form.getAttribute('action') || '').trim();
+    if (!action || action.startsWith('/') || action.startsWith(window.location.origin + '/')) return false;
+    if (action.startsWith(window.location.origin)) return false;
+    try {
+      const url = new URL(action, window.location.href);
+      return url.origin !== window.location.origin;
+    } catch (_) {}
+    return false;
   }
   
   async showInstallButton() {

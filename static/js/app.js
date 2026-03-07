@@ -116,18 +116,16 @@ function setupEventListeners() {
 }
 
 /**
- * Setup offline handling
+ * Setup offline handling - app uses localhost only, no external network.
+ * No offline/online UI; behavior is identical regardless of internet connectivity.
  */
 function setupOfflineHandling() {
     window.addEventListener('online', function() {
         AppState.isOnline = true;
-        showNotification('Connection restored', 'success');
         syncOfflineData();
     });
-    
     window.addEventListener('offline', function() {
         AppState.isOnline = false;
-        showNotification('You are now offline. Changes will be saved locally.', 'warning');
     });
 }
 

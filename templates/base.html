@@ -4,7 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Restore app name</title>
-    
+    {% if request.host and 'localhost' in request.host %}
+    <!-- Use 127.0.0.1 so links work when WiFi is off (localhost may not resolve) -->
+    <base href="{{ request.url_root.replace('localhost', '127.0.0.1') }}">
+    {% endif %}
     <!-- PWA Meta Tags -->
     <meta name="application-name" content="Restore app name">
     <meta name="apple-mobile-web-app-capable" content="yes">

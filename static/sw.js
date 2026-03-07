@@ -3,20 +3,26 @@
  * Provides offline functionality and caching for the PWA
  */
 
-const CACHE_NAME = 'Restore app name-v1.0.0';
-const STATIC_CACHE_NAME = 'Restore app name-static-v1.0.0';
-const DYNAMIC_CACHE_NAME = 'Restore app name-dynamic-v1.0.0';
+const CACHE_NAME = 'Restore app name-v1.0.4';
+const STATIC_CACHE_NAME = 'Restore app name-static-v1.0.4';
+const DYNAMIC_CACHE_NAME = 'Restore app name-dynamic-v1.0.4';
 
-// Files to cache for offline functionality
+// Files to cache for offline functionality (paths must match actual static layout)
 const STATIC_FILES = [
   '/',
+  '/login',
   '/start',
   '/guidelines',
   '/summary',
-  '/static/css/bootstrap.min.css',
-  '/static/css/style.css',
-  '/static/js/bootstrap.bundle.min.js',
+  '/upload-patch',
+  '/offline',
+  '/static/vendor/bootstrap/css/bootstrap.min.css',
+  '/static/vendor/bootstrap/js/bootstrap.bundle.min.js',
+  '/static/vendor/bootstrap-icons/bootstrap-icons.css',
+  '/static/vendor/bootstrap-icons/fonts/bootstrap-icons.woff2',
+  '/static/css/styles.css',
   '/static/js/app.js',
+  '/static/js/pwa.js',
   '/static/manifest.json',
   '/static/icons/icon-192x192.png',
   '/static/icons/icon-512x512.png'
@@ -28,6 +34,16 @@ const API_ROUTES = [
   '/refresh-all',
   '/refresh-categories'
 ];
+
+// Minimal HTML fallback when cache is empty (server down, first load)
+function getOfflineFallbackResponse() {
+  const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>App Unavailable</title></head><body style="font-family:sans-serif;max-width:480px;margin:2rem auto;padding:1rem;text-align:center"><h1>App Unavailable</h1><p>The app server is not reachable. Please ensure the app is running and try again.</p><p><button onclick="location.reload()" style="padding:0.5rem 1rem;cursor:pointer">Try Again</button> <button onclick="history.back()" style="padding:0.5rem 1rem;cursor:pointer">Go Back</button></p></body></html>';
+  return new Response(html, {
+    status: 503,
+    statusText: 'Service Unavailable',
+    headers: { 'Content-Type': 'text/html; charset=utf-8' }
+  });
+}
 
 // Install event - cache static files
 self.addEventListener('install', (event) => {
@@ -87,6 +103,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
+  // Don't intercept navigation (page) requests - let browser handle them directly.
+  // SW interception was causing ERR_FAILED for routes like /start, /summary.
+  if (request.mode === 'navigate') {
+    return;
+  }
+  
   event.respondWith(
     caches.match(request)
       .then((cachedResponse) => {
@@ -120,19 +142,15 @@ self.addEventListener('fetch', (event) => {
           .catch((error) => {
             console.log('Service Worker: Network request failed', request.url, error);
             
-            // Return offline page for navigation requests
             if (request.mode === 'navigate') {
-              return caches.match('/') || new Response('Offline', {
-                status: 503,
-                statusText: 'Service Unavailable'
-              });
+              return caches.match(new Request(url.origin + '/offline'))
+                .then((r) => r || caches.match(new Request(url.origin + '/')))
+                .then((r) => r || getOfflineFallbackResponse())
+                .catch(() => getOfflineFallbackResponse());
             }
-            
-            // Return cached version if available, otherwise return error
-            return caches.match(request) || new Response('Offline', {
-              status: 503,
-              statusText: 'Service Unavailable'
-            });
+            return caches.match(request)
+              .then((r) => r || getOfflineFallbackResponse())
+              .catch(() => getOfflineFallbackResponse());
           });
       })
   );

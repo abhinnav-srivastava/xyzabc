@@ -138,8 +138,8 @@
     "use_remote_user": false
   },
   "data_egress": {
-    "block_external_resources": false,
-    "block_external_downloads": false,
+    "block_external_resources": true,
+    "block_external_downloads": true,
     "block_git_remote": true
   },
   "data_retention": {
